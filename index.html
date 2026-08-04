@@ -1438,6 +1438,318 @@
             {id:'tki11_coat', label:'Coatings/Linings', unit:'rating'},
             {id:'tki11_appurt', label:'Appurtenances', unit:'rating'}
           ]}
+      ]},
+    { id:'piping-hose-inspection', title:'Piping & Hose Inspection Checklist',
+      dept:'Condition Monitoring — API 570 / API RP 574 / ASME B31.3 / ASME PCC-2 / ISO 4413-4414 (Piping & Hoses)',
+      category:'static',
+      tagPlaceholder:'e.g. PL-01', defaultVisual:true, defaultVibration:false, sections:[
+        { id:'ph_s1', title:'Section 1 — Pre-Inspection Safety, Isolation & Access', items:[
+            {id:'ph1_1', label:'Complete JSA / Take 5 and confirm task-specific hazards and controls'},
+            {id:'ph1_2', label:'Verify piping contents, pressure, temperature and chemical hazards from current documentation'},
+            {id:'ph1_3', label:'Confirm required isolation, depressurisation, draining, flushing and LOTO are complete'},
+            {id:'ph1_4', label:'Verify zero-energy state before opening, loosening or disturbing any piping component'},
+            {id:'ph1_5', label:'Confirm permits are approved for line breaking, confined space, work at height or hot work'},
+            {id:'ph1_6', label:'Wear service-appropriate PPE, including chemical, thermal and respiratory protection where required'},
+            {id:'ph1_7', label:'Confirm safe access, scaffolding, lighting, fall protection and emergency egress'},
+            {id:'ph1_8', label:'Barricade leak, spray, stored-energy and overhead-work exposure zones'},
+            {id:'ph1_9', label:'Verify gas testing and ventilation where hazardous vapours or confined spaces may exist'},
+            {id:'ph1_10', label:'Notify operations/control room and confirm communication and emergency response arrangements'}
+          ]},
+        { id:'ph_s2', title:'Section 2 — Documentation, Identification & Operating Envelope', items:[
+            {id:'ph2_1', label:'Verify line number, service, direction of flow and limits against the current P&ID/isometric'},
+            {id:'ph2_2', label:'Confirm pipe material, schedule, class/rating and corrosion allowance are documented'},
+            {id:'ph2_3', label:'Verify design and operating pressure/temperature remain within the approved envelope'},
+            {id:'ph2_4', label:'Check pipe, valve and hose identification, colour coding and flow arrows are legible'},
+            {id:'ph2_5', label:'Confirm previous inspection findings, thickness readings and repair recommendations are available'},
+            {id:'ph2_6', label:'Identify damage mechanisms and susceptible locations for the actual service and environment'},
+            {id:'ph2_7', label:'Verify changes, temporary repairs, reratings or alterations have approved engineering records'},
+            {id:'ph2_8', label:'Confirm inspection interval and condition-monitoring locations are defined and current'}
+          ]},
+        { id:'ph_s3', title:'Section 3 — External Condition, Corrosion & Mechanical Damage', items:[
+            {id:'ph3_1', label:'Inspect accessible pipe surfaces for general corrosion, pitting, grooving and scale'},
+            {id:'ph3_2', label:'Check low points, dead legs, injection points, mix points and drains for localised corrosion'},
+            {id:'ph3_3', label:'Inspect soil-to-air, concrete-to-air and splash-zone interfaces for accelerated corrosion'},
+            {id:'ph3_4', label:'Check for erosion, thinning or impingement at elbows, tees, reducers and high-velocity locations'},
+            {id:'ph3_5', label:'Inspect for dents, gouges, buckling, ovality, abrasion and impact damage'},
+            {id:'ph3_6', label:'Check small-bore connections, vents, drains and instrument take-offs for fatigue or damage'},
+            {id:'ph3_7', label:'Inspect external coatings, wraps and corrosion protection for breakdown or disbondment'},
+            {id:'ph3_8', label:'Check stainless steel and alloy piping for contamination, chloride exposure or stress-corrosion indicators'},
+            {id:'ph3_9', label:'Inspect buried/partially buried interfaces and verify cathodic-protection records where applicable'},
+            {id:'ph3_10', label:'Photograph, locate and dimension every significant defect for trending and assessment'}
+          ]},
+        { id:'ph_s4', title:'Section 4 — Supports, Alignment, Vibration & Flexibility', items:[
+            {id:'ph4_1', label:'Inspect hangers, shoes, saddles, clamps, guides and anchors for damage, looseness or corrosion'},
+            {id:'ph4_2', label:'Verify supports carry the pipe without excessive sagging, point loading or unsupported spans'},
+            {id:'ph4_3', label:'Check spring supports/constant hangers for correct travel position and freedom of movement'},
+            {id:'ph4_4', label:'Inspect sliding supports and expansion joints for binding, misalignment or restricted movement'},
+            {id:'ph4_5', label:'Check piping alignment at pumps, vessels and equipment nozzles for visible strain or displacement'},
+            {id:'ph4_6', label:'Assess vibration, pulsation and resonance; record abnormal movement or noise'},
+            {id:'ph4_7', label:'Inspect supports and nearby steelwork for fretting, wear, cracking or loose fasteners'},
+            {id:'ph4_8', label:'Verify thermal expansion clearances and expansion loops are unobstructed'},
+            {id:'ph4_9', label:'Check pipe penetrations and sleeves for rubbing, sealing failure or load transfer'}
+          ]},
+        { id:'ph_s5', title:'Section 5 — Welds, Flanges, Threaded Joints & Fittings', items:[
+            {id:'ph5_1', label:'Inspect circumferential and longitudinal welds for cracks, corrosion, undercut or leakage'},
+            {id:'ph5_2', label:'Check branch connections, reinforcement pads and welded attachments for fatigue cracking'},
+            {id:'ph5_3', label:'Inspect flanges for leakage, corrosion, distortion, misalignment and gasket extrusion'},
+            {id:'ph5_4', label:'Verify flange bolting is complete, correct, evenly engaged and free from severe corrosion'},
+            {id:'ph5_5', label:'Check threaded, socket-weld and compression joints for leakage, damage or excessive sealant'},
+            {id:'ph5_6', label:'Inspect elbows, tees, reducers, caps and couplings for thinning, erosion or deformation'},
+            {id:'ph5_7', label:'Verify spectacle blinds, spades, spacers and blanks are correctly installed and identified'},
+            {id:'ph5_8', label:'Check temporary clamps, wraps or enclosures for approved status, condition and expiry date'},
+            {id:'ph5_9', label:'Refer crack-like indications, active leaks and unapproved repairs for immediate engineering review'}
+          ]},
+        { id:'ph_s6', title:'Section 6 — Valves, Strainers & Specialty Components', items:[
+            {id:'ph6_1', label:'Inspect valve bodies, bonnets, glands, packing and drains for leakage or corrosion'},
+            {id:'ph6_2', label:'Verify critical isolation valves are accessible, identified and in the required position'},
+            {id:'ph6_3', label:'Check handwheels, gearboxes, actuators, stems and position indicators for damage or seizure'},
+            {id:'ph6_4', label:'Inspect check valves and critical non-return devices for evidence of malfunction or reverse flow'},
+            {id:'ph6_5', label:'Check strainers, filters and traps for blockage, leakage, differential pressure and drain condition'},
+            {id:'ph6_6', label:'Inspect expansion joints/bellows for distortion, leakage, damaged braid, anchors or shipping bars'},
+            {id:'ph6_7', label:'Verify pressure-relief device inlet/outlet piping is supported, unobstructed and not leaking'},
+            {id:'ph6_8', label:'Confirm drains, vents, sample points and bleed valves are capped, plugged or routed safely'}
+          ]},
+        { id:'ph_s7', title:'Section 7 — Hoses, Flexible Connections & Couplings', items:[
+            {id:'ph7_1', label:'Verify hose assembly type, material, pressure rating and temperature rating suit the service'},
+            {id:'ph7_2', label:'Inspect hose cover for cuts, cracks, abrasion, blistering, soft spots, hardening or exposed reinforcement'},
+            {id:'ph7_3', label:'Check for kinking, crushing, flattening, twisting and bend radius below manufacturer limits'},
+            {id:'ph7_4', label:'Inspect couplings, ferrules, clamps, threads and seals for corrosion, movement, damage or leakage'},
+            {id:'ph7_5', label:'Confirm hose routing prevents rubbing, heat exposure, sharp edges, vehicle damage and trip hazards'},
+            {id:'ph7_6', label:'Verify adequate slack for movement without tensile loading, excessive sag or whip exposure'},
+            {id:'ph7_7', label:'Check restraints, whip checks, safety cables and supports are correctly fitted where required'},
+            {id:'ph7_8', label:'Inspect conductive/anti-static bonding and continuity provisions where required by the service'},
+            {id:'ph7_9', label:'Verify inspection/test date, assembly ID and replacement-life markings are legible and current'},
+            {id:'ph7_10', label:'Remove from service any leaking, bulged, reinforcement-exposed, coupling-slipped or otherwise unsafe hose'}
+          ]},
+        { id:'ph_s8', title:'Section 8 — Thickness Monitoring, NDT & Integrity Assessment', items:[
+            {id:'ph8_1', label:'Verify thickness measurement locations match the approved inspection plan and are permanently identified'},
+            {id:'ph8_2', label:'Prepare measurement surfaces and confirm UT gauge calibration for material and temperature'},
+            {id:'ph8_3', label:'Record current wall thickness at every required condition-monitoring location'},
+            {id:'ph8_4', label:'Compare readings with previous data, nominal thickness and minimum required thickness'},
+            {id:'ph8_5', label:'Calculate/update corrosion rate and remaining life using approved engineering methodology'},
+            {id:'ph8_6', label:'Investigate unexpected readings, local pits and accelerated corrosion with expanded examination'},
+            {id:'ph8_7', label:'Apply appropriate NDT to suspect welds or crack-like indications using qualified personnel/procedures'},
+            {id:'ph8_8', label:'Refer readings at/below minimum thickness or outside acceptance criteria for immediate engineering assessment'},
+            {id:'ph8_9', label:'Update isometric/CML map, photographs and inspection records with traceable results'}
+          ]},
+        { id:'ph_s9', title:'Section 9 — Leaks, Insulation, Containment & Environment', items:[
+            {id:'ph9_1', label:'Inspect for active leaks, staining, deposits, odour, vapour, wet insulation or product accumulation'},
+            {id:'ph9_2', label:'Treat pinhole leaks, sprays and hazardous-service seepage as immediate safety risks'},
+            {id:'ph9_3', label:'Check insulation and cladding for damage, open seams, water ingress and corrosion-under-insulation risk'},
+            {id:'ph9_4', label:'Inspect heat tracing, weather seals and removable insulation covers for condition and correct installation'},
+            {id:'ph9_5', label:'Verify drip trays, bunds, guards, shields and leak-detection provisions are serviceable'},
+            {id:'ph9_6', label:'Check drains and containment routes are clear and direct releases to approved collection points'},
+            {id:'ph9_7', label:'Assess nearby electrical equipment, walkways and structures for exposure from potential leakage'},
+            {id:'ph9_8', label:'Record environmental contamination and initiate spill response/notification where required'}
+          ]},
+        { id:'ph_s10', title:'Section 10 — Testing, Reinstatement & Follow-Up', items:[
+            {id:'ph10_1', label:'Confirm pressure/leak testing requirements, test medium and limits are engineering-approved'},
+            {id:'ph10_2', label:'Verify calibrated gauges, relief protection, barriers and exclusion zones before any test'},
+            {id:'ph10_3', label:'Check system for leakage or abnormal movement during approved operational/pressure testing'},
+            {id:'ph10_4', label:'Confirm all vents, drains, blinds, valves, guards, insulation and supports are correctly reinstated'},
+            {id:'ph10_5', label:'Verify temporary equipment, tools, rags and inspection access materials are removed'},
+            {id:'ph10_6', label:'Classify findings by condition and priority; identify immediate isolation or operating restrictions'},
+            {id:'ph10_7', label:'Raise work orders/recommendations with owner, due date and clear acceptance criteria'},
+            {id:'ph10_8', label:'Communicate results to operations and update inspection history before closing the work order'}
+          ]},
+        { id:'ph_s11', title:'Section 11 — Condition Assessment Summary',
+          readingNote:'Rating key — 1 Good (no defects, fit for continued service) · 2 Fair (minor deterioration, routine monitoring) · 3 Poor (moderate deterioration, planned repair) · 4 Critical (urgent repair/restriction) · 5 Unsafe (isolate immediately)',
+          items:[], readings:[
+            {id:'ph11_pipe', label:'Pipework / Corrosion', unit:'rating'},
+            {id:'ph11_supp', label:'Supports / Alignment', unit:'rating'},
+            {id:'ph11_welds', label:'Welds / Attachments', unit:'rating'},
+            {id:'ph11_flange', label:'Flanges / Bolting', unit:'rating'},
+            {id:'ph11_valve', label:'Valves / Specialty Items', unit:'rating'},
+            {id:'ph11_hose', label:'Hoses / Flexible Connections', unit:'rating'},
+            {id:'ph11_cui', label:'Insulation / CUI Risk', unit:'rating'},
+            {id:'ph11_ndt', label:'Thickness / NDT Results', unit:'rating'},
+            {id:'ph11_leak', label:'Leaks / Containment', unit:'rating'},
+            {id:'ph11_relief', label:'Pressure-Relief Interfaces', unit:'rating'},
+            {id:'ph11_overall', label:'Overall Piping Circuit', unit:'rating'}
+          ]}
+      ]},
+    { id:'feed-box-inspection', title:'Feed Box Inspection Checklist',
+      dept:'Condition Monitoring — AS/NZS 4100 / AS 1554.1 / ISO 9001 / CEMA (Feed Box)',
+      category:'static',
+      tagPlaceholder:'e.g. FB-01', defaultVisual:true, defaultVibration:false, sections:[
+        { id:'fb_s1', title:'Section 1 — Pre-Inspection Safety & Access', items:[
+            {id:'fb1_1', label:'Conduct Job Safety Analysis (JSA) / Take 5 risk assessment'},
+            {id:'fb1_2', label:'Don appropriate PPE: hard hat, safety glasses, steel-toe boots, high-vis vest, dust mask'},
+            {id:'fb1_3', label:'Verify LOTO procedures completed on feed conveyor and downstream equipment'},
+            {id:'fb1_4', label:'Confirm feed box is empty or material flow stopped before internal inspection'},
+            {id:'fb1_5', label:'Confirm safe access routes and platform/ladder condition identified'},
+            {id:'fb1_6', label:'Verify fall protection equipment in place for elevated access points'},
+            {id:'fb1_7', label:'Check dust levels / atmosphere before entry into enclosed sections'},
+            {id:'fb1_8', label:'Notify operations/control room of inspection activity'},
+            {id:'fb1_9', label:'Establish exclusion zone below the feed box if working at height'}
+          ]},
+        { id:'fb_s2', title:'Section 2 — Structural Frame & Support Steelwork', items:[
+            {id:'fb2_1', label:'Inspect support columns/legs for plumbness and deformation'},
+            {id:'fb2_2', label:'Check main support beams for deflection, sagging, or buckling'},
+            {id:'fb2_3', label:'Inspect cross-bracing for tension/compression damage'},
+            {id:'fb2_4', label:'Check base plates and foundation bolts for looseness or corrosion'},
+            {id:'fb2_5', label:'Verify structural modifications have engineering approval'},
+            {id:'fb2_6', label:'Inspect for impact damage from mobile equipment or falling material'},
+            {id:'fb2_7', label:'Check for signs of overloading: bent members, local buckling'},
+            {id:'fb2_8', label:'Verify vibration isolation/mounting hardware, if fitted'}
+          ]},
+        { id:'fb_s3', title:'Section 3 — Shell Plate & Panel Inspection', items:[
+            {id:'fb3_1', label:'Inspect hopper/box shell plates for wear-through and holing'},
+            {id:'fb3_2', label:'Check sloped/conical sidewalls for bulging or distortion'},
+            {id:'fb3_3', label:'Inspect plate-to-plate seams for cracking or gapping'},
+            {id:'fb3_4', label:'Check for material build-up affecting flow (choke points)'},
+            {id:'fb3_5', label:'Inspect stiffener ribs and gusset plates for cracks'},
+            {id:'fb3_6', label:'Verify plate thickness at high-wear zones (impact area, discharge throat)'},
+            {id:'fb3_7', label:'Check for evidence of past patch repairs and their condition'}
+          ]},
+        { id:'fb_s4', title:'Section 4 — Wear Liners & Impact Protection', items:[
+            {id:'fb4_1', label:'Inspect impact/wear liners for thickness loss and perforation'},
+            {id:'fb4_2', label:'Check liner fastening bolts/clamps for looseness or missing hardware'},
+            {id:'fb4_3', label:'Verify liner overlap and joint sealing to prevent fines ingress'},
+            {id:'fb4_4', label:'Inspect impact bars/deflector plates at the feed inlet'},
+            {id:'fb4_5', label:'Check rubber or ceramic liner segments for cracking or delamination'},
+            {id:'fb4_6', label:'Document liner wear pattern and estimate remaining service life'}
+          ]},
+        { id:'fb_s5', title:'Section 5 — Welded & Bolted Connections', items:[
+            {id:'fb5_1', label:'Inspect all structural welds for cracks, undercut, or porosity'},
+            {id:'fb5_2', label:'Check fillet welds at plate junctions for proper size and profile'},
+            {id:'fb5_3', label:'Inspect bolted flange connections for looseness — torque check sample'},
+            {id:'fb5_4', label:'Verify correct bolt grades installed (marked heads)'},
+            {id:'fb5_5', label:'Check for galvanic corrosion at dissimilar metal contacts'},
+            {id:'fb5_6', label:'Verify lock nuts/washers in place where required'}
+          ]},
+        { id:'fb_s6', title:'Section 6 — Inlet/Outlet Openings & Chute Alignment', items:[
+            {id:'fb6_1', label:'Verify inlet chute alignment with upstream conveyor discharge'},
+            {id:'fb6_2', label:'Check outlet opening alignment with downstream conveyor/crusher'},
+            {id:'fb6_3', label:'Inspect chute angle for adequate material flow (no build-up)'},
+            {id:'fb6_4', label:'Check for material spillage at transfer points'},
+            {id:'fb6_5', label:'Verify skirt rubber/seals at inlet and outlet are intact'},
+            {id:'fb6_6', label:'Inspect centering/guide plates for wear or misalignment'}
+          ]},
+        { id:'fb_s7', title:'Section 7 — Dust Suppression, Sealing & Enclosure', items:[
+            {id:'fb7_1', label:'Inspect dust suppression spray nozzles and piping for blockage'},
+            {id:'fb7_2', label:'Check dust curtain/enclosure panels for damage or gaps'},
+            {id:'fb7_3', label:'Verify dust collection ductwork connections are sealed'},
+            {id:'fb7_4', label:'Inspect access door seals for dust leakage'},
+            {id:'fb7_5', label:'Check water/additive supply line for leaks'}
+          ]},
+        { id:'fb_s8', title:'Section 8 — Access Doors, Inspection Hatches & Guarding', items:[
+            {id:'fb8_1', label:'Inspect access doors/hatches for secure closure and hinges'},
+            {id:'fb8_2', label:'Check hatch gaskets for dust-tight sealing'},
+            {id:'fb8_3', label:'Verify guarding is in place over moving/pinch points'},
+            {id:'fb8_4', label:'Check inspection hatch signage and lockout provisions'},
+            {id:'fb8_5', label:'Verify walkway grating and handrails around the feed box'}
+          ]},
+        { id:'fb_s9', title:'Section 9 — Corrosion & Protective Coatings', items:[
+            {id:'fb9_1', label:'Assess overall corrosion level using standard rating scale'},
+            {id:'fb9_2', label:'Identify areas of active corrosion requiring immediate attention'},
+            {id:'fb9_3', label:'Check for coating failures: blistering, peeling, chalking'},
+            {id:'fb9_4', label:'Inspect areas prone to moisture/condensation build-up'},
+            {id:'fb9_5', label:'Document areas requiring touch-up or full recoating'}
+          ]},
+        { id:'fb_s10', title:'Section 10 — Condition Assessment Summary',
+          readingNote:'Rating key — 1 Good · 2 Fair · 3 Poor · 4 Critical · 5 Unsafe', items:[], readings:[
+            {id:'fb10_frame', label:'Structural Frame', unit:'rating'},
+            {id:'fb10_shell', label:'Shell Plates', unit:'rating'},
+            {id:'fb10_liner', label:'Wear Liners', unit:'rating'},
+            {id:'fb10_weld', label:'Welded Connections', unit:'rating'},
+            {id:'fb10_bolt', label:'Bolted Connections', unit:'rating'},
+            {id:'fb10_align', label:'Inlet/Outlet Alignment', unit:'rating'},
+            {id:'fb10_dust', label:'Dust Sealing/Enclosure', unit:'rating'},
+            {id:'fb10_doors', label:'Access Doors/Guarding', unit:'rating'},
+            {id:'fb10_coat', label:'Coatings/Corrosion', unit:'rating'}
+          ]}
+      ]},
+    { id:'sag-feed-chute-inspection', title:'SAG Mill Feed Chute Inspection Checklist',
+      dept:'Condition Monitoring — AS/NZS 4100 / AS 4024.1 / ISO 9001 / MSHA 30 CFR (SAG Mill Feed Chute)',
+      category:'static',
+      tagPlaceholder:'e.g. SFC-01', defaultVisual:true, defaultVibration:false, sections:[
+        { id:'sfc_s1', title:'Section 1 — Pre-Inspection Safety & Access', items:[
+            {id:'sfc1_1', label:'Conduct Job Safety Analysis (JSA) / Take 5 risk assessment'},
+            {id:'sfc1_2', label:'Confirm SAG mill is fully isolated, LOTO applied, and zero-energy verified'},
+            {id:'sfc1_3', label:'Verify mill placed on turning gear lockout or blocked against rotation'},
+            {id:'sfc1_4', label:'Don appropriate PPE: hard hat, safety glasses, steel-toe boots, high-vis vest'},
+            {id:'sfc1_5', label:'Confirm confined space entry permit if entering the chute/trunnion area'},
+            {id:'sfc1_6', label:'Verify atmospheric testing completed if entering an enclosed section'},
+            {id:'sfc1_7', label:'Confirm safe access routes, platforms, and fall protection are in place'},
+            {id:'sfc1_8', label:'Notify control room / process operations of inspection activity'},
+            {id:'sfc1_9', label:'Establish exclusion zone around the feed chute and trunnion area'}
+          ]},
+        { id:'sfc_s2', title:'Section 2 — Structural Frame, Undercarriage & Rail Alignment', items:[
+            {id:'sfc2_1', label:'Inspect main support frame for cracks, distortion, or fatigue damage'},
+            {id:'sfc2_2', label:'Check cross-bracing (X-bracing) for tension/compression damage'},
+            {id:'sfc2_3', label:'Inspect wheel bogies/undercarriage frame for structural integrity'},
+            {id:'sfc2_4', label:'Verify rail track alignment and level along the travel path'},
+            {id:'sfc2_5', label:'Check rail fixings/anchors for looseness or corrosion'},
+            {id:'sfc2_6', label:'Inspect for impact damage from mobile equipment'},
+            {id:'sfc2_7', label:'Verify structural modifications have engineering approval'},
+            {id:'sfc2_8', label:'Check base plates and foundation bolts for looseness or corrosion'}
+          ]},
+        { id:'sfc_s3', title:'Section 3 — Wear Liners & Spoon/Chute Plate Inspection', items:[
+            {id:'sfc3_1', label:'Inspect chute liner plates for wear-through and perforation'},
+            {id:'sfc3_2', label:'Check spoon/feed liner at the trunnion discharge point for wear'},
+            {id:'sfc3_3', label:'Verify liner fastening bolts/clamps for looseness or missing hardware'},
+            {id:'sfc3_4', label:'Inspect impact zone liners for cracking or displacement'},
+            {id:'sfc3_5', label:'Check liner joint overlap to prevent fines/ore ingress behind liners'},
+            {id:'sfc3_6', label:'Measure liner thickness at high-wear monitoring points'},
+            {id:'sfc3_7', label:'Document liner wear trend and estimate remaining service life'}
+          ]},
+        { id:'sfc_s4', title:'Section 4 — Trunnion Interface, Seals & Clearance', items:[
+            {id:'sfc4_1', label:'Verify feed chute-to-trunnion clearance is within OEM specification'},
+            {id:'sfc4_2', label:'Inspect trunnion seal/wiper for wear, tears, or hardening'},
+            {id:'sfc4_3', label:'Check for ore spillage or dust leakage at the trunnion interface'},
+            {id:'sfc4_4', label:'Verify chute spout centering relative to trunnion bore'},
+            {id:'sfc4_5', label:'Inspect for contact marks indicating chute-to-trunnion rubbing'},
+            {id:'sfc4_6', label:'Check grease/lubrication points at the interface, if fitted'}
+          ]},
+        { id:'sfc_s5', title:'Section 5 — Welded & Bolted Connections', items:[
+            {id:'sfc5_1', label:'Inspect all structural welds for cracks, undercut, or porosity'},
+            {id:'sfc5_2', label:'Check fillet welds at frame and liner-backing junctions'},
+            {id:'sfc5_3', label:'Inspect bolted connections for looseness — torque check sample'},
+            {id:'sfc5_4', label:'Verify correct bolt grades installed (marked heads)'},
+            {id:'sfc5_5', label:'Check for galvanic corrosion at dissimilar metal contacts'},
+            {id:'sfc5_6', label:'Verify lock nuts/washers in place where required'}
+          ]},
+        { id:'sfc_s6', title:'Section 6 — Wheel, Axle & Bearing Inspection (Undercarriage)', items:[
+            {id:'sfc6_1', label:'Inspect travel wheels for flat spots, cracking, or excessive wear'},
+            {id:'sfc6_2', label:'Check wheel bearings for play, noise, or overheating signs'},
+            {id:'sfc6_3', label:'Verify axle alignment and straightness'},
+            {id:'sfc6_4', label:'Inspect wheel flanges for rail-riding wear'},
+            {id:'sfc6_5', label:'Check lubrication of wheel bearings and axle bushes'},
+            {id:'sfc6_6', label:'Verify retaining pins/circlips are in place and secure'}
+          ]},
+        { id:'sfc_s7', title:'Section 7 — Positioning, Retraction & Alignment Mechanism', items:[
+            {id:'sfc7_1', label:'Verify retraction/withdrawal mechanism operates smoothly (if fitted)'},
+            {id:'sfc7_2', label:'Check hydraulic/pneumatic cylinders for leaks and mounting integrity'},
+            {id:'sfc7_3', label:'Inspect position indicators/limit switches for correct operation'},
+            {id:'sfc7_4', label:'Verify locking pins or stops function correctly at operating position'},
+            {id:'sfc7_5', label:'Check drive motor/gearbox mounting for the traverse mechanism'}
+          ]},
+        { id:'sfc_s8', title:'Section 8 — Dust & Spillage Containment', items:[
+            {id:'sfc8_1', label:'Inspect dust enclosure panels and seals for damage or gaps'},
+            {id:'sfc8_2', label:'Check spillage collection trays/chutes beneath the feed chute'},
+            {id:'sfc8_3', label:'Verify dust suppression spray nozzles are clear and functional'},
+            {id:'sfc8_4', label:'Inspect housekeeping — accumulated ore/dust build-up around the unit'}
+          ]},
+        { id:'sfc_s9', title:'Section 9 — Corrosion & Protective Coatings', items:[
+            {id:'sfc9_1', label:'Assess overall corrosion level using standard rating scale'},
+            {id:'sfc9_2', label:'Identify areas of active corrosion requiring immediate attention'},
+            {id:'sfc9_3', label:'Check for coating failures: blistering, peeling, chalking'},
+            {id:'sfc9_4', label:'Inspect areas prone to moisture accumulation near the mill'},
+            {id:'sfc9_5', label:'Document areas requiring touch-up or full recoating'}
+          ]},
+        { id:'sfc_s10', title:'Section 10 — Condition Assessment Summary',
+          readingNote:'Rating key — 1 Good · 2 Fair · 3 Poor · 4 Critical · 5 Unsafe', items:[], readings:[
+            {id:'sfc10_frame', label:'Structural Frame/Undercarriage', unit:'rating'},
+            {id:'sfc10_liner', label:'Wear Liners', unit:'rating'},
+            {id:'sfc10_trunnion', label:'Trunnion Interface/Seals', unit:'rating'},
+            {id:'sfc10_weld', label:'Welded Connections', unit:'rating'},
+            {id:'sfc10_bolt', label:'Bolted Connections', unit:'rating'},
+            {id:'sfc10_wheel', label:'Wheels/Bearings', unit:'rating'},
+            {id:'sfc10_pos', label:'Positioning Mechanism', unit:'rating'},
+            {id:'sfc10_dust', label:'Dust/Spillage Containment', unit:'rating'},
+            {id:'sfc10_coat', label:'Coatings/Corrosion', unit:'rating'}
+          ]}
       ]}
   ];
 

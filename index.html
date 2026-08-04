@@ -9,8 +9,9 @@
 <style>
   :root{
     --ink:#132330; --ink-soft:#4b5c68; --paper:#eef1f3; --card:#ffffff; --line:#d7dde2;
-    --navy:#1b3648; --navy-deep:#0f2330; --amber:#e0972c; --amber-deep:#9a6113;
+    --navy:#1b3648; --navy-deep:#0f2330; --amber:#e0972c; --amber-deep:#9a6113; --amber-bg:#fdf1e0;
     --ok:#2f7d5c; --ok-bg:#e4f3ec; --notok:#b4432f; --notok-bg:#fbe8e4; --na-bg:#eceff1;
+    --poor:#c1521f; --poor-bg:#fbe6d9;
     --focus:#2f7dc9; --radius:10px;
   }
   *{box-sizing:border-box;}
@@ -39,6 +40,17 @@
     font-size:10.5px; font-weight:700; color:var(--amber-deep); background:#fbf0dd;
     padding:2px 7px; border-radius:999px; align-self:flex-start;
   }
+  .hub-card .draft-chip.health-chip.good{color:var(--ok); background:var(--ok-bg);}
+  .hub-card .draft-chip.health-chip.fair{color:var(--amber-deep); background:var(--amber-bg);}
+  .hub-card .draft-chip.health-chip.poor{color:var(--poor); background:var(--poor-bg);}
+  .hub-card .draft-chip.health-chip.critical{color:var(--notok); background:var(--notok-bg);}
+
+  .health-pill{display:inline-flex; align-items:center; gap:4px; font-weight:700; font-size:12.5px; padding:6px 10px; border-radius:999px; white-space:nowrap; flex:none; border:1px solid rgba(255,255,255,.25);}
+  .health-pill.pending{background:rgba(255,255,255,.1); color:#fff;}
+  .health-pill.good{background:var(--ok-bg); color:var(--ok); border-color:var(--ok);}
+  .health-pill.fair{background:var(--amber-bg); color:var(--amber-deep); border-color:var(--amber);}
+  .health-pill.poor{background:var(--poor-bg); color:var(--poor); border-color:var(--poor);}
+  .health-pill.critical{background:var(--notok-bg); color:var(--notok); border-color:var(--notok);}
 
   /* ---------- Top bar (form view) ---------- */
   .topbar{position:sticky; top:0; z-index:40; background:linear-gradient(180deg,var(--navy) 0%, var(--navy-deep) 100%); color:#fff; padding:12px 16px 12px; box-shadow:0 2px 10px rgba(0,0,0,.25);}
@@ -48,7 +60,7 @@
     font-size:12.5px; font-weight:700; padding:6px 10px; border-radius:8px; cursor:pointer;
     display:flex; align-items:center; gap:5px;
   }
-  .topbar-row{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .topbar-row{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
   .brand{display:flex; flex-direction:column; line-height:1.15; min-width:0;}
   .brand .eyebrow{font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:#9fc3d6; font-weight:600;}
   .brand .title{font-size:16.5px; font-weight:700; margin-top:2px; overflow-wrap:anywhere;}
@@ -106,6 +118,16 @@
   .reading-field{display:flex; flex-direction:column; gap:4px;}
   .reading-field label{font-size:11px; color:var(--ink-soft); font-weight:600;}
   .reading-field input{padding:7px 8px; font-size:14px;}
+  .thickness-list{display:flex; flex-direction:column; gap:12px;}
+  .thickness-point{background:var(--paper); border:1px solid var(--line); border-radius:8px; padding:10px;}
+  .thickness-point-head{font-size:13px; font-weight:700; margin-bottom:8px;}
+  .thickness-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(120px,1fr)); gap:8px;}
+  .thickness-result{margin-top:8px; font-size:12px; font-weight:600; padding:7px 9px; border-radius:6px;}
+  .thickness-result.pending{background:var(--na-bg); color:var(--ink-soft); font-weight:500;}
+  .thickness-result.good{background:var(--ok-bg); color:var(--ok);}
+  .thickness-result.fair{background:var(--amber-bg); color:var(--amber-deep);}
+  .thickness-result.poor{background:var(--poor-bg); color:var(--poor);}
+  .thickness-result.critical{background:var(--notok-bg); color:var(--notok);}
 
   .comment-block{margin-top:12px;}
   .comment-block label{display:block; margin-bottom:5px;}
@@ -197,6 +219,8 @@
         <span class="title" id="formTitle">—</span>
       </div>
       <span class="tag-pill" id="tagPill">Set tag #</span>
+      <span class="health-pill pending" id="healthPill">Health —</span>
+      <span class="health-pill pending" id="rulPill" style="display:none;">RUL —</span>
     </div>
     <div class="progress-wrap">
       <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
@@ -864,7 +888,7 @@
       ]},
 
     { id:'lube-oil-sampling', title:'Lube Oil Sampling', dept:'Condition Monitoring — ASTM D4057 / ISO 4406 / ICML',
-      category:'lube',
+      category:'lube', healthScoreApplicable:false,
       tagPlaceholder:'Sample ID / Bottle No.', defaultVisual:true, defaultVibration:false, sections:[
         { id:'los_s1', title:'Section 1 — Pre-Sampling Safety & Preparation', items:[
             {id:'los1_1', label:'Confirm sample is due per sampling schedule'},
@@ -979,7 +1003,7 @@
       ]},
 
     { id:'lube-oil-replacement', title:'Lube Oil Replacement', dept:'Condition Monitoring — ISO 55000 / ICML 55',
-      category:'lube',
+      category:'lube', healthScoreApplicable:false,
       tagPlaceholder:'e.g. Equipment tag', defaultVisual:true, defaultVibration:false, sections:[
         { id:'lor_s1', title:'Section 1 — Pre-Work Safety & Preparation', items:[
             {id:'lor1_1', label:'Reviewed JSA / Safe Work Procedure for oil replacement'},
@@ -1165,6 +1189,12 @@
             {id:'si8_5', label:'Calculate remaining service life where applicable'},
             {id:'si8_6', label:'Identify any load restriction requirements'},
             {id:'si8_7', label:'Complete inspection report with recommendations'}
+          ],
+          readingNote:'Site-defined monitoring points — rename to match your structure\u2019s CML/drawing references', readings:[
+            {id:'si8_pt1', label:'Monitoring Point 1', unit:'mm'},
+            {id:'si8_pt2', label:'Monitoring Point 2', unit:'mm'},
+            {id:'si8_pt3', label:'Monitoring Point 3', unit:'mm'},
+            {id:'si8_pt4', label:'Monitoring Point 4', unit:'mm'}
           ]},
         { id:'si_s9', title:'Section 9 — Condition Assessment Summary',
           readingNote:'Rating key — 1 Good · 2 Fair · 3 Poor · 4 Critical · 5 Unsafe', items:[], readings:[
@@ -1531,6 +1561,13 @@
             {id:'ph8_7', label:'Apply appropriate NDT to suspect welds or crack-like indications using qualified personnel/procedures'},
             {id:'ph8_8', label:'Refer readings at/below minimum thickness or outside acceptance criteria for immediate engineering assessment'},
             {id:'ph8_9', label:'Update isometric/CML map, photographs and inspection records with traceable results'}
+          ],
+          readingNote:'CML numbers — rename to match your isometric/CML map reference', readings:[
+            {id:'ph8_cml1', label:'CML-1', unit:'mm'},
+            {id:'ph8_cml2', label:'CML-2', unit:'mm'},
+            {id:'ph8_cml3', label:'CML-3', unit:'mm'},
+            {id:'ph8_cml4', label:'CML-4', unit:'mm'},
+            {id:'ph8_cml5', label:'CML-5', unit:'mm'}
           ]},
         { id:'ph_s9', title:'Section 9 — Leaks, Insulation, Containment & Environment', items:[
             {id:'ph9_1', label:'Inspect for active leaks, staining, deposits, odour, vapour, wet insulation or product accumulation'},
@@ -1784,20 +1821,48 @@
     try{ return !!window.localStorage.getItem(draftKey(eq)); } catch(e){ return false; }
   }
 
+  function getDraftHealth(eq){
+    try{
+      const raw = window.localStorage.getItem(draftKey(eq));
+      if (!raw) return null;
+      const saved = JSON.parse(raw);
+      return saved.healthScore || null;
+    } catch(e){ return null; }
+  }
+
+  function getDraftRUL(eq){
+    try{
+      const raw = window.localStorage.getItem(draftKey(eq));
+      if (!raw) return null;
+      const saved = JSON.parse(raw);
+      return saved.worstRUL || null;
+    } catch(e){ return null; }
+  }
+
   function equipmentCard(eq){
     const card = document.createElement('div');
     card.className = 'hub-card';
     const initials = eq.title.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
     const sectionCount = eq.sections.length;
+    const health = getDraftHealth(eq);
+    const rul = getDraftRUL(eq);
+    let chip = health
+      ? `<span class="draft-chip health-chip ${health.band}">Health ${health.score}% · ${health.label}</span>`
+      : (hasDraft(eq) ? '<span class="draft-chip">Draft saved</span>' : '');
+    if (rul){
+      const lifeText = rul.remainingLife === Infinity ? 'Stable' : rul.remainingLife.toFixed(1) + ' yrs';
+      chip += `<span class="draft-chip health-chip ${rul.band}">RUL ${lifeText}</span>`;
+    }
     card.innerHTML = `
       <div class="icon">${initials}</div>
       <div class="name">${eq.title}</div>
       <div class="meta">${sectionCount} section${sectionCount>1?'s':''}</div>
-      ${hasDraft(eq) ? '<span class="draft-chip">Draft saved</span>' : ''}
+      ${chip}
     `;
     card.addEventListener('click', () => openEquipment(eq));
     return card;
   }
+
 
   /* ---------------- Home: category cards only ---------------- */
   function renderHub(){
@@ -1939,18 +2004,64 @@
       });
 
       if (sec.readings && sec.readings.length){
-        const rb = document.createElement('div');
-        rb.className = 'reading-block';
-        rb.innerHTML = (sec.readingNote ? `<div class="reading-note">Target range: ${sec.readingNote}</div>` : '') +
-          `<div class="reading-grid">${sec.readings.map(r => `
-            <div class="reading-field">
-              <label>${r.label} (${r.unit})</label>
-              <input type="text" inputmode="decimal" data-reading="${r.id}" placeholder="—">
-            </div>`).join('')}</div>`;
-        body.appendChild(rb);
-        rb.querySelectorAll('input[data-reading]').forEach(inp => {
-          inp.addEventListener('input', () => { state.readings[inp.dataset.reading] = inp.value; scheduleSave(); });
-        });
+        const plainReadings = sec.readings.filter(r => r.unit !== 'mm');
+        const thicknessReadings = sec.readings.filter(r => r.unit === 'mm');
+
+        if (plainReadings.length){
+          const rb = document.createElement('div');
+          rb.className = 'reading-block';
+          rb.innerHTML = (sec.readingNote ? `<div class="reading-note">Target range: ${sec.readingNote}</div>` : '') +
+            `<div class="reading-grid">${plainReadings.map(r => `
+              <div class="reading-field">
+                <label>${r.label} (${r.unit})</label>
+                <input type="text" inputmode="decimal" data-reading="${r.id}" placeholder="—">
+              </div>`).join('')}</div>`;
+          body.appendChild(rb);
+          rb.querySelectorAll('input[data-reading]').forEach(inp => {
+            inp.addEventListener('input', () => { state.readings[inp.dataset.reading] = inp.value; scheduleSave(); });
+          });
+        }
+
+        if (thicknessReadings.length){
+          const tb = document.createElement('div');
+          tb.className = 'reading-block';
+          tb.innerHTML = (sec.readingNote ? `<div class="reading-note">${sec.readingNote}</div>` : '') +
+            `<div class="thickness-list">${thicknessReadings.map(r => `
+              <div class="thickness-point" data-point="${r.id}">
+                <div class="thickness-point-head">${r.label} (mm)</div>
+                <div class="thickness-grid">
+                  <div class="reading-field">
+                    <label>Current reading</label>
+                    <input type="text" inputmode="decimal" data-tk="${r.id}" data-field="current" placeholder="—">
+                  </div>
+                  <div class="reading-field">
+                    <label>Previous reading</label>
+                    <input type="text" inputmode="decimal" data-tk="${r.id}" data-field="previous" placeholder="—">
+                  </div>
+                  <div class="reading-field">
+                    <label>Previous reading date</label>
+                    <input type="date" data-tk="${r.id}" data-field="previousDate">
+                  </div>
+                  <div class="reading-field">
+                    <label>Min. allowable (mm)</label>
+                    <input type="text" inputmode="decimal" data-tk="${r.id}" data-field="minAllowable" placeholder="—">
+                  </div>
+                </div>
+                <div class="thickness-result pending" data-tk-result="${r.id}">Enter current, previous, previous date and minimum allowable to calculate corrosion rate and remaining life.</div>
+              </div>`).join('')}</div>`;
+          body.appendChild(tb);
+          tb.querySelectorAll('input[data-tk]').forEach(inp => {
+            inp.addEventListener('input', () => {
+              const id = inp.dataset.tk, field = inp.dataset.field;
+              state.readings[id] = state.readings[id] || {};
+              if (typeof state.readings[id] === 'string'){ state.readings[id] = { current: state.readings[id] }; }
+              state.readings[id][field] = inp.value;
+              refreshThicknessPoint(id);
+              refreshProgress();
+              scheduleSave();
+            });
+          });
+        }
       }
 
       const cb = document.createElement('div');
@@ -2016,6 +2127,231 @@
     } else {
       banner.classList.remove('show');
     }
+
+    updateHealthPill();
+    updateRULPill();
+  }
+
+  /* =====================================================================
+     RELIABILITY — PHASE 1: EQUIPMENT HEALTH SCORE
+     Converts the current inspection's answers into a single 0-100
+     condition score, weighted by how safety/integrity-critical each
+     section is. Purely computed from data already on the form — no
+     backend or extra fields required.
+     ===================================================================== */
+
+  // Section classification: procedural/safety sections are excluded from
+  // the health score (they measure compliance, not equipment condition).
+  // Everything else is weighted by how directly it reflects asset integrity.
+  const HEALTH_EXCLUDE_SECONDARY = ['access', 'isolation', 'preparation', 'requirement', 'entry'];
+  const HEALTH_CRITICAL_KEYWORDS = [
+    'weld', 'bolt', 'connection', 'foundation', 'bottom plate', 'shell',
+    'trunnion', 'bearing', 'wheel', 'axle', 'thickness', 'ndt', 'leak',
+    'containment', 'pressure', 'relief', 'liner', 'wear', 'metering',
+    'injector', 'valve', 'strainer', 'reservoir', 'pump unit', 'roof',
+    'structural frame', 'undercarriage', 'structural members',
+    'motor', 'gearbox', 'coupling', 'pump', 'agitator', 'sizer', 'mill',
+    'pinion', 'gear', 'cylinder', 'cooling system', 'drive unit',
+    'drive motor', 'lubricator', 'rake', 'hydraulic drive', 'oil film'
+  ];
+  const HEALTH_MAJOR_KEYWORDS = [
+    'corrosion', 'coating', 'documentation', 'operating envelope',
+    'alignment', 'support', 'platform', 'handrail', 'dust', 'enclosure',
+    'access door', 'guarding', 'lubrication point', 'distribution line',
+    'nozzle', 'appurten', 'controller', 'timer', 'positioning', 'retraction',
+    'screen panel', 'lab submission', 'record keeping'
+  ];
+
+  function classifySection(sec){
+    const t = (sec.title || '').toLowerCase();
+    // A section with only a condition-rating table (no checklist items) is
+    // the engineer's own holistic judgment call — always weighted highest.
+    if ((!sec.items || sec.items.length === 0) && sec.readings && sec.readings.length){
+      return { weight: 3, exclude: false, kind: 'rating' };
+    }
+    // Procedural/safety sections (JSA, PPE, LOTO, permits, access) measure
+    // task compliance, not equipment condition — excluded from the score.
+    if (t.includes('safety') && HEALTH_EXCLUDE_SECONDARY.some(k => t.includes(k))){
+      return { weight: 0, exclude: true, kind: 'procedural' };
+    }
+    if (HEALTH_CRITICAL_KEYWORDS.some(k => t.includes(k))) return { weight: 3, exclude: false, kind: 'critical' };
+    if (HEALTH_MAJOR_KEYWORDS.some(k => t.includes(k))) return { weight: 2, exclude: false, kind: 'major' };
+    return { weight: 1, exclude: false, kind: 'minor' };
+  }
+
+  function computeHealthScore(eq, st){
+    if (!eq || eq.healthScoreApplicable === false) return null;
+    let weightedSum = 0, weightTotal = 0, anyData = false;
+
+    eq.sections.forEach(sec => {
+      const cls = classifySection(sec);
+      if (cls.exclude) return;
+      let secScore = null;
+
+      if (cls.kind === 'rating'){
+        const vals = sec.readings
+          .map(r => parseFloat(st.readings[r.id]))
+          .filter(v => !isNaN(v) && v >= 1 && v <= 5);
+        if (vals.length){
+          const avgRating = vals.reduce((a,b) => a+b, 0) / vals.length;
+          secScore = Math.max(0, Math.min(100, (6 - avgRating) / 5 * 100));
+        }
+      } else if (sec.items && sec.items.length){
+        const vals = sec.items.map(i => st.items[i.id]).filter(v => v === 'ok' || v === 'notok');
+        if (vals.length){
+          const okCount = vals.filter(v => v === 'ok').length;
+          secScore = okCount / vals.length * 100;
+        }
+      }
+
+      if (secScore !== null){
+        anyData = true;
+        weightedSum += secScore * cls.weight;
+        weightTotal += cls.weight;
+      }
+    });
+
+    if (!anyData || weightTotal === 0) return null;
+    const score = Math.round(weightedSum / weightTotal);
+    let band, label;
+    if (score >= 80){ band = 'good'; label = 'Good'; }
+    else if (score >= 60){ band = 'fair'; label = 'Fair — Monitor'; }
+    else if (score >= 40){ band = 'poor'; label = 'Poor — Plan Repair'; }
+    else { band = 'critical'; label = 'Critical — Urgent'; }
+    return { score, band, label };
+  }
+
+  function updateHealthPill(){
+    if (!currentEquipment) return;
+    const pill = document.getElementById('healthPill');
+    if (!pill) return;
+    if (currentEquipment.healthScoreApplicable === false){
+      pill.style.display = 'none';
+      return;
+    }
+    pill.style.display = 'inline-flex';
+    const health = computeHealthScore(currentEquipment, state);
+    state.healthScore = health; // carried into the saved draft for the hub/category card chip
+    if (health){
+      pill.textContent = 'Health ' + health.score + '% · ' + health.label;
+      pill.className = 'health-pill ' + health.band;
+    } else {
+      pill.textContent = 'Health —';
+      pill.className = 'health-pill pending';
+    }
+  }
+
+  /* =====================================================================
+     RELIABILITY — PHASE 2: REMAINING USEFUL LIFE (RUL) / CORROSION RATE
+     Standard API 570 / API 653 methodology, applied to any reading field
+     tagged unit:'mm'. Purely a calculator — the inspector supplies the
+     previous reading, its date, and the minimum allowable thickness each
+     time (there is no shared backend yet to carry this forward automatically —
+     see the Phase 3 roadmap).
+       Corrosion rate (mm/yr) = (previous - current) / years between readings
+       Remaining life (yrs)   = (current - minimum allowable) / corrosion rate
+     ===================================================================== */
+
+  function computeRUL(entry, curDateStr){
+    if (!entry || typeof entry !== 'object') return null;
+    const cur = parseFloat(entry.current);
+    const prev = parseFloat(entry.previous);
+    const minT = parseFloat(entry.minAllowable);
+    const prevDateStr = entry.previousDate;
+    if (isNaN(cur) || isNaN(prev) || isNaN(minT) || !prevDateStr || !curDateStr) return null;
+
+    const curDate = new Date(curDateStr), prevDate = new Date(prevDateStr);
+    const years = (curDate - prevDate) / (365.25 * 24 * 3600 * 1000);
+    if (!(years > 0)){
+      return { error: 'Previous reading date must be before the current inspection date.' };
+    }
+
+    const loss = prev - cur;
+    if (loss <= 0){
+      return {
+        rate: 0, remainingLife: Infinity, band: 'good',
+        text: 'No measurable thickness loss since last reading — corrosion rate \u2248 0 mm/yr.'
+      };
+    }
+
+    const rate = loss / years;
+    if (cur <= minT){
+      return {
+        rate, remainingLife: 0, band: 'critical',
+        text: `Corrosion rate ${rate.toFixed(3)} mm/yr — current reading is AT or BELOW minimum allowable thickness. Immediate engineering assessment required.`
+      };
+    }
+
+    const remainingLife = (cur - minT) / rate;
+    let band;
+    if (remainingLife >= 5) band = 'good';
+    else if (remainingLife >= 2) band = 'fair';
+    else if (remainingLife >= 1) band = 'poor';
+    else band = 'critical';
+
+    return {
+      rate, remainingLife, band,
+      text: `Corrosion rate: ${rate.toFixed(3)} mm/yr — Estimated remaining life: ${remainingLife.toFixed(1)} yrs`
+    };
+  }
+
+  function refreshThicknessPoint(id){
+    const el = document.querySelector(`[data-tk-result="${id}"]`);
+    if (!el) return;
+    const result = computeRUL(state.readings[id], state.header.f_date);
+    if (!result){
+      el.className = 'thickness-result pending';
+      el.textContent = 'Enter current, previous, previous date and minimum allowable to calculate corrosion rate and remaining life.';
+      return;
+    }
+    if (result.error){
+      el.className = 'thickness-result poor';
+      el.textContent = result.error;
+      return;
+    }
+    el.className = 'thickness-result ' + result.band;
+    el.textContent = result.text;
+  }
+
+  function equipmentHasThicknessFields(eq){
+    return !!eq && eq.sections.some(s => (s.readings || []).some(r => r.unit === 'mm'));
+  }
+
+  function computeEquipmentRUL(eq, st){
+    if (!eq) return null;
+    let worst = null;
+    eq.sections.forEach(sec => {
+      (sec.readings || []).forEach(r => {
+        if (r.unit !== 'mm') return;
+        const result = computeRUL(st.readings[r.id], st.header.f_date);
+        if (!result || result.error || result.remainingLife === undefined) return;
+        if (worst === null || result.remainingLife < worst.remainingLife){
+          worst = Object.assign({ pointLabel: r.label }, result);
+        }
+      });
+    });
+    return worst;
+  }
+
+  function updateRULPill(){
+    if (!currentEquipment) return;
+    const pill = document.getElementById('rulPill');
+    if (!pill) return;
+    if (!equipmentHasThicknessFields(currentEquipment)){
+      pill.style.display = 'none';
+      return;
+    }
+    pill.style.display = 'inline-flex';
+    const worst = computeEquipmentRUL(currentEquipment, state);
+    state.worstRUL = worst || null; // carried into the saved draft for the hub/category card chip
+    if (!worst){
+      pill.textContent = 'RUL —';
+      pill.className = 'health-pill pending';
+      return;
+    }
+    const lifeText = worst.remainingLife === Infinity ? 'Stable' : worst.remainingLife.toFixed(1) + ' yrs';
+    pill.textContent = 'RUL ' + lifeText + ' (' + worst.pointLabel + ')';
+    pill.className = 'health-pill ' + worst.band;
   }
 
   /* ---------------- Photos ---------------- */
@@ -2135,8 +2471,20 @@
         }
       });
       (sec.readings||[]).forEach(r => {
-        const inp = document.querySelector(`input[data-reading="${r.id}"]`);
-        if (inp && state.readings[r.id] !== undefined) inp.value = state.readings[r.id];
+        if (r.unit === 'mm'){
+          let entry = state.readings[r.id];
+          if (typeof entry === 'string'){ entry = { current: entry }; state.readings[r.id] = entry; } // migrate old plain-value drafts
+          if (entry && typeof entry === 'object'){
+            ['current','previous','previousDate','minAllowable'].forEach(field => {
+              const inp = document.querySelector(`input[data-tk="${r.id}"][data-field="${field}"]`);
+              if (inp && entry[field] !== undefined) inp.value = entry[field];
+            });
+          }
+          refreshThicknessPoint(r.id);
+        } else {
+          const inp = document.querySelector(`input[data-reading="${r.id}"]`);
+          if (inp && state.readings[r.id] !== undefined) inp.value = state.readings[r.id];
+        }
       });
       const ta = document.querySelector(`textarea[data-comment="${sec.id}"]`);
       if (ta && state.comments[sec.id]) ta.value = state.comments[sec.id];
@@ -2154,7 +2502,7 @@
     const eq = currentEquipment;
     state = { header:{}, items:{}, readings:{}, comments:{}, photos:{} };
     document.querySelectorAll('.seg-btn.active').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('input[type=text], input[data-reading]').forEach(i => i.value = '');
+    document.querySelectorAll('input[type=text], input[data-reading], input[data-tk]').forEach(i => i.value = '');
     document.querySelectorAll('textarea').forEach(t => t.value = '');
     document.getElementById('f_date').value = new Date().toISOString().slice(0,10);
     document.getElementById('f_tag').value = '';
@@ -2167,6 +2515,7 @@
     eq.sections.forEach(sec => {
       const strip = document.getElementById('strip_'+sec.id);
       if (strip) strip.querySelectorAll('.photo-thumb').forEach(el=>el.remove());
+      (sec.readings || []).forEach(r => { if (r.unit === 'mm') refreshThicknessPoint(r.id); });
       refreshSection(sec);
     });
     refreshProgress();
@@ -2198,6 +2547,8 @@
     const notOkCount = Object.values(state.items).filter(v => v==='notok').length;
     const okCount = Object.values(state.items).filter(v => v==='ok').length;
     const totalItems = eq.sections.reduce((n,s)=>n+s.items.length,0);
+    const health = computeHealthScore(eq, state);
+    const worstRUL = computeEquipmentRUL(eq, state);
 
     let html = `
       <h1>${esc(eq.title)} — Condition Monitoring Check Sheet</h1>
@@ -2211,6 +2562,8 @@
         <div><b>${okCount}</b> OK</div>
         <div><b>${notOkCount}</b> Not OK</div>
         <div><b>${totalItems}</b> total checks</div>
+        ${health ? `<div><b>${health.score}%</b> Health Score — ${esc(health.label)}</div>` : ''}
+        ${worstRUL ? `<div><b>${worstRUL.remainingLife === Infinity ? 'Stable' : worstRUL.remainingLife.toFixed(1) + ' yrs'}</b> Worst-case Remaining Life (${esc(worstRUL.pointLabel)})</div>` : ''}
       </div>`;
 
     eq.sections.forEach(sec => {
@@ -2220,8 +2573,18 @@
         html += `<div class="rep-item"><span>${esc(item.label)}</span><span class="rep-status ${s.cls}">${s.text}</span></div>`;
       });
       if (sec.readings && sec.readings.length){
-        const readingsText = sec.readings.map(r => `${r.label}: ${esc(state.readings[r.id]||'—')} ${r.unit}`).join(' · ');
-        html += `<div class="rep-comment"><b>Readings</b>${sec.readingNote?' (target '+sec.readingNote+')':''} — ${readingsText}</div>`;
+        const plainReadings = sec.readings.filter(r => r.unit !== 'mm');
+        const thicknessReadings = sec.readings.filter(r => r.unit === 'mm');
+        if (plainReadings.length){
+          const readingsText = plainReadings.map(r => `${r.label}: ${esc(state.readings[r.id]||'—')} ${r.unit}`).join(' · ');
+          html += `<div class="rep-comment"><b>Readings</b>${sec.readingNote?' (target '+sec.readingNote+')':''} — ${readingsText}</div>`;
+        }
+        thicknessReadings.forEach(r => {
+          const entry = (state.readings[r.id] && typeof state.readings[r.id] === 'object') ? state.readings[r.id] : {};
+          const result = computeRUL(entry, state.header.f_date);
+          const rulText = result ? (result.error || result.text) : 'No thickness/RUL data entered';
+          html += `<div class="rep-comment"><b>${esc(r.label)}</b> — Current: ${esc(entry.current||'—')} mm · Previous: ${esc(entry.previous||'—')} mm (${esc(entry.previousDate||'—')}) · Min. allowable: ${esc(entry.minAllowable||'—')} mm — ${esc(rulText)}</div>`;
+        });
       }
       const comment = state.comments[sec.id];
       if (comment) html += `<div class="rep-comment"><b>Comments:</b> ${esc(comment)}</div>`;

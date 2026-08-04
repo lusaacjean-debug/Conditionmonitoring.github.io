@@ -166,6 +166,22 @@
   <div class="hub-grid" id="hubGrid"></div>
 </div>
 
+<!-- ===================== CATEGORY VIEW ===================== -->
+<div id="catView" style="display:none">
+  <div class="hub-topbar">
+    <div class="back-row" style="margin-bottom:10px;">
+      <button class="back-btn" id="btnCatBack">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+        Home
+      </button>
+    </div>
+    <div class="eyebrow">Condition Monitoring</div>
+    <h1 id="catTitle">Category</h1>
+    <p id="catDesc"></p>
+  </div>
+  <div class="hub-grid" id="catGrid"></div>
+</div>
+
 <!-- ===================== FORM VIEW ===================== -->
 <div id="formView" style="display:none">
   <div class="topbar">
@@ -340,6 +356,7 @@
   const EQUIPMENT = [
 
     { id:'yard-conveyor', title:'Yard Conveyor Belt', dept:'Ambatovy Maintenance Asset Management',
+      category:'rotating',
       tagPlaceholder:'75-CV-03', defaultVisual:false, defaultVibration:true, sections:[
         safetySection('yc'),
         motorBlock('yc_motor'),
@@ -371,6 +388,7 @@
       ]},
 
     { id:'vbelt-drive-pump', title:'V-Belt Drive Pump', dept:'Engineering Department',
+      category:'rotating',
       tagPlaceholder:'e.g. 32-PP-01', defaultVisual:true, defaultVibration:true, sections:[
         safetySection('vb'),
         motorBlock('vb_motor', { items:[
@@ -406,6 +424,7 @@
       ]},
 
     { id:'vertical-pump', title:'Acid Vertical Pump', dept:'Lotus Engineering Department',
+      category:'rotating',
       tagPlaceholder:'e.g. VP-01', defaultVisual:false, defaultVibration:true, sections:[
         safetySection('vp'),
         motorBlock('vp_motor', { items:[
@@ -428,6 +447,7 @@
       ]},
 
     { id:'general-conveyor', title:'General Conveyor', dept:'Lotus Engineering Department',
+      category:'rotating',
       tagPlaceholder:'e.g. CV-01', defaultVisual:false, defaultVibration:true, sections:[
         safetySection('gc'),
         motorBlock('gc_motor', { items:[
@@ -462,6 +482,7 @@
       ]},
 
     { id:'linear-screen', title:'Linear Screen', dept:'Lotus Engineering Department',
+      category:'rotating',
       tagPlaceholder:'e.g. SCR-01', defaultVisual:false, defaultVibration:true, sections:[
         safetySection('ls'),
         motorBlock('ls_motor'),
@@ -496,6 +517,7 @@
       ]},
 
     { id:'magnetic-conveyor', title:'Magnetic Conveyor', dept:'Lotus Engineering Department',
+      category:'rotating',
       tagPlaceholder:'e.g. MC-01', defaultVisual:false, defaultVibration:true, sections:[
         safetySection('mc'),
         motorBlock('mc_motor'),
@@ -514,6 +536,7 @@
       ]},
 
     { id:'mix-tank-agitator', title:'Mix Tank Agitator', dept:'Lotus Engineering Department',
+      category:'rotating',
       tagPlaceholder:'e.g. MTA-01', defaultVisual:false, defaultVibration:true, sections:[
         { id:'mta_safety', title:'Safety', items:[
             {id:'mta_s_tag', label:'Equipment Tag'},
@@ -553,6 +576,7 @@
       ]},
 
     { id:'neutralization-tank-agitator', title:'Neutralization Tank Agitator', dept:'Lotus Engineering Department',
+      category:'rotating',
       tagPlaceholder:'e.g. NTA-01', defaultVisual:true, defaultVibration:true, sections:[
         safetySection('nta'),
         motorBlock('nta_motor', { items:[
@@ -573,6 +597,7 @@
       ]},
 
     { id:'thickener-rake-hpp', title:'Thickener Rake Drive Hydraulic Power Pack', dept:'Lotus Engineering Department',
+      category:'rotating',
       tagPlaceholder:'e.g. THK-HPP-01', defaultVisual:true, defaultVibration:true, sections:[
         safetySection('thk'),
         { id:'thk_rake', title:'General Rake Operating Condition', items:[], readings:[
@@ -644,6 +669,7 @@
       ]},
 
     { id:'sag-mill', title:'SAG Mill (Ball Mill)', dept:'Lotus Engineering Department',
+      category:'rotating',
       tagPlaceholder:'e.g. SAG-01', defaultVisual:false, defaultVibration:true, sections:(function(){
         const sections = [];
         sections.push(safetySection('sag'));
@@ -777,6 +803,7 @@
       })() },
 
     { id:'mineral-sizer', title:'Mineral Sizer', dept:'Lotus Engineering Department',
+      category:'rotating',
       tagPlaceholder:'e.g. SZ-01', defaultVisual:false, defaultVibration:true, sections:[
         safetySection('sz'),
         motorBlock('sz_motor'),
@@ -812,6 +839,7 @@
       ]},
 
     { id:'grease-pot', title:'Automatic Grease Lubricator (Grease Pot)', dept:'Condition Monitoring — Lubrication Maintenance Program',
+      category:'lube',
       tagPlaceholder:'e.g. GP-01', defaultVisual:true, defaultVibration:false, sections:[
         { id:'gp_info', title:'Lubricator Details', items:[], readings:[
             {id:'gp_capacity', label:'Capacity', unit:'g/mL'},
@@ -836,6 +864,7 @@
       ]},
 
     { id:'lube-oil-sampling', title:'Lube Oil Sampling', dept:'Condition Monitoring — ASTM D4057 / ISO 4406 / ICML',
+      category:'lube',
       tagPlaceholder:'Sample ID / Bottle No.', defaultVisual:true, defaultVibration:false, sections:[
         { id:'los_s1', title:'Section 1 — Pre-Sampling Safety & Preparation', items:[
             {id:'los1_1', label:'Confirm sample is due per sampling schedule'},
@@ -950,6 +979,7 @@
       ]},
 
     { id:'lube-oil-replacement', title:'Lube Oil Replacement', dept:'Condition Monitoring — ISO 55000 / ICML 55',
+      category:'lube',
       tagPlaceholder:'e.g. Equipment tag', defaultVisual:true, defaultVibration:false, sections:[
         { id:'lor_s1', title:'Section 1 — Pre-Work Safety & Preparation', items:[
             {id:'lor1_1', label:'Reviewed JSA / Safe Work Procedure for oil replacement'},
@@ -1046,7 +1076,379 @@
             {id:'lor8_8', label:'Closed out work order in maintenance system'},
             {id:'lor8_9', label:'Obtained supervisor sign-off for completion'}
           ]}
+      ]},
+    { id:'structural-inspection', title:'Structural Inspection Checklist',
+      dept:'Condition Monitoring — OSHA 1926 / AS/NZS 4100 / ISO 9001 (Mining Operations, Structural)',
+      category:'static',
+      tagPlaceholder:'e.g. STR-PLT-01', defaultVisual:true, defaultVibration:false, sections:[
+        { id:'si_s1', title:'Section 1 — Pre-Inspection Safety & Access', items:[
+            {id:'si1_1', label:'Conduct Job Safety Analysis (JSA) / Take 5 risk assessment'},
+            {id:'si1_2', label:'Don appropriate PPE: hard hat, safety glasses, steel-toe boots, high-vis vest'},
+            {id:'si1_3', label:'Verify LOTO procedures completed if required for access'},
+            {id:'si1_4', label:'Confirm safe access routes and emergency egress points identified'},
+            {id:'si1_5', label:'Inspect scaffolding/elevated work platforms for compliance (if used)'},
+            {id:'si1_6', label:'Verify fall protection equipment is in place for heights >1.8 m'},
+            {id:'si1_7', label:'Check atmospheric conditions in confined spaces (if applicable)'},
+            {id:'si1_8', label:'Notify operations/control room of inspection activity'},
+            {id:'si1_9', label:'Establish exclusion zone below elevated inspection areas'}
+          ]},
+        { id:'si_s2', title:'Section 2 — Foundation & Base Plate Inspection', items:[
+            {id:'si2_1', label:'Inspect concrete foundations for cracks, spalling, or deterioration'},
+            {id:'si2_2', label:'Check for settlement, heaving, or differential movement'},
+            {id:'si2_3', label:'Verify base plates are level and properly seated'},
+            {id:'si2_4', label:'Inspect anchor bolts for corrosion, looseness, or damage'},
+            {id:'si2_5', label:'Measure anchor bolt projection and thread condition'},
+            {id:'si2_6', label:'Check grout condition under base plates'},
+            {id:'si2_7', label:'Verify drainage around foundation (no water pooling)'},
+            {id:'si2_8', label:'Inspect expansion joints for proper function'},
+            {id:'si2_9', label:'Document any foundation repairs or modifications'}
+          ]},
+        { id:'si_s3', title:'Section 3 — Steel Structural Members', items:[
+            {id:'si3_1', label:'Inspect columns for plumbness (vertical alignment)'},
+            {id:'si3_2', label:'Check beams for deflection, sagging, or lateral buckling'},
+            {id:'si3_3', label:'Examine bracing members for tension/compression damage'},
+            {id:'si3_4', label:'Inspect gusset plates for cracks, corrosion, or distortion'},
+            {id:'si3_5', label:'Check for signs of overloading: bent members, local buckling'},
+            {id:'si3_6', label:'Verify fire protection coatings are intact (if applicable)'},
+            {id:'si3_7', label:'Inspect for impact damage from mobile equipment'},
+            {id:'si3_8', label:'Check all members for section loss due to corrosion'},
+            {id:'si3_9', label:'Verify structural modifications have engineering approval'}
+          ]},
+        { id:'si_s4', title:'Section 4 — Connections & Fasteners', items:[
+            {id:'si4_1', label:'Inspect bolted connections for looseness — torque check random sample'},
+            {id:'si4_2', label:'Check high-strength bolts for proper tensioning indicators'},
+            {id:'si4_3', label:'Examine bolt holes for elongation or damage'},
+            {id:'si4_4', label:'Verify correct bolt grades are installed (marked heads)'},
+            {id:'si4_5', label:'Inspect welded connections for cracks, undercut, or porosity'},
+            {id:'si4_6', label:'Check fillet welds for proper size and profile'},
+            {id:'si4_7', label:'Look for lamellar tearing in thick plate connections'},
+            {id:'si4_8', label:'Verify lock nuts/washers are in place where required'},
+            {id:'si4_9', label:'Check for galvanic corrosion at dissimilar metal contacts'}
+          ]},
+        { id:'si_s5', title:'Section 5 — Corrosion & Protective Coatings', items:[
+            {id:'si5_1', label:'Assess overall corrosion level using standard rating scale'},
+            {id:'si5_2', label:'Identify areas of active corrosion requiring immediate attention'},
+            {id:'si5_3', label:'Measure coating thickness at representative locations (DFT)'},
+            {id:'si5_4', label:'Check for coating failures: blistering, peeling, chalking'},
+            {id:'si5_5', label:'Inspect areas prone to moisture accumulation'},
+            {id:'si5_6', label:'Check crevices and overlapping surfaces for hidden corrosion'},
+            {id:'si5_7', label:'Verify galvanizing is intact on galvanized members'},
+            {id:'si5_8', label:'Document areas requiring touch-up or full recoating'},
+            {id:'si5_9', label:'Assess cathodic protection system function (if installed)'}
+          ]},
+        { id:'si_s6', title:'Section 6 — Platforms, Walkways & Handrails', items:[
+            {id:'si6_1', label:'Inspect platform structural supports for integrity'},
+            {id:'si6_2', label:'Check grating for secure attachment and proper clips'},
+            {id:'si6_3', label:'Verify grating is not bent, damaged, or missing sections'},
+            {id:'si6_4', label:'Inspect handrails: 1050 mm height, 450 mm mid-rail, toe boards'},
+            {id:'si6_5', label:'Check handrail posts for secure base attachment'},
+            {id:'si6_6', label:'Verify ladder cages are intact and properly attached'},
+            {id:'si6_7', label:'Inspect stairways for structural integrity and anti-slip treads'},
+            {id:'si6_8', label:'Check platform drainage — no water accumulation'},
+            {id:'si6_9', label:'Verify load rating signage is posted and visible'}
+          ]},
+        { id:'si_s7', title:'Section 7 — Special Structures (Conveyors, Bins, Chutes)', items:[
+            {id:'si7_1', label:'Inspect conveyor support structures for alignment'},
+            {id:'si7_2', label:'Check transfer chute liners for wear and attachment'},
+            {id:'si7_3', label:'Examine bin/hopper structural supports'},
+            {id:'si7_4', label:'Inspect for wear from material flow/abrasion'},
+            {id:'si7_5', label:'Check vibrating equipment mounting and isolation'},
+            {id:'si7_6', label:'Verify emergency stop pull cords are accessible'},
+            {id:'si7_7', label:'Inspect dust collection system supports'},
+            {id:'si7_8', label:'Check structural steel around heat sources'}
+          ]},
+        { id:'si_s8', title:'Section 8 — Measurement & Documentation', items:[
+            {id:'si8_1', label:'Record thickness measurements at predetermined monitoring points'},
+            {id:'si8_2', label:'Document all defects with photographs (include reference scale)'},
+            {id:'si8_3', label:'Update structural inspection database/CMMS'},
+            {id:'si8_4', label:'Compare current findings to previous inspection records'},
+            {id:'si8_5', label:'Calculate remaining service life where applicable'},
+            {id:'si8_6', label:'Identify any load restriction requirements'},
+            {id:'si8_7', label:'Complete inspection report with recommendations'}
+          ]},
+        { id:'si_s9', title:'Section 9 — Condition Assessment Summary',
+          readingNote:'Rating key — 1 Good · 2 Fair · 3 Poor · 4 Critical · 5 Unsafe', items:[], readings:[
+            {id:'si9_found', label:'Foundations', unit:'rating'},
+            {id:'si9_cols', label:'Columns/Main Frame', unit:'rating'},
+            {id:'si9_beams', label:'Beams/Girders', unit:'rating'},
+            {id:'si9_brace', label:'Bracing', unit:'rating'},
+            {id:'si9_conn', label:'Connections', unit:'rating'},
+            {id:'si9_plat', label:'Platforms/Walkways', unit:'rating'},
+            {id:'si9_hand', label:'Handrails/Guards', unit:'rating'},
+            {id:'si9_coat', label:'Coatings/Corrosion', unit:'rating'}
+          ]}
+      ]},
+    { id:'auto-greasing-system', title:'Automatic Greasing System Inspection',
+      dept:'Condition Monitoring — Lubrication Maintenance Program (Offline Preventive Maintenance)',
+      category:'lube',
+      tagPlaceholder:'e.g. AGS-01', defaultVisual:true, defaultVibration:false, sections:[
+        { id:'ags_s1', title:'Section 1 — Reservoir / Pump Unit', items:[
+            {id:'ags1_1', label:'Check grease level; top off with the correct NLGI grade and base oil (Weekly)'},
+            {id:'ags1_2', label:'Inspect grease for water, dirt, hardening, or oil separation/bleeding (Weekly)'},
+            {id:'ags1_3', label:'Clean or replace the reservoir breather / vent cap (Monthly)'},
+            {id:'ags1_4', label:'Inspect the low-level sensor / float for correct operation (Quarterly)'},
+            {id:'ags1_5', label:'Check pump element mounting, seals, and inlet strainer/screen for blockage (Quarterly)'},
+            {id:'ags1_6', label:'Verify the agitator, if fitted, moves freely (Quarterly)'}
+          ]},
+        { id:'ags_s2', title:'Section 2 — Controller / Timer', items:[
+            {id:'ags2_1', label:'Verify cycle time, pause time, and cycle count match the OEM/application spec (Quarterly)'},
+            {id:'ags2_2', label:'Check battery backup condition and replace at the approved fixed interval (Annual)'},
+            {id:'ags2_3', label:'Confirm low-level, no-pressure, and cycle-fail alarms trip during a manual test cycle (Quarterly)'},
+            {id:'ags2_4', label:'Check electrical terminals and connectors for corrosion or looseness (Quarterly)'}
+          ]},
+        { id:'ags_s3', title:'Section 3 — Metering Devices (Injectors / Divider Valves)', items:[
+            {id:'ags3_1', label:'Visually confirm each injector indicator pin cycles during a controlled manual trigger (Monthly)'},
+            {id:'ags3_2', label:'Remove and inspect a representative sample of injectors/valve sections for blockage or worn pistons (Semi-Annual)'},
+            {id:'ags3_3', label:'Confirm output volume per injector matches specification; bench-check critical points where required (Semi-Annual)'}
+          ]},
+        { id:'ags_s4', title:'Section 4 — Distribution Lines & Fittings', items:[
+            {id:'ags4_1', label:'Trace the full line route for chafing, kinks, crushing, or contact with moving parts (Monthly)'},
+            {id:'ags4_2', label:'Check all fittings for tightness and leakage (Monthly)'},
+            {id:'ags4_3', label:'Replace tubing showing cracking, swelling, abrasion, or heat damage (Quarterly)'},
+            {id:'ags4_4', label:'Confirm line supports and clamps are intact and correctly positioned (Quarterly)'}
+          ]},
+        { id:'ags_s5', title:'Section 5 — Lubrication Points (Bearings / Pins / Bushings)', items:[
+            {id:'ags5_1', label:'Confirm grease purge is visible at the seal of each lubrication point, where applicable (Monthly)'},
+            {id:'ags5_2', label:'Check for starvation indicators: dry seals, discoloration, heat marks, or abnormal noise (Monthly)'},
+            {id:'ags5_3', label:'Confirm bearing relief / vent fittings are not blocked (Quarterly)'}
+          ]},
+        { id:'ags_s6', title:'Section 6 — System Pressure', items:[
+            {id:'ags6_1', label:'Check the main-line relief valve setting and operation using the approved test method (Annual)'},
+            {id:'ags6_2', label:'Verify pressure switch / gauge calibration against a known reference (Annual)'}
+          ]},
+        { id:'ags_s7', title:'Section 7 — Documentation & Close-Out', items:[
+            {id:'ags7_1', label:'Log cycle count, grease-consumption trend, and faults recorded since the previous PM (Every PM)'},
+            {id:'ags7_2', label:'Record parts replaced, including injectors, lines, fittings, sensors, and batteries (Every PM)'}
+          ]}
+      ]},
+    { id:'tank-external-inspection', title:'Tank External Inspection Checklist',
+      dept:'Condition Monitoring — API 653 / API 575 / EEMUA 159 (Tank External)',
+      category:'static',
+      tagPlaceholder:'e.g. TK-01', defaultVisual:true, defaultVibration:false, sections:[
+        { id:'tke_s1', title:'Section 1 — Pre-Inspection Safety', items:[
+            {id:'tke1_1', label:'Complete JSA/Take 5 risk assessment'},
+            {id:'tke1_2', label:'Don PPE: hard hat, safety glasses, steel-toe boots, FRC (if required)'},
+            {id:'tke1_3', label:'Verify atmospheric monitoring for hazardous vapors'},
+            {id:'tke1_4', label:'Confirm hot work permits in place if any welding nearby'},
+            {id:'tke1_5', label:'Check wind conditions — suspend inspection if unsafe'},
+            {id:'tke1_6', label:'Verify emergency response equipment accessible'}
+          ]},
+        { id:'tke_s2', title:'Section 2 — Foundation Inspection', items:[
+            {id:'tke2_1', label:'Inspect ringwall/concrete foundation for cracks or spalling'},
+            {id:'tke2_2', label:'Check for settlement — uneven or differential settlement'},
+            {id:'tke2_3', label:'Verify proper drainage slope away from tank'},
+            {id:'tke2_4', label:'Inspect foundation anchor bolts and chairs'},
+            {id:'tke2_5', label:'Check for vegetation growth near foundation'},
+            {id:'tke2_6', label:'Verify cathodic protection test stations (if installed)'},
+            {id:'tke2_7', label:'Inspect grounding connections and continuity'}
+          ]},
+        { id:'tke_s3', title:'Section 3 — Tank Bottom & Annular Plate', items:[
+            {id:'tke3_1', label:'Inspect visible bottom edge for corrosion'},
+            {id:'tke3_2', label:'Check bottom-to-shell weld (sketch weld) for cracks'},
+            {id:'tke3_3', label:'Look for product staining indicating leaks'},
+            {id:'tke3_4', label:'Verify bottom plate projection beyond shell'},
+            {id:'tke3_5', label:'Check for bulging or distortion of bottom'},
+            {id:'tke3_6', label:'Inspect leak detection system (if installed)'}
+          ]},
+        { id:'tke_s4', title:'Section 4 — Shell Inspection', items:[
+            {id:'tke4_1', label:'Inspect shell plates for corrosion — all courses'},
+            {id:'tke4_2', label:'Check vertical shell welds for cracks or defects'},
+            {id:'tke4_3', label:'Inspect horizontal shell welds'},
+            {id:'tke4_4', label:'Look for bulges, dents, or out-of-roundness'},
+            {id:'tke4_5', label:'Check shell for hot spots (insulated tanks)'},
+            {id:'tke4_6', label:'Verify shell plumbness (vertical alignment)'},
+            {id:'tke4_7', label:'Inspect for shell settlement or tilt'},
+            {id:'tke4_8', label:'Check coating/paint condition on shell'},
+            {id:'tke4_9', label:'Document any previous repair areas'}
+          ]},
+        { id:'tke_s5', title:'Section 5 — Shell Appurtenances', items:[
+            {id:'tke5_1', label:'Inspect all shell nozzles and reinforcing pads'},
+            {id:'tke5_2', label:'Check nozzle welds for cracks or corrosion'},
+            {id:'tke5_3', label:'Verify tell-tale holes in reinforcing pads are open'},
+            {id:'tke5_4', label:'Inspect manways — condition and gasket seating'},
+            {id:'tke5_5', label:'Check cleanout doors/fittings'},
+            {id:'tke5_6', label:'Inspect shell-mounted instruments and connections'},
+            {id:'tke5_7', label:'Verify valve condition and operability'},
+            {id:'tke5_8', label:'Check pipe supports attached to shell'}
+          ]},
+        { id:'tke_s6', title:'Section 6 — Roof Inspection (Fixed Roof)', items:[
+            {id:'tke6_1', label:'Inspect roof plates for corrosion or holes'},
+            {id:'tke6_2', label:'Check roof-to-shell junction for cracks'},
+            {id:'tke6_3', label:'Verify roof slope — no ponding areas'},
+            {id:'tke6_4', label:'Inspect roof vents for blockage or damage'},
+            {id:'tke6_5', label:'Check pressure/vacuum relief valves'},
+            {id:'tke6_6', label:'Inspect roof drain system'},
+            {id:'tke6_7', label:'Check roof nozzles and fittings'},
+            {id:'tke6_8', label:'Verify emergency venting (weak roof-to-shell)'}
+          ]},
+        { id:'tke_s7', title:'Section 7 — Floating Roof (If Applicable)', items:[
+            {id:'tke7_1', label:'Check roof position and level'},
+            {id:'tke7_2', label:'Inspect primary seal condition'},
+            {id:'tke7_3', label:'Check secondary seal (if installed)'},
+            {id:'tke7_4', label:'Verify roof drain system functional'},
+            {id:'tke7_5', label:'Inspect pontoons/floats for integrity'},
+            {id:'tke7_6', label:'Check rolling ladder/stairway condition'},
+            {id:'tke7_7', label:'Inspect roof legs and guide poles'},
+            {id:'tke7_8', label:'Verify anti-rotation devices functional'}
+          ]},
+        { id:'tke_s8', title:'Section 8 — Accessories & Safety Systems', items:[
+            {id:'tke8_1', label:'Inspect spiral stairway — structural integrity'},
+            {id:'tke8_2', label:'Check stairway handrails and toe boards'},
+            {id:'tke8_3', label:'Verify gauging platform condition'},
+            {id:'tke8_4', label:'Inspect foam chambers/fire suppression system'},
+            {id:'tke8_5', label:'Check earthing/grounding straps'},
+            {id:'tke8_6', label:'Verify tank identification signage visible'},
+            {id:'tke8_7', label:'Inspect overflow line and containment'},
+            {id:'tke8_8', label:'Check level gauging instruments'}
+          ]},
+        { id:'tke_s9', title:'Section 9 — Containment & Environment', items:[
+            {id:'tke9_1', label:'Inspect bund wall/dike integrity'},
+            {id:'tke9_2', label:'Verify containment capacity adequate'},
+            {id:'tke9_3', label:'Check bund drainage valve — closed position'},
+            {id:'tke9_4', label:'Inspect for product staining in bund area'},
+            {id:'tke9_5', label:'Verify no unauthorized penetrations through bund'},
+            {id:'tke9_6', label:'Check fire access roads clear'},
+            {id:'tke9_7', label:'Inspect deluge/foam system piping'}
+          ]},
+        { id:'tke_s10', title:'Section 10 — Condition Summary',
+          readingNote:'Rating key — 1 Good · 2 Fair · 3 Poor · 4 Critical · 5 Unsafe', items:[], readings:[
+            {id:'tke10_found', label:'Foundation', unit:'rating'},
+            {id:'tke10_bottom', label:'Bottom/Annular', unit:'rating'},
+            {id:'tke10_shellp', label:'Shell Plates', unit:'rating'},
+            {id:'tke10_shellw', label:'Shell Welds', unit:'rating'},
+            {id:'tke10_roof', label:'Roof', unit:'rating'},
+            {id:'tke10_appurt', label:'Appurtenances', unit:'rating'},
+            {id:'tke10_coat', label:'Coatings', unit:'rating'},
+            {id:'tke10_safety', label:'Safety Systems', unit:'rating'}
+          ]}
+      ]},
+    { id:'tank-internal-inspection', title:'Tank Internal Inspection Checklist',
+      dept:'Condition Monitoring — API 653 / API 575 / EEMUA 159 / AS 1940 (Tank Internal, Confined Space)',
+      category:'static',
+      tagPlaceholder:'e.g. TK-01', defaultVisual:true, defaultVibration:false, sections:[
+        { id:'tki_s1', title:'Section 1 — Pre-Entry Safety Requirements (Critical)', items:[
+            {id:'tki1_1', label:'Verify tank is completely emptied and isolated from all sources'},
+            {id:'tki1_2', label:'Confirm all valves locked out and tagged (LOTO complete)'},
+            {id:'tki1_3', label:'Verify tank has been cleaned to remove hazardous residues'},
+            {id:'tki1_4', label:'Confirm atmospheric testing completed — O2, LEL, H2S, CO'},
+            {id:'tki1_5', label:'Verify gas-free certificate issued and valid'},
+            {id:'tki1_6', label:'Confirm confined space entry permit signed and posted'},
+            {id:'tki1_7', label:'Verify rescue plan in place with trained rescue team on standby'},
+            {id:'tki1_8', label:'Confirm continuous atmospheric monitoring during entry'},
+            {id:'tki1_9', label:'Verify forced ventilation adequate and continuous'},
+            {id:'tki1_10', label:'Confirm communication system between entrant and attendant'},
+            {id:'tki1_11', label:'Verify intrinsically safe equipment only'},
+            {id:'tki1_12', label:'Confirm fall protection for roof inspections'}
+          ]},
+        { id:'tki_s2', title:'Section 2 — Bottom Plate Inspection', items:[
+            {id:'tki2_1', label:'Visually inspect entire bottom for corrosion pitting'},
+            {id:'tki2_2', label:'Check for underside corrosion'},
+            {id:'tki2_3', label:'Inspect bottom-to-shell weld from inside'},
+            {id:'tki2_4', label:'Check annular plate for corrosion and thickness loss'},
+            {id:'tki2_5', label:'Perform floor scan/UT thickness mapping'},
+            {id:'tki2_6', label:'Identify areas below minimum thickness'},
+            {id:'tki2_7', label:'Check for buckling or distortion of bottom plates'},
+            {id:'tki2_8', label:'Inspect lap welds for cracks or corrosion'},
+            {id:'tki2_9', label:'Check sump area condition'},
+            {id:'tki2_10', label:'Document all pitting depths and locations'}
+          ]},
+        { id:'tki_s3', title:'Section 3 — Shell Inspection (Internal)', items:[
+            {id:'tki3_1', label:'Inspect Course 1 (bottom) — highest corrosion risk'},
+            {id:'tki3_2', label:'Check liquid/vapor interface zone'},
+            {id:'tki3_3', label:'Inspect all horizontal shell welds from inside'},
+            {id:'tki3_4', label:'Check vertical shell welds'},
+            {id:'tki3_5', label:'Perform UT thickness measurements at grid points'},
+            {id:'tki3_6', label:'Inspect for hydrogen blistering (if sour service)'},
+            {id:'tki3_7', label:'Check for stress corrosion cracking indicators'},
+            {id:'tki3_8', label:'Inspect internal coating/lining condition'},
+            {id:'tki3_9', label:'Document all shell thickness readings'}
+          ]},
+        { id:'tki_s4', title:'Section 4 — Internal Structures', items:[
+            {id:'tki4_1', label:'Inspect internal support columns'},
+            {id:'tki4_2', label:'Check roof support structure (fixed roof tanks)'},
+            {id:'tki4_3', label:'Inspect internal piping and supports'},
+            {id:'tki4_4', label:'Check heating coils (if installed) — integrity and supports'},
+            {id:'tki4_5', label:'Inspect mixers/agitators and mounting'},
+            {id:'tki4_6', label:'Check swing lines and guides'},
+            {id:'tki4_7', label:'Inspect floating roof legs and guides (internal)'},
+            {id:'tki4_8', label:'Verify all internal welds'}
+          ]},
+        { id:'tki_s5', title:'Section 5 — Roof Inspection (Internal)', items:[
+            {id:'tki5_1', label:'Inspect underside of roof plates for corrosion'},
+            {id:'tki5_2', label:'Check roof support rafters/trusses'},
+            {id:'tki5_3', label:'Inspect roof-to-shell connection from inside'},
+            {id:'tki5_4', label:'Check center column (if cone roof)'},
+            {id:'tki5_5', label:'Inspect roof plate welds'},
+            {id:'tki5_6', label:'Verify roof nozzle connections'},
+            {id:'tki5_7', label:'Check pontoon compartments (floating roof)'},
+            {id:'tki5_8', label:'Inspect deck plates (floating roof)'}
+          ]},
+        { id:'tki_s6', title:'Section 6 — Nozzles & Appurtenances (Internal)', items:[
+            {id:'tki6_1', label:'Inspect all nozzle welds from inside'},
+            {id:'tki6_2', label:'Check nozzle necks for corrosion/erosion'},
+            {id:'tki6_3', label:'Inspect reinforcing pad welds'},
+            {id:'tki6_4', label:'Check manway frames and seating surfaces'},
+            {id:'tki6_5', label:'Inspect shell nozzle projection alignment'},
+            {id:'tki6_6', label:'Verify nozzle flange faces condition'},
+            {id:'tki6_7', label:'Check instrument nozzles and thermowells'}
+          ]},
+        { id:'tki_s7', title:'Section 7 — Coatings & Linings', items:[
+            {id:'tki7_1', label:'Assess overall coating/lining condition'},
+            {id:'tki7_2', label:'Check for holidays, blistering, or disbondment'},
+            {id:'tki7_3', label:'Measure coating thickness at representative points'},
+            {id:'tki7_4', label:'Document areas requiring coating repair'},
+            {id:'tki7_5', label:'Check cathodic protection anodes (if installed)'},
+            {id:'tki7_6', label:'Inspect lining at welds and transitions'}
+          ]},
+        { id:'tki_s8', title:'Section 8 — NDT Examination', items:[
+            {id:'tki8_1', label:'Perform UT thickness grid mapping — bottom'},
+            {id:'tki8_2', label:'Perform UT thickness grid mapping — shell'},
+            {id:'tki8_3', label:'MPI/DPI critical welds as required'},
+            {id:'tki8_4', label:'TOFD/Phased Array on suspect welds'},
+            {id:'tki8_5', label:'Vacuum box testing of bottom welds'},
+            {id:'tki8_6', label:'Document all NDT results'}
+          ]},
+        { id:'tki_s9', title:'Section 9 — Post-Inspection', items:[
+            {id:'tki9_1', label:'Account for all personnel exiting tank'},
+            {id:'tki9_2', label:'Secure manways properly'},
+            {id:'tki9_3', label:'Complete all documentation and photographs'},
+            {id:'tki9_4', label:'Issue inspection report with findings'},
+            {id:'tki9_5', label:'Calculate remaining service life'},
+            {id:'tki9_6', label:'Schedule repairs as required'}
+          ]},
+        { id:'tki_s10', title:'Section 10 — Thickness Measurement Summary',
+          readingNote:'Record measured thickness at each monitoring location', items:[], readings:[
+            {id:'tki10_botc', label:'Bottom — Center', unit:'mm'},
+            {id:'tki10_bot3', label:'Bottom — 3m Ring', unit:'mm'},
+            {id:'tki10_bot6', label:'Bottom — 6m Ring', unit:'mm'},
+            {id:'tki10_annular', label:'Annular Plate', unit:'mm'},
+            {id:'tki10_c1', label:'Shell Course 1', unit:'mm'},
+            {id:'tki10_c2', label:'Shell Course 2', unit:'mm'},
+            {id:'tki10_c3', label:'Shell Course 3', unit:'mm'},
+            {id:'tki10_roof', label:'Roof Plates', unit:'mm'}
+          ]},
+        { id:'tki_s11', title:'Section 11 — Condition Summary',
+          readingNote:'Rating key — 1 Good · 2 Fair · 3 Poor · 4 Critical · 5 Unsafe', items:[], readings:[
+            {id:'tki11_bottom', label:'Tank Bottom', unit:'rating'},
+            {id:'tki11_annular', label:'Annular Ring', unit:'rating'},
+            {id:'tki11_shelll', label:'Shell (Lower)', unit:'rating'},
+            {id:'tki11_shellu', label:'Shell (Upper)', unit:'rating'},
+            {id:'tki11_roof', label:'Roof Structure', unit:'rating'},
+            {id:'tki11_internal', label:'Internal Structures', unit:'rating'},
+            {id:'tki11_coat', label:'Coatings/Linings', unit:'rating'},
+            {id:'tki11_appurt', label:'Appurtenances', unit:'rating'}
+          ]}
       ]}
+  ];
+
+  /* =====================================================================
+     CATEGORIES — top-level groupings shown on the Home page
+     ===================================================================== */
+
+  const CATEGORIES = [
+    { id:'static',   title:'Static Equipment',   desc:'Structural inspections for fixed steel structures, platforms, foundations and supports.' },
+    { id:'rotating',  title:'Rotating Equipment', desc:'Motors, pumps, conveyors, gearboxes, mills and agitators.' },
+    { id:'lube',      title:'Lubrication',        desc:'Grease points, oil sampling and oil change procedures.' }
   ];
 
   /* =====================================================================
@@ -1054,12 +1456,15 @@
      ===================================================================== */
 
   let currentEquipment = null;
+  let currentCategory = null;
   let state = { header:{}, items:{}, readings:{}, comments:{}, photos:{} };
   let saveTimer = null;
 
   const hubView = document.getElementById('hubView');
+  const catView = document.getElementById('catView');
   const formView = document.getElementById('formView');
   const hubGrid = document.getElementById('hubGrid');
+  const catGrid = document.getElementById('catGrid');
 
   function draftKey(eq){ return 'draft:' + eq.id; }
 
@@ -1067,23 +1472,63 @@
     try{ return !!window.localStorage.getItem(draftKey(eq)); } catch(e){ return false; }
   }
 
+  function equipmentCard(eq){
+    const card = document.createElement('div');
+    card.className = 'hub-card';
+    const initials = eq.title.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+    const sectionCount = eq.sections.length;
+    card.innerHTML = `
+      <div class="icon">${initials}</div>
+      <div class="name">${eq.title}</div>
+      <div class="meta">${sectionCount} section${sectionCount>1?'s':''}</div>
+      ${hasDraft(eq) ? '<span class="draft-chip">Draft saved</span>' : ''}
+    `;
+    card.addEventListener('click', () => openEquipment(eq));
+    return card;
+  }
+
+  /* ---------------- Home: category cards only ---------------- */
   function renderHub(){
     hubGrid.innerHTML = '';
-    EQUIPMENT.forEach(eq => {
+    CATEGORIES.forEach(cat => {
+      const count = EQUIPMENT.filter(eq => eq.category === cat.id).length;
       const card = document.createElement('div');
       card.className = 'hub-card';
-      const initials = eq.title.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
-      const sectionCount = eq.sections.length;
+      const initials = cat.title.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
       card.innerHTML = `
         <div class="icon">${initials}</div>
-        <div class="name">${eq.title}</div>
-        <div class="meta">${sectionCount} section${sectionCount>1?'s':''}</div>
-        ${hasDraft(eq) ? '<span class="draft-chip">Draft saved</span>' : ''}
+        <div class="name">${cat.title}</div>
+        <div class="meta">${count} checklist${count!==1?'s':''}</div>
       `;
-      card.addEventListener('click', () => openEquipment(eq));
+      card.addEventListener('click', () => openCategory(cat));
       hubGrid.appendChild(card);
     });
   }
+
+  /* ---------------- Category page: only that category's checklists ---------------- */
+  function openCategory(cat){
+    currentCategory = cat;
+    document.getElementById('catTitle').textContent = cat.title;
+    document.getElementById('catDesc').textContent = cat.desc || '';
+    catGrid.innerHTML = '';
+    EQUIPMENT.filter(eq => eq.category === cat.id).forEach(eq => {
+      catGrid.appendChild(equipmentCard(eq));
+    });
+    hubView.style.display = 'none';
+    formView.style.display = 'none';
+    catView.style.display = 'block';
+    window.scrollTo(0,0);
+  }
+
+  function closeCategory(){
+    catView.style.display = 'none';
+    hubView.style.display = 'block';
+    currentCategory = null;
+    renderHub();
+    window.scrollTo(0,0);
+  }
+
+  document.getElementById('btnCatBack').addEventListener('click', closeCategory);
 
   function openEquipment(eq){
     currentEquipment = eq;
@@ -1107,6 +1552,7 @@
     document.getElementById('actionbar').classList.add('show');
     document.getElementById('saveNoteWrap').classList.add('show');
     hubView.style.display = 'none';
+    catView.style.display = 'none';
     formView.style.display = 'block';
     window.scrollTo(0,0);
 
@@ -1116,11 +1562,15 @@
 
   function closeEquipment(){
     formView.style.display = 'none';
-    hubView.style.display = 'block';
     document.getElementById('actionbar').classList.remove('show');
     document.getElementById('saveNoteWrap').classList.remove('show');
     currentEquipment = null;
-    renderHub();
+    if (currentCategory){
+      openCategory(currentCategory); // return to the category page, refreshing draft chips
+    } else {
+      hubView.style.display = 'block';
+      renderHub();
+    }
     window.scrollTo(0,0);
   }
 

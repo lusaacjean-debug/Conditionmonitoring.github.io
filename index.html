@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
 <title>Condition Monitoring Checklists</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js"></script>
 <style>
@@ -171,22 +170,6 @@
   .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
 
   /* ---------- Report (offscreen, used for PDF) ---------- */
-  #reportRoot{position:fixed; left:-9999px; top:0; width:760px; background:#fff; color:#111; font-family:"Segoe UI", Arial, sans-serif; padding:28px;}
-  #reportRoot h1{font-size:19px; margin:0 0 2px;}
-  #reportRoot .sub{font-size:12px; color:#555; margin-bottom:14px;}
-  #reportRoot table{width:100%; border-collapse:collapse; margin-bottom:14px; font-size:12px;}
-  #reportRoot td, #reportRoot th{border:1px solid #ccc; padding:5px 7px; text-align:left; vertical-align:top;}
-  #reportRoot .rep-section-title{background:#1b3648; color:#fff; font-weight:700; font-size:12.5px; padding:6px 8px; margin-top:14px; border-radius:4px 4px 0 0;}
-  #reportRoot .rep-item{display:flex; justify-content:space-between; border-bottom:1px solid #e3e3e3; padding:5px 8px; font-size:11.5px;}
-  #reportRoot .rep-status{font-weight:700;}
-  #reportRoot .rep-status.ok{color:#2f7d5c;}
-  #reportRoot .rep-status.notok{color:#b4432f;}
-  #reportRoot .rep-status.na{color:#8a97a1;}
-  #reportRoot .rep-comment{padding:6px 8px; font-size:11px; color:#333; background:#f7f8f9;}
-  #reportRoot .rep-photos{display:flex; flex-wrap:wrap; gap:6px; padding:8px;}
-  #reportRoot .rep-photos img{width:100px; height:100px; object-fit:cover; border-radius:4px; border:1px solid #ddd;}
-  #reportRoot .rep-summary{display:flex; gap:14px; margin:10px 0 4px;}
-  #reportRoot .rep-summary div{border:1px solid #ccc; border-radius:6px; padding:8px 12px; font-size:12px;}
 
   @media (max-width:400px){ .field-grid{grid-template-columns:1fr;} }
 
@@ -314,7 +297,6 @@
   <button class="btn btn-primary" id="btnPdf">Download PDF</button>
 </div>
 
-<div id="reportRoot"></div>
 
 <script>
 (function(){
@@ -3526,9 +3508,65 @@
     return {text:'—', cls:'na'};
   }
 
-  function buildReportHTML(){
+  function esc(str){
+    return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  // Builds the PDF natively with jsPDF text/image calls instead of screenshotting
+  // the page with html2canvas. The old screenshot approach rendered the whole
+  // report as one very tall off-screen block and rasterised it in one shot —
+  // once equipment checklists grew (Safety + Motor + Coupling + their own
+  // sections can now be 50-90+ items), that block got tall enough to exceed
+  // browser canvas size/memory limits, which is what broke the page on
+  // download. Native text has no such ceiling and paginates cleanly for any
+  // equipment size.
+  function generatePdfDoc(){
     const eq = currentEquipment;
     const h = state.header;
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'pt', 'a4');
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const marginX = 40;
+    const maxW = pageW - marginX * 2;
+    let y = 50;
+
+    function ensureSpace(need){
+      if (y + need > pageH - 36){
+        doc.addPage();
+        y = 50;
+      }
+    }
+    function textLine(text, opts){
+      opts = opts || {};
+      doc.setFont('helvetica', opts.bold ? 'bold' : 'normal');
+      doc.setFontSize(opts.size || 9.5);
+      const indent = opts.indent || 0;
+      const lines = doc.splitTextToSize(String(text), maxW - indent);
+      lines.forEach(line => {
+        ensureSpace(opts.lineH || 12);
+        doc.setTextColor.apply(doc, opts.color || [0,0,0]);
+        doc.text(line, marginX + indent, y);
+        y += opts.lineH || 12;
+      });
+    }
+
+    // ---- Header ----
+    doc.setFont('helvetica','bold'); doc.setFontSize(15);
+    doc.text(eq.title + ' — Condition Monitoring Check Sheet', marginX, y);
+    y += 18;
+    textLine(eq.dept || '', { size:9, color:[100,100,100] });
+    y += 4;
+
+    const metaLines = [
+      'Equipment Tag #: ' + (h.f_tag || '—') + '     Date: ' + (h.f_date || '—'),
+      'WO #: ' + (h.f_wo || '—') + '     Method: ' + ((h.f_visual?'Visual ':'') + (h.f_vibration?'Vibration':'') || '—'),
+      'Check by: ' + (h.f_checkby || '—') + '     Review by: ' + (h.f_reviewby || '—')
+    ];
+    if (eq.driveCouplingField) metaLines.push('Drive/Coupling Type: ' + (h.f_drivetype || '—'));
+    metaLines.forEach(l => textLine(l, { size:9.5, lineH:13 }));
+    y += 4;
+
     const allVisible = eq.sections.reduce((arr,s) => arr.concat(visibleItems(s)), []);
     const visibleVals = allVisible.map(i => state.items[i.id]);
     const notOkCount = visibleVals.filter(v => v==='notok').length;
@@ -3537,64 +3575,93 @@
     const health = computeHealthScore(eq, state);
     const worstRUL = computeEquipmentRUL(eq, state);
 
-    let html = `
-      <h1>${esc(eq.title)} — Condition Monitoring Check Sheet</h1>
-      <div class="sub">${esc(eq.dept || '')}</div>
-      <table>
-        <tr><th>Equipment Tag #</th><td>${esc(h.f_tag||'')}</td><th>Date</th><td>${esc(h.f_date||'')}</td></tr>
-        <tr><th>WO #</th><td>${esc(h.f_wo||'')}</td><th>Method</th><td>${h.f_visual?'Visual ':''}${h.f_vibration?'Vibration':''}</td></tr>
-        <tr><th>Check by</th><td>${esc(h.f_checkby||'')}</td><th>Review by</th><td>${esc(h.f_reviewby||'')}</td></tr>
-        ${eq.driveCouplingField ? `<tr><th>Drive/Coupling Type</th><td colspan="3">${esc(h.f_drivetype||'—')}</td></tr>` : ''}
-      </table>
-      <div class="rep-summary">
-        <div><b>${okCount}</b> OK</div>
-        <div><b>${notOkCount}</b> Not OK</div>
-        <div><b>${totalItems}</b> total checks</div>
-        ${health ? `<div><b>${health.score}%</b> Health Score — ${esc(health.label)}</div>` : ''}
-        ${worstRUL ? `<div><b>${worstRUL.remainingLife === Infinity ? 'Stable' : worstRUL.remainingLife.toFixed(1) + ' yrs'}</b> Worst-case Remaining Life (${esc(worstRUL.pointLabel)})</div>` : ''}
-      </div>`;
+    let summary = okCount + ' OK  ·  ' + notOkCount + ' Not OK  ·  ' + totalItems + ' total checks';
+    if (health) summary += '  ·  Health ' + health.score + '% (' + health.label + ')';
+    if (worstRUL) summary += '  ·  Worst-case RUL ' + (worstRUL.remainingLife === Infinity ? 'Stable' : worstRUL.remainingLife.toFixed(1) + ' yrs') + ' (' + worstRUL.pointLabel + ')';
+    textLine(summary, { bold:true, size:9.5, lineH:14 });
+    y += 6;
 
+    // ---- Sections ----
     eq.sections.forEach(sec => {
       const items = visibleItems(sec);
       if (!items.length && !(sec.readings && sec.readings.length) && !state.comments[sec.id]) return;
-      html += `<div class="rep-section-title">${esc(sec.title)}</div>`;
+
+      ensureSpace(20);
+      doc.setFillColor(27,54,72);
+      doc.rect(marginX, y - 11, maxW, 16, 'F');
+      doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(10);
+      doc.text(sec.title, marginX + 6, y);
+      doc.setTextColor(0,0,0);
+      y += 16;
+
       items.forEach(item => {
         const s = statusLabel(state.items[item.id]);
-        html += `<div class="rep-item"><span>${esc(item.label)}</span><span class="rep-status ${s.cls}">${s.text}</span></div>`;
+        doc.setFont('helvetica','normal'); doc.setFontSize(9);
+        const labelLines = doc.splitTextToSize(item.label, maxW - 55);
+        ensureSpace(labelLines.length * 11 + 2);
+        labelLines.forEach((ln, i) => {
+          doc.setTextColor(0,0,0);
+          doc.text(ln, marginX, y);
+          if (i === 0){
+            doc.setFont('helvetica','bold');
+            const color = s.cls === 'ok' ? [47,125,92] : s.cls === 'notok' ? [180,67,47] : [138,151,161];
+            doc.setTextColor.apply(doc, color);
+            doc.text(s.text, marginX + maxW - 42, y);
+            doc.setFont('helvetica','normal');
+          }
+          y += 11;
+        });
         if (item.detailed){
           const finding = state.findings[item.id];
           const corrective = state.corrective[item.id];
-          if (finding || corrective){
-            html += `<div class="rep-comment">${finding ? `<b>Findings:</b> ${esc(finding)} ` : ''}${corrective ? `<b>Corrective Action:</b> ${esc(corrective)}` : ''}</div>`;
-          }
+          let note = '';
+          if (finding) note += 'Findings: ' + finding + '   ';
+          if (corrective) note += 'Corrective Action: ' + corrective;
+          if (note) textLine(note, { size:8.5, indent:10, lineH:10, color:[60,60,60] });
         }
       });
+
       if (sec.readings && sec.readings.length){
         const plainReadings = sec.readings.filter(r => r.unit !== 'mm');
         const thicknessReadings = sec.readings.filter(r => r.unit === 'mm');
         if (plainReadings.length){
-          const readingsText = plainReadings.map(r => `${r.label}: ${esc(state.readings[r.id]||'—')} ${r.unit}`).join(' · ');
-          html += `<div class="rep-comment"><b>Readings</b>${sec.readingNote?' (target '+sec.readingNote+')':''} — ${readingsText}</div>`;
+          const readingsText = 'Readings' + (sec.readingNote ? ' (target ' + sec.readingNote + ')' : '') + ' — ' +
+            plainReadings.map(r => r.label + ': ' + (state.readings[r.id] || '—') + ' ' + r.unit).join(' · ');
+          textLine(readingsText, { size:8.5, indent:10, lineH:11, color:[60,60,60] });
         }
         thicknessReadings.forEach(r => {
           const entry = (state.readings[r.id] && typeof state.readings[r.id] === 'object') ? state.readings[r.id] : {};
           const result = computeRUL(entry, state.header.f_date);
           const rulText = result ? (result.error || result.text) : 'No thickness/RUL data entered';
-          html += `<div class="rep-comment"><b>${esc(r.label)}</b> — Current: ${esc(entry.current||'—')} mm · Previous: ${esc(entry.previous||'—')} mm (${esc(entry.previousDate||'—')}) · Min. allowable: ${esc(entry.minAllowable||'—')} mm — ${esc(rulText)}</div>`;
+          const line = r.label + ' — Current: ' + (entry.current||'—') + ' mm · Previous: ' + (entry.previous||'—') +
+            ' mm (' + (entry.previousDate||'—') + ') · Min. allowable: ' + (entry.minAllowable||'—') + ' mm — ' + rulText;
+          textLine(line, { size:8.5, indent:10, lineH:11, color:[60,60,60] });
         });
       }
+
       const comment = state.comments[sec.id];
-      if (comment) html += `<div class="rep-comment"><b>Comments:</b> ${esc(comment)}</div>`;
+      if (comment) textLine('Comments: ' + comment, { size:8.5, indent:10, lineH:11, color:[60,60,60] });
+
       const photos = state.photos[sec.id] || [];
       if (photos.length){
-        html += `<div class="rep-photos">${photos.map(src => `<img src="${src}">`).join('')}</div>`;
+        const imgSize = 70, gap = 6;
+        let x = marginX;
+        ensureSpace(imgSize + 10);
+        photos.forEach(src => {
+          if (x + imgSize > marginX + maxW){
+            x = marginX;
+            y += imgSize + gap;
+            ensureSpace(imgSize + 10);
+          }
+          try { doc.addImage(src, 'JPEG', x, y, imgSize, imgSize); } catch(e){ /* skip unreadable image, keep report going */ }
+          x += imgSize + gap;
+        });
+        y += imgSize + 10;
       }
+      y += 6;
     });
-    return html;
-  }
 
-  function esc(str){
-    return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    return doc;
   }
 
   document.getElementById('btnPdf').addEventListener('click', async () => {
@@ -3602,33 +3669,10 @@
     const btn = document.getElementById('btnPdf');
     btn.disabled = true; btn.textContent = 'Building PDF…';
     try{
-      const reportRoot = document.getElementById('reportRoot');
-      reportRoot.innerHTML = buildReportHTML();
-
-      const canvas = await html2canvas(reportRoot, { scale: 2, useCORS: true, backgroundColor:'#ffffff' });
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF('p', 'pt', 'a4');
-      const pageW = pdf.internal.pageSize.getWidth();
-      const pageH = pdf.internal.pageSize.getHeight();
-      const imgW = pageW;
-      const imgH = canvas.height * imgW / canvas.width;
-
-      let heightLeft = imgH;
-      let position = 0;
-      const imgData = canvas.toDataURL('image/jpeg', 0.92);
-
-      pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
-      heightLeft -= pageH;
-      while (heightLeft > 0){
-        position = heightLeft - imgH;
-        pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
-        heightLeft -= pageH;
-      }
-
+      const doc = generatePdfDoc();
       const tag = (state.header.f_tag || currentEquipment.id).replace(/[^a-z0-9\-]/gi,'_');
       const date = state.header.f_date || new Date().toISOString().slice(0,10);
-      pdf.save(`${currentEquipment.id}_${tag}_${date}.pdf`);
+      doc.save(`${currentEquipment.id}_${tag}_${date}.pdf`);
       showToast('PDF downloaded');
     } catch(err){
       showToast('PDF export failed — try again');

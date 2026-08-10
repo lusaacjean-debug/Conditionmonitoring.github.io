@@ -485,35 +485,22 @@
 
   function buildMotorSections(prefix){
     return [
-        { id:prefix+'_general', title:'Motor — A. General / Visual', items:[
-            checklistPoint(prefix+'_1','1','Frame & Casing','Check for cracks, corrosion, oil/grease leakage, physical damage','No cracks, no leaks, paint intact','M'),
-            checklistPoint(prefix+'_2','2','Nameplate','Confirm nameplate data legible and matches duty (kW, V, A, RPM, IP, class)','Legible, matches drive schedule','A'),
-            checklistPoint(prefix+'_3','3','Foundation & Mounting Bolts','Check hold-down/foundation bolts for tightness, grouting cracks','All bolts tight, no cracked grout','M'),
-            checklistPoint(prefix+'_4','4','Earthing/Grounding','Verify earth strap/cable intact and connected','Continuous, resistance per standard','Q')
-          ]},
-        { id:prefix+'_electrical', title:'Motor — B. Electrical', items:[
-            checklistPoint(prefix+'_5','5','Insulation Resistance (IR)','Megger test stator winding to earth','> 1 MΩ per kV + 1 (or per OEM), trend recorded','6M'),
-            checklistPoint(prefix+'_6','6','Polarization Index (PI)','PI test on MV motors','PI ≥ 2.0 (Class F)','A'),
-            checklistPoint(prefix+'_7','7','Winding Resistance','Phase-to-phase resistance balance','Imbalance < 2%','A'),
-            checklistPoint(prefix+'_8','8','Terminal Box','Inspect cable terminations, lugs, gland seals for tightness/corrosion','Torqued to spec, no discolouration','6M'),
-            checklistPoint(prefix+'_9','9','Current Draw (3-phase)','Measure running current each phase under load','Within nameplate FLA, balanced <5%','M'),
-            checklistPoint(prefix+'_10','10','Voltage Supply','Measure supply voltage per phase','±10% of nameplate, balanced','M'),
-            checklistPoint(prefix+'_11','11','Space Heater (if fitted)','Verify anti-condensation heater operational when motor off','Functional, correct voltage','Q'),
-            checklistPoint(prefix+'_12','12','Surge/Lightning Arrestors (MV)','Check condition and connection','Intact, correctly connected','A')
-          ]},
-        { id:prefix+'_mech', title:'Motor — C. Mechanical / Bearings', readingNote:'< 80°C or per OEM, stable trend', items:[
-            checklistPoint(prefix+'_13','13','Bearing Temperature','Check DE/NDE bearing housing temperature','< 80°C or per OEM, stable trend','D/W'),
-            checklistPoint(prefix+'_14','14','Bearing Lubrication','Grease type, quantity, re-greasing interval, condition of purged grease','Per OEM lubrication schedule, no contamination','Per schedule'),
-            checklistPoint(prefix+'_15','15','Bearing Noise','Listen for grinding, whining, rumbling','Smooth, no abnormal noise','W'),
-            checklistPoint(prefix+'_16','16','Vibration Levels','Overall vibration velocity DE & NDE, horizontal/vertical/axial','ISO 10816-3 Zone A/B','M'),
-            checklistPoint(prefix+'_17','17','Shaft End-Float/Runout','Check axial float within tolerance','Per OEM tolerance','A')
+        { id:prefix+'_general', title:'A. MOTOR', readingNote:'< 80°C or per OEM, stable trend', items:[
+            checklistPoint(prefix+'_1','1','','Check for cracks, corrosion, oil/grease leakage, physical damage','No cracks, no leaks, paint intact',''),
+            checklistPoint(prefix+'_2','2','','Confirm nameplate data legible and matches duty (kW, V, A, RPM, IP, class)','Legible, matches drive schedule',''),
+            checklistPoint(prefix+'_3','3','','Check hold-down/foundation bolts for tightness, grouting cracks','All bolts tight, no cracked grout',''),
+            checklistPoint(prefix+'_4','4','','Verify earth strap/cable intact and connected','Continuous, resistance per standard',''),
+            checklistPoint(prefix+'_5','5','','Inspect cable terminations, lugs, gland seals for tightness/corrosion','Torqued to spec, no discolouration',''),
+            checklistPoint(prefix+'_6','6','','Check DE/NDE bearing housing temperature','< 80°C or per OEM, stable trend',''),
+            checklistPoint(prefix+'_7','7','','Grease type, quantity, re-greasing interval, condition of purged grease','Per OEM lubrication schedule, no contamination',''),
+            checklistPoint(prefix+'_8','8','','Listen for grinding, whining, rumbling','Smooth, no abnormal noise',''),
+            checklistPoint(prefix+'_9','9','','Overall vibration velocity DE & NDE, horizontal/vertical/axial','ISO 10816-3 Zone A/B',''),
+            checklistPoint(prefix+'_10','10','','Check axial float within tolerance','Per OEM tolerance',''),
+            checklistPoint(prefix+'_11','11','','Inspect external fan blades and cowl for damage/obstruction','Free rotation, undamaged, unobstructed',''),
+            checklistPoint(prefix+'_12','12','','Inspect/clean/replace inlet air filters','Clean, unblocked',''),
+            checklistPoint(prefix+'_13','13','','Check cooling fins/ducts clear of dust build-up','Free of dust/debris','')
           ], readings:[
             {id:prefix+'_nde', label:'NDE', unit:'°C'}, {id:prefix+'_de', label:'DE', unit:'°C'}
-          ]},
-        { id:prefix+'_cooling', title:'Motor — D. Cooling & Ventilation', items:[
-            checklistPoint(prefix+'_18','18','Cooling Fan/Fan Cover','Inspect external fan blades and cowl for damage/obstruction','Free rotation, undamaged, unobstructed','M'),
-            checklistPoint(prefix+'_19','19','Air Filters (if TEFC/forced vent)','Inspect/clean/replace inlet air filters','Clean, unblocked','M'),
-            checklistPoint(prefix+'_20','20','Ventilation Passages','Check cooling fins/ducts clear of dust build-up','Free of dust/debris','M')
           ]}];
   }
 
@@ -586,34 +573,27 @@
       category:'rotating', sourceSheet:'Centrifugal Pump', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. CP-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('cnp')].concat(buildMotorSections('cnp_mtr').concat(buildCouplingSections('cnp_cpl'), [
-        { id:'cnp_general', title:'A. General / Visual', items:[
-            checklistPoint('cnp_1','1','Casing & Volute','Inspect for cracks, corrosion, erosion, leakage at joints','No leaks, wear within allowance','W'),
-            checklistPoint('cnp_2','2','Baseplate/Foundation','Check grouting, hold-down bolts, soft-foot','No cracks, bolts tight, no soft foot','Q'),
-            checklistPoint('cnp_3','3','Suction & Discharge Piping','Check for leaks, support, correct alignment (no pipe strain)','No leaks, adequately supported','M'),
-            checklistPoint('cnp_4','4','Pressure Gauges','Verify suction & discharge pressure gauges functional and in range','Reading within design operating range','D')
+        { id:'cnp_own1', title:'C. CENTRIFUGAL PUMP', items:[
+            checklistPoint('cnp_own1_1','1','','Inspect for cracks, corrosion, erosion, leakage at joints','No leaks, wear within allowance',''),
+            checklistPoint('cnp_own1_2','2','','Check grouting, hold-down bolts, soft-foot','No cracks, bolts tight, no soft foot',''),
+            checklistPoint('cnp_own1_3','3','','Check for leaks, support, correct alignment (no pipe strain)','No leaks, adequately supported',''),
+            checklistPoint('cnp_own1_4','4','','Verify suction & discharge pressure gauges functional and in range','Reading within design operating range','')
           ]},
-        { id:'cnp_sealing', title:'B. Sealing System', items:[
-            checklistPoint('cnp_5','5','Mechanical Seal','Check for leakage at seal faces, flush line flow/pressure','Minimal/no visible leakage, flush per plan','D'),
-            checklistPoint('cnp_6','6','Gland Packing (if fitted)','Check packing gland leakage rate, adjust as required','Slight drip per OEM (typ. 40-60 drops/min)','D'),
-            checklistPoint('cnp_7','7','Seal Flush/Barrier Fluid','Check flush plan reservoir level & pressure (API plan)','Per plan spec, topped up','W')
+        { id:'cnp_own2', title:'SEALING SYSTEM', items:[
+            checklistPoint('cnp_own2_1','5','','Check for leakage at seal faces, flush line flow/pressure','Minimal/no visible leakage, flush per plan',''),
+            checklistPoint('cnp_own2_2','6','','Check packing gland leakage rate, adjust as required','Slight drip per OEM (typ. 40-60 drops/min)',''),
+            checklistPoint('cnp_own2_3','7','','Check flush plan reservoir level & pressure (API plan)','Per plan spec, topped up','')
           ]},
-        { id:'cnp_bearings', title:'C. Bearings & Lubrication', readingNote:'< 70-80°C or per OEM, stable', items:[
-            checklistPoint('cnp_8','8','Bearing Housing Oil Level/Grease','Check oil level (sight glass) or grease nipple condition','Between min/max marks, clean, correct grade','D/W'),
-            checklistPoint('cnp_9','9','Bearing Temperature','Measure DE/NDE bearing temperature','< 70-80°C or per OEM, stable','D/W'),
-            checklistPoint('cnp_10','10','Bearing Vibration','Measure vibration velocity DE/NDE','ISO 10816-3 Zone A/B','M')
-          ], readings:[
-            {id:'cnp_nde', label:'NDE', unit:'°C'}, {id:'cnp_de', label:'DE', unit:'°C'}
+        { id:'cnp_own3', title:'BEARINGS & LUBRICATION', items:[
+            checklistPoint('cnp_own3_1','8','','Check oil level (sight glass) or grease nipple condition','Between min/max marks, clean, correct grade',''),
+            checklistPoint('cnp_own3_2','9','','Measure DE/NDE bearing temperature','< 70-80°C or per OEM, stable',''),
+            checklistPoint('cnp_own3_3','10','','Measure vibration velocity DE/NDE','ISO 10816-3 Zone A/B','')
           ]},
-        { id:'cnp_rotating', title:'D. Rotating Element', items:[
-            checklistPoint('cnp_11','11','Impeller Clearance','Check impeller-to-casing (wear ring) clearance','Within OEM tolerance','A'),
-            checklistPoint('cnp_12','12','Shaft Runout','Check shaft straightness/runout','< 0.05 mm or per OEM','A'),
-            checklistPoint('cnp_13','13','Coupling Alignment','Verify pump-motor alignment (see Coupling checklist)','Per OEM tolerance','A / after maintenance')
-          ]},
-        { id:'cnp_performance', title:'E. Performance & Condition Monitoring', items:[
-            checklistPoint('cnp_14','14','Flow Rate','Compare actual flow against duty point','Within ±10% of design duty','M'),
-            checklistPoint('cnp_15','15','NPSH / Cavitation Noise','Listen for cavitation (gravel-like noise)','No cavitation noise','W'),
-            checklistPoint('cnp_16','16','Motor Current / Power Draw','Check motor amps against rated/expected load','Within nameplate FLA','M'),
-            checklistPoint('cnp_17','17','Noise Levels','General noise check for bearing/cavitation/misalignment issues','No abnormal noise','W')
+        { id:'cnp_own4', title:'PERFORMANCE & CONDITION MONITORING', items:[
+            checklistPoint('cnp_own4_1','11','','Compare actual flow against duty point','Within ±10% of design duty',''),
+            checklistPoint('cnp_own4_2','12','','Listen for cavitation (gravel-like noise)','No cavitation noise',''),
+            checklistPoint('cnp_own4_3','13','','Check motor amps against rated/expected load','Within nameplate FLA',''),
+            checklistPoint('cnp_own4_4','14','','General noise check for bearing/cavitation/misalignment issues','No abnormal noise','')
           ]}
       ]))},
 
@@ -621,204 +601,252 @@
       category:'rotating', sourceSheet:'Positive Displ. Pump', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. PDP-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('pdp')].concat(buildMotorSections('pdp_mtr').concat(buildCouplingSections('pdp_cpl'), [
-        { id:'pdp_general', title:'A. General / Visual', items:[
-            checklistPoint('pdp_1','1','Casing/Cylinder','Inspect for cracks, corrosion, leaks at fasteners/joints','No leaks or cracks','W'),
-            checklistPoint('pdp_2','2','Baseplate & Foundation','Check grouting and hold-down bolts','No cracks, bolts tight','Q'),
-            checklistPoint('pdp_3','3','Suction/Discharge Valves','Inspect valve chest for leakage, listen for valve chatter','No external leaks, smooth valve action','W'),
-            checklistPoint('pdp_4','4','Pulsation Dampener/Accumulator','Check pre-charge pressure and mounting','Pre-charge per spec, securely mounted','Q'),
-            checklistPoint('pdp_5','5','Relief/Safety Valve','Verify relief valve set pressure and function (pop test where applicable)','Set per system MAWP, tested per schedule','A')
+        { id:'pdp_own1', title:'C.PUMP', items:[
+            checklistPoint('pdp_own1_1','1','','Inspect for cracks, corrosion, leaks at fasteners/joints','No leaks or cracks',''),
+            checklistPoint('pdp_own1_2','2','','Check grouting and hold-down bolts','No cracks, bolts tight',''),
+            checklistPoint('pdp_own1_3','3','','Inspect valve chest for leakage, listen for valve chatter','No external leaks, smooth valve action',''),
+            checklistPoint('pdp_own1_4','4','','Check pre-charge pressure and mounting','Pre-charge per spec, securely mounted',''),
+            checklistPoint('pdp_own1_5','5','','Verify relief valve set pressure and function (pop test where applicable)','Set per system MAWP, tested per schedule','')
           ]},
-        { id:'pdp_sealing', title:'B. Sealing & Packing', items:[
-            checklistPoint('pdp_6','6','Stuffing Box/Packing','Check packing leakage, adjust gland as necessary','Controlled minimal leakage per OEM','D'),
-            checklistPoint('pdp_7','7','Plunger/Piston Rod Condition','Inspect rod surface for scoring, pitting, wear','Smooth, no scoring','6M'),
-            checklistPoint('pdp_8','8','Diaphragm Condition (if fitted)','Check diaphragm for cracking/rupture, hydraulic oil level','Intact, oil level correct','6M')
+        { id:'pdp_own2', title:'SEALING & PACKING', items:[
+            checklistPoint('pdp_own2_1','6','','Check packing leakage, adjust gland as necessary','Controlled minimal leakage per OEM',''),
+            checklistPoint('pdp_own2_2','7','','Inspect rod surface for scoring, pitting, wear','Smooth, no scoring',''),
+            checklistPoint('pdp_own2_3','8','','Check diaphragm for cracking/rupture, hydraulic oil level','Intact, oil level correct','')
           ]},
-        { id:'pdp_powerend', title:'C. Power End / Drive', items:[
-            checklistPoint('pdp_9','9','Crankcase Oil Level & Condition','Check oil level, colour, water/particle contamination','Correct level, clean','D/W'),
-            checklistPoint('pdp_10','10','Crosshead & Bearings','Inspect crosshead guides and bearings for wear, lubrication','Within wear limits, adequately lubricated','A'),
-            checklistPoint('pdp_11','11','Timing Gears (rotary lobe/gear pumps)','Check gear backlash and tooth condition','Within OEM tolerance','A'),
-            checklistPoint('pdp_12','12','Rotor/Gear/Lobe Clearances (rotary PD)','Check internal clearances between rotors and casing','Within OEM tolerance','A')
+        { id:'pdp_own3', title:'POWER END / DRIVE', items:[
+            checklistPoint('pdp_own3_1','9','','Check oil level, colour, water/particle contamination','Correct level, clean',''),
+            checklistPoint('pdp_own3_2','10','','Inspect crosshead guides and bearings for wear, lubrication','Within wear limits, adequately lubricated',''),
+            checklistPoint('pdp_own3_3','11','','Check gear backlash and tooth condition','Within OEM tolerance',''),
+            checklistPoint('pdp_own3_4','12','','Check internal clearances between rotors and casing','Within OEM tolerance','')
           ]},
-        { id:'pdp_bearings', title:'D. Bearings & Vibration', readingNote:'< 80°C or per OEM', items:[
-            checklistPoint('pdp_13','13','Main Bearing Temperature','Check bearing housing temperature','< 80°C or per OEM','D/W'),
-            checklistPoint('pdp_14','14','Vibration Levels','Measure vibration at bearing housings','ISO 10816-3 Zone A/B','M')
-          ], readings:[
-            {id:'pdp_brg', label:'Bearing housing', unit:'°C'}
+        { id:'pdp_own4', title:'BEARINGS & VIBRATION', items:[
+            checklistPoint('pdp_own4_1','13','','Check bearing housing temperature','< 80°C or per OEM',''),
+            checklistPoint('pdp_own4_2','14','','Measure vibration at bearing housings','ISO 10816-3 Zone A/B','')
           ]},
-        { id:'pdp_performance', title:'E. Performance', items:[
-            checklistPoint('pdp_15','15','Discharge Pressure','Monitor against system design pressure','Within design operating range','D'),
-            checklistPoint('pdp_16','16','Flow/Stroke Rate','Verify stroke count / flow rate against duty','Within ±10% of design duty','M'),
-            checklistPoint('pdp_17','17','Motor Current','Check motor amp draw','Within nameplate FLA','M')
-          ]},
-              ]))},
+        { id:'pdp_own5', title:'PERFORMANCE', items:[
+            checklistPoint('pdp_own5_1','15','','Monitor against system design pressure','Within design operating range',''),
+            checklistPoint('pdp_own5_2','16','','Verify stroke count / flow rate against duty','Within ±10% of design duty',''),
+            checklistPoint('pdp_own5_3','17','','Check motor amp draw','Within nameplate FLA','')
+          ]}
+      ]))},
 
     { id:'progressive-cavity-pump', title:'Progressive Cavity Pump', dept:'Condition Monitoring — Rotating Equipment',
       category:'rotating', sourceSheet:'Progressive Cavity Pump', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. PCP-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('pcp')].concat(buildMotorSections('pcp_mtr').concat(buildCouplingSections('pcp_cpl'), [
-        { id:'pcp_general', title:'A. General / Visual', items:[
-            checklistPoint('pcp_1','1','Pump Casing/Stator Housing','Inspect for leaks, cracks, corrosion','No leaks or cracks','W'),
-            checklistPoint('pcp_2','2','Baseplate & Foundation','Check grouting and hold-down bolts','No cracks, bolts tight','Q'),
-            checklistPoint('pcp_3','3','Suction Hopper/Inlet','Check for blockage, wear, bridging of material','Free flowing, no build-up','D')
+        { id:'pcp_own1', title:'C. PUMP', items:[
+            checklistPoint('pcp_own1_1','1','','Inspect for leaks, cracks, corrosion','No leaks or cracks',''),
+            checklistPoint('pcp_own1_2','2','','Check grouting and hold-down bolts','No cracks, bolts tight',''),
+            checklistPoint('pcp_own1_3','3','','Check for blockage, wear, bridging of material','Free flowing, no build-up','')
           ]},
-        { id:'pcp_rotorstator', title:'B. Rotor / Stator', items:[
-            checklistPoint('pcp_4','4','Stator Elastomer Condition','Inspect stator bore (via strip or borescope) for wear, swelling, chemical attack','Within OEM wear limit, no excessive swell','A or on performance drop'),
-            checklistPoint('pcp_5','5','Rotor Surface Condition','Check rotor chrome plating for wear, pitting, corrosion','Smooth plating intact','A'),
-            checklistPoint('pcp_6','6','Rotor-Stator Interference/Fit','Verify pump still develops rated pressure (interference fit check)','Achieves rated discharge pressure at rated speed','6M')
+        { id:'pcp_own2', title:'ROTOR / STATOR', items:[
+            checklistPoint('pcp_own2_1','4','','Inspect stator bore (via strip or borescope) for wear, swelling, chemical attack','Within OEM wear limit, no excessive swell',''),
+            checklistPoint('pcp_own2_2','5','','Check rotor chrome plating for wear, pitting, corrosion','Smooth plating intact',''),
+            checklistPoint('pcp_own2_3','6','','Verify pump still develops rated pressure (interference fit check)','Achieves rated discharge pressure at rated speed','')
           ]},
-        { id:'pcp_drivetrain', title:'C. Drive Train', items:[
-            checklistPoint('pcp_7','7','Universal Joints / Pin Joint','Check drive-end and pump-end joints for wear/play, lubrication','No excess play, greased per schedule','M'),
-            checklistPoint('pcp_8','8','Drive Shaft / Pony Rod','Inspect for straightness, corrosion, coupling condition','Straight, no corrosion','6M'),
-            checklistPoint('pcp_9','9','Gearbox/Reducer (if fitted)','Refer to Gearbox checklist','Per gearbox checklist','-')
+        { id:'pcp_own3', title:'D. DRIVE TRAIN', items:[
+            checklistPoint('pcp_own3_1','1','','Check drive-end and pump-end joints for wear/play, lubrication','No excess play, greased per schedule',''),
+            checklistPoint('pcp_own3_2','2','','Inspect for straightness, corrosion, coupling condition','Straight, no corrosion',''),
+            checklistPoint('pcp_own3_3','3','','Refer to Gearbox checklist','Per gearbox checklist','')
           ]},
-        { id:'pcp_sealing', title:'D. Sealing', items:[
-            checklistPoint('pcp_10','10','Packed Gland / Mechanical Seal','Check leakage rate and gland adjustment','Controlled minimal leakage / no leak (mech seal)','D'),
-            checklistPoint('pcp_11','11','Seal Flush (if applicable)','Check flush line pressure/flow','Per design spec','W')
+        { id:'pcp_own4', title:'SEALING', items:[
+            checklistPoint('pcp_own4_1','4','','Check leakage rate and gland adjustment','Controlled minimal leakage / no leak (mech seal)',''),
+            checklistPoint('pcp_own4_2','5','','Check flush line pressure/flow','Per design spec','')
           ]},
-        { id:'pcp_bearings', title:'E. Bearings & Lubrication', readingNote:'< 80°C or per OEM', items:[
-            checklistPoint('pcp_12','12','Drive-End Bearing Frame Oil/Grease','Check oil level or grease condition','Correct level, clean, correct grade','W'),
-            checklistPoint('pcp_13','13','Bearing Temperature','Measure bearing housing temperature','< 80°C or per OEM','D/W'),
-            checklistPoint('pcp_14','14','Vibration Levels','Measure vibration at bearing housing','ISO 10816-3 Zone A/B','M')
-          ], readings:[
-            {id:'pcp_brg', label:'Bearing housing', unit:'°C'}
+        { id:'pcp_own5', title:'BEARINGS & LUBRICATION', items:[
+            checklistPoint('pcp_own5_1','6','','Check oil level or grease condition','Correct level, clean, correct grade',''),
+            checklistPoint('pcp_own5_2','7','','Measure bearing housing temperature','< 80°C or per OEM',''),
+            checklistPoint('pcp_own5_3','8','','Measure vibration at bearing housing','ISO 10816-3 Zone A/B','')
           ]},
-        { id:'pcp_performance', title:'F. Performance', items:[
-            checklistPoint('pcp_15','15','Discharge Pressure','Monitor against system design/rated pressure','Within design operating range','D'),
-            checklistPoint('pcp_16','16','Motor Current','Check motor amp draw','Within nameplate FLA','M'),
-            checklistPoint('pcp_17','17','Run-Dry Protection','Verify low-level/dry-run protection functional','Trips pump on low level/no flow','Q')
-          ]},
-              ]))},
+        { id:'pcp_own6', title:'PERFORMANCE', items:[
+            checklistPoint('pcp_own6_1','9','','Monitor against system design/rated pressure','Within design operating range',''),
+            checklistPoint('pcp_own6_2','10','','Check motor amp draw','Within nameplate FLA',''),
+            checklistPoint('pcp_own6_3','11','','Verify low-level/dry-run protection functional','Trips pump on low level/no flow','')
+          ]}
+      ]))},
 
     { id:'gearbox', title:'Gearbox', dept:'Condition Monitoring — Rotating Equipment',
       category:'rotating', sourceSheet:'Gearbox', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. GBX-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('gbx')].concat(buildMotorSections('gbx_mtr').concat(buildCouplingSections('gbx_cpl'), [
-        { id:'gbx_general', title:'A. General / Visual', items:[
-            checklistPoint('gbx_1','1','Housing','Inspect casing for cracks, corrosion, oil weeping at joints/seams','No cracks, no leaks','W'),
-            checklistPoint('gbx_2','2','Mounting Bolts / Foundation','Check hold-down bolts, torque arm/foot mounting for tightness','All bolts tight, no cracked grout','M'),
-            checklistPoint('gbx_3','3','Breather','Check breather clear, not blocked or missing','Clean, functional, correctly fitted','M')
+        { id:'gbx_own1', title:'B. GENERAL / VISUAL', items:[
+            checklistPoint('gbx_own1_1','1','','Inspect casing for cracks, corrosion, oil weeping at joints/seams','No cracks, no leaks',''),
+            checklistPoint('gbx_own1_2','2','','Check hold-down bolts, torque arm/foot mounting for tightness','All bolts tight, no cracked grout',''),
+            checklistPoint('gbx_own1_3','3','','Check breather clear, not blocked or missing','Clean, functional, correctly fitted','')
           ]},
-        { id:'gbx_lube', title:'B. Lubrication', items:[
-            checklistPoint('gbx_4','4','Oil Level','Check oil level via sight glass/dipstick','Between min/max marks','D/W'),
-            checklistPoint('gbx_5','5','Oil Condition','Check colour, clarity, water/metal contamination; take sample if due','Clean, no water/metallic particles, per oil analysis program','Per schedule (typ. Q)'),
-            checklistPoint('gbx_6','6','Oil Temperature','Check operating oil/housing temperature','< 80-90°C or per OEM','D/W'),
-            checklistPoint('gbx_7','7','Seals (Input/Output shaft)','Inspect shaft seals for leakage','No leaks','W')
+        { id:'gbx_own2', title:'C. LUBRICATION', items:[
+            checklistPoint('gbx_own2_1','1','','Check oil level via sight glass/dipstick','Between min/max marks',''),
+            checklistPoint('gbx_own2_2','2','','Check colour, clarity, water/metal contamination; take sample if due','Clean, no water/metallic particles, per oil analysis program',''),
+            checklistPoint('gbx_own2_3','3','','Check operating oil/housing temperature','< 80-90°C or per OEM',''),
+            checklistPoint('gbx_own2_4','4','','Inspect shaft seals for leakage','No leaks','')
           ]},
-        { id:'gbx_gearsbearings', title:'C. Gears & Bearings', readingNote:'< 80°C or per OEM, stable trend', items:[
-            checklistPoint('gbx_8','8','Gear Mesh Noise','Listen for whining, knocking, rattling indicating wear/misalignment','Smooth, consistent mesh noise','W'),
-            checklistPoint('gbx_9','9','Backlash (on inspection/strip)','Check gear backlash against OEM spec','Within OEM tolerance','A'),
-            checklistPoint('gbx_10','10','Bearing Temperature','Check bearing housing temperatures (input/output)','< 80°C or per OEM, stable trend','D/W'),
-            checklistPoint('gbx_11','11','Vibration Levels','Measure vibration at bearing positions','ISO 10816-3 Zone A/B or OEM limit','M'),
-            checklistPoint('gbx_12','12','Oil Analysis - Wear Metals','Lab analysis for Fe/Cu/Cr particles trending','Within baseline trend, no step change','Q')
-          ], readings:[
-            {id:'gbx_input', label:'Input bearing', unit:'°C'}, {id:'gbx_output', label:'Output bearing', unit:'°C'}
+        { id:'gbx_own3', title:'D. GEARS & BEARINGS', items:[
+            checklistPoint('gbx_own3_1','1','','Listen for whining, knocking, rattling indicating wear/misalignment','Smooth, consistent mesh noise',''),
+            checklistPoint('gbx_own3_2','2','','Check gear backlash against OEM spec','Within OEM tolerance',''),
+            checklistPoint('gbx_own3_3','3','','Check bearing housing temperatures (input/output)','< 80°C or per OEM, stable trend',''),
+            checklistPoint('gbx_own3_4','4','','Measure vibration at bearing positions','ISO 10816-3 Zone A/B or OEM limit',''),
+            checklistPoint('gbx_own3_5','5','','Lab analysis for Fe/Cu/Cr particles trending','Within baseline trend, no step change','')
           ]},
-        { id:'gbx_coupling', title:'D. Couplings & Alignment', items:[
-            checklistPoint('gbx_13','13','Input Coupling Alignment','Verify motor-to-gearbox alignment (see Coupling checklist)','Per OEM tolerance','A / after maintenance'),
-            checklistPoint('gbx_14','14','Output Coupling Alignment','Verify gearbox-to-driven equipment alignment','Per OEM tolerance','A / after maintenance'),
-            checklistPoint('gbx_15','15','Torque Arm / Reaction Bracket','Check condition and mounting of torque arm (shaft-mount gearboxes)','Secure, no cracking, rubber bushes intact','M')
-          ]},
-              ]))},
+        { id:'gbx_own4', title:'E. COUPLINGS & ALIGNMENT', items:[
+            checklistPoint('gbx_own4_1','1','','Verify motor-to-gearbox alignment (see Coupling checklist)','Per OEM tolerance',''),
+            checklistPoint('gbx_own4_2','2','','Verify gearbox-to-driven equipment alignment','Per OEM tolerance',''),
+            checklistPoint('gbx_own4_3','3','','Check condition and mounting of torque arm (shaft-mount gearboxes)','Secure, no cracking, rubber bushes intact','')
+          ]}
+      ]))},
 
     { id:'agitator', title:'Agitator', dept:'Condition Monitoring — Rotating Equipment',
       category:'rotating', sourceSheet:'Agitator', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. AGT-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('agt')].concat(buildMotorSections('agt_mtr').concat(buildCouplingSections('agt_cpl'), [
-        { id:'agt_general', title:'A. General / Visual', items:[
-            checklistPoint('agt_1','1','Mounting Structure/Bridge','Inspect mounting beam/bridge, tank nozzle for cracks, corrosion','No cracks, structurally sound','M'),
-            checklistPoint('agt_2','2','Drive Unit Housing','Check gearbox/motor housing for leaks, damage','No leaks, no damage','W'),
-            checklistPoint('agt_3','3','Shaft Guard/Cover','Verify top guard/grating over open shaft is fitted','Fitted and secure per guarding standard','M')
+        { id:'agt_own1', title:'C. GEARBOX', items:[
+            checklistPoint('agt_own1_1','1','','Inspect casing for cracks, corrosion, oil weeping at joints/seams','No cracks, no leaks',''),
+            checklistPoint('agt_own1_2','2','','Check hold-down bolts, torque arm/foot mounting for tightness','All bolts tight, no cracked grout',''),
+            checklistPoint('agt_own1_3','3','','Check breather clear, not blocked or missing','Clean, functional, correctly fitted','')
           ]},
-        { id:'agt_shaft', title:'B. Shaft & Impeller', items:[
-            checklistPoint('agt_4','4','Shaft Straightness/Runout','Check for visible wobble/whip during operation','No visible wobble, within OEM runout','M'),
-            checklistPoint('agt_5','5','Shaft Steady Bearing/Bush (if fitted)','Inspect lower steady bearing for wear, lubrication','Within wear limit, lubricated','6M'),
-            checklistPoint('agt_6','6','Impeller/Blades','Inspect blades for wear, erosion, cracking, build-up/scaling','No cracks, wear within allowance, clean','M / on shutdown'),
-            checklistPoint('agt_7','7','Impeller Fasteners','Check impeller retaining bolts/set screws tight','Torqued to spec, locking device intact','6M')
+        { id:'agt_own2', title:'LUBRICATION', items:[
+            checklistPoint('agt_own2_1','4','','Check oil level via sight glass/dipstick','Between min/max marks',''),
+            checklistPoint('agt_own2_2','5','','Check colour, clarity, water/metal contamination; take sample if due','Clean, no water/metallic particles, per oil analysis program',''),
+            checklistPoint('agt_own2_3','6','','Check operating oil/housing temperature','< 80-90°C or per OEM',''),
+            checklistPoint('agt_own2_4','7','','Inspect shaft seals for leakage','No leaks','')
           ]},
-        { id:'agt_seal', title:'C. Seal / Stuffing Box', items:[
-            checklistPoint('agt_8','8','Shaft Seal / Gland Packing','Check for leakage at tank penetration seal','Minimal/no leakage','D')
+        { id:'agt_own3', title:'GEARS & BEARINGS', items:[
+            checklistPoint('agt_own3_1','8','','Listen for whining, knocking, rattling indicating wear/misalignment','Smooth, consistent mesh noise',''),
+            checklistPoint('agt_own3_2','9','','Check gear backlash against OEM spec','Within OEM tolerance',''),
+            checklistPoint('agt_own3_3','10','','Check bearing housing temperatures (input/output)','< 80°C or per OEM, stable trend',''),
+            checklistPoint('agt_own3_4','11','','Measure vibration at bearing positions','ISO 10816-3 Zone A/B or OEM limit','')
           ]},
-        { id:'agt_drive', title:'D. Gearbox / Drive (see also Gearbox checklist)', items:[
-            checklistPoint('agt_9','9','Gearbox Oil Level/Condition','Check per Gearbox checklist','Per Gearbox checklist','W'),
-            checklistPoint('agt_10','10','Coupling Alignment','Verify motor-gearbox and gearbox-shaft alignment','Per OEM tolerance','A / after maintenance'),
+        { id:'agt_own4', title:'E. AGITATOR', items:[
+            checklistPoint('agt_own4_1','1','','Check condition and mounting of torque arm (shaft-mount gearboxes)','Secure, no cracking, rubber bushes intact',''),
+            checklistPoint('agt_own4_2','2','','Inspect mounting beam/bridge, tank nozzle for cracks, corrosion','No cracks, structurally sound',''),
+            checklistPoint('agt_own4_3','3','','Check gearbox/motor housing for leaks, damage','No leaks, no damage','')
           ]},
-        { id:'agt_bearings', title:'E. Bearings & Vibration', readingNote:'< 80°C or per OEM', items:[
-            checklistPoint('agt_12','12','Bearing Temperature','Check drive/gearbox bearing temperature','< 80°C or per OEM','D/W'),
-            checklistPoint('agt_13','13','Vibration Levels','Measure vibration at drive unit / top of shaft','ISO 10816-3 Zone A/B','M'),
-            checklistPoint('agt_14','14','Torque/Load Monitoring','Check motor current / torque against normal operating range','Within normal process range','D')
-          ], readings:[
-            {id:'agt_brg', label:'Bearing housing', unit:'°C'}
+        { id:'agt_own5', title:'SHAFT & IMPELLER', items:[
+            checklistPoint('agt_own5_1','4','','Check for visible wobble/whip during operation','No visible wobble, within OEM runout',''),
+            checklistPoint('agt_own5_2','5','','Inspect lower steady bearing for wear, lubrication','Within wear limit, lubricated',''),
+            checklistPoint('agt_own5_3','6','','Inspect blades for wear, erosion, cracking, build-up/scaling','No cracks, wear within allowance, clean',''),
+            checklistPoint('agt_own5_4','7','','Check impeller retaining bolts/set screws tight','Torqued to spec, locking device intact','')
           ]},
-        { id:'agt_process', title:'F. Tank & Process', items:[
-            checklistPoint('agt_15','15','Tank Level / Freeboard','Verify liquid level appropriate for impeller submergence','Impeller adequately submerged, no vortex to shaft','D'),
-            checklistPoint('agt_16','16','Vortexing / Splashing','Observe for excessive vortex or splash indicating level/speed issue','Controlled flow pattern, no air entrainment','D')
+        { id:'agt_own6', title:'D. SEAL / STUFFING BOX( If applicable', items:[
+            checklistPoint('agt_own6_1','1','','Check for leakage at tank penetration seal','Minimal/no leakage','')
+          ]},
+        { id:'agt_own7', title:'E. BEARINGS & VIBRATION(if applicable)', items:[
+            checklistPoint('agt_own7_1','1','','Check bearing temperature','< 80°C or per OEM',''),
+            checklistPoint('agt_own7_2','2','','Measure vibration on the bearing','ISO 10816-3 Zone A/B',''),
+            checklistPoint('agt_own7_3','3','','Check motor current / torque against normal operating range','Within normal process range','')
+          ]},
+        { id:'agt_own8', title:'G. TANK & PROCESS', items:[
+            checklistPoint('agt_own8_1','1','','Verify liquid level appropriate for impeller submergence','Impeller adequately submerged, no vortex to shaft',''),
+            checklistPoint('agt_own8_2','2','','Observe for excessive vortex or splash indicating level/speed issue','Controlled flow pattern, no air entrainment','')
           ]}
       ]))},
 
     { id:'linear-screen-standard', title:'Linear Screen — Standard Checklist', dept:'Condition Monitoring — Rotating Equipment',
-      category:'rotating', sourceSheet:'Linear Screen',
-      tagPlaceholder:'e.g. LSC-01', defaultVisual:true, defaultVibration:true, sections:[
-        buildSafetySection('lsc'),
-        { id:'lsc_general', title:'A. General / Structure', items:[
-            checklistPoint('lsc_1','1','Screen Frame/Deck','Inspect side plates, cross members for cracks, fatigue, corrosion','No cracks, structurally sound','M'),
-            checklistPoint('lsc_2','2','Isolators / Springs / Rubber Mounts','Inspect coil springs or rubber isolators for cracking, sagging, breakage','No cracks, even loading, no broken springs','M'),
-            checklistPoint('lsc_3','3','Feed Box / Chute','Check feed chute/box for wear, liner condition, correct feed distribution','Liners within wear limit, even feed spread','W'),
-            checklistPoint('lsc_4','4','Discharge Lip / Chutes','Inspect discharge end for wear and blockage','No excessive wear, unobstructed','W')
+      category:'rotating', sourceSheet:'Linear Screen', driveCouplingField:true,
+      driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
+      tagPlaceholder:'e.g. LSC-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('lsc')].concat(buildMotorSections('lsc_mtr').concat(buildCouplingSections('lsc_cpl'), [
+        { id:'lsc_own1', title:'C. GEARBOX', items:[
+            checklistPoint('lsc_own1_1','1','','Inspect casing for cracks, corrosion, oil weeping at joints/seams','No cracks, no leaks',''),
+            checklistPoint('lsc_own1_2','2','','Check hold-down bolts, torque arm/foot mounting for tightness','All bolts tight, no cracked grout',''),
+            checklistPoint('lsc_own1_3','3','','Check breather clear, not blocked or missing','Clean, functional, correctly fitted','')
           ]},
-        { id:'lsc_media', title:'B. Screen Cloth / Media', items:[
-            checklistPoint('lsc_5','5','Screen Cloth Condition','Inspect for tears, holes, blinding, stretching, wear','No tears/holes beyond spec, aperture size within tolerance','D/W'),
-            checklistPoint('lsc_6','6','Cloth Tensioning','Check tensioning bolts/rails for correct, even tension','Evenly tensioned per OEM, no slack sections','W'),
-            checklistPoint('lsc_7','7','Panel/Clip Retention (modular panels)','Check retaining clips/rails secure, no missing panels','All panels secure, none missing','W'),
-            checklistPoint('lsc_8','8','Support/Rubber Decking under cloth','Inspect support rails/rubber for wear allowing cloth sag','Intact, adequately supporting cloth','M')
+        { id:'lsc_own2', title:'LUBRICATION', items:[
+            checklistPoint('lsc_own2_1','4','','Check oil level via sight glass/dipstick','Between min/max marks',''),
+            checklistPoint('lsc_own2_2','5','','Check colour, clarity, water/metal contamination; take sample if due','Clean, no water/metallic particles, per oil analysis program',''),
+            checklistPoint('lsc_own2_3','6','','Check operating oil/housing temperature','< 80-90°C or per OEM',''),
+            checklistPoint('lsc_own2_4','7','','Inspect shaft seals for leakage','No leaks','')
           ]},
-        { id:'lsc_drive', title:'C. Vibrating Mechanism / Drive', readingNote:'< 80°C, ISO 10816-3 within limit', items:[
-            checklistPoint('lsc_9','9','Vibrator Motor(s)/Exciter Unbalance Weights','Check unbalance weight settings match both motors, security of weights','Weights matched and secure per stroke design','M'),
-            checklistPoint('lsc_10','10','Vibrator Motor Bearings','Check bearing temperature and vibration','< 80°C, ISO 10816-3 within limit','D/W'),
-            checklistPoint('lsc_11','11','Drive Belts (motor to exciter, if applicable)','Inspect belt tension, wear, alignment','Correct tension, no cracking, aligned pulleys','M'),
-            checklistPoint('lsc_12','12','Timing/Synchronisation (dual-motor drive)','Verify counter-rotating motors synchronised (phase angle)','Correct phase relationship maintained','6M'),
-            checklistPoint('lsc_13','13','Stroke & Frequency','Measure screen stroke amplitude and frequency','Within OEM design specification','Q')
-          ], readings:[
-            {id:'lsc_exciter', label:'Exciter bearing', unit:'°C'}
+        { id:'lsc_own3', title:'GEARS & BEARINGS', items:[
+            checklistPoint('lsc_own3_1','8','','Listen for whining, knocking, rattling indicating wear/misalignment','Smooth, consistent mesh noise',''),
+            checklistPoint('lsc_own3_2','9','','Check gear backlash against OEM spec','Within OEM tolerance',''),
+            checklistPoint('lsc_own3_3','10','','Check bearing housing temperatures (input/output)','< 80°C or per OEM, stable trend',''),
+            checklistPoint('lsc_own3_4','11','','Measure vibration at bearing positions','ISO 10816-3 Zone A/B or OEM limit',''),
+            checklistPoint('lsc_own3_5','12','','Lab analysis for Fe/Cu/Cr particles trending','Within baseline trend, no step change','')
           ]},
-        { id:'lsc_bearings', title:'D. Bearings & Lubrication', items:[
-            checklistPoint('lsc_14','14','Exciter Bearing Lubrication','Check grease/oil level and re-lubrication per schedule','Per OEM lubrication schedule','Per schedule'),
-            checklistPoint('lsc_15','15','Bolted Connections (all)','Check all structural and mechanical bolted joints for tightness (fretting risk)','All bolts tight, no fretting/witness marks','M')
+        { id:'lsc_own4', title:'E. COUPLINGS & ALIGNMENT', items:[
+            checklistPoint('lsc_own4_1','1','','Verify motor-to-gearbox alignment (see Coupling checklist)','Per OEM tolerance',''),
+            checklistPoint('lsc_own4_2','2','','Verify gearbox-to-driven equipment alignment','Per OEM tolerance',''),
+            checklistPoint('lsc_own4_3','3','','Check condition and mounting of torque arm (shaft-mount gearboxes)','Secure, no cracking, rubber bushes intact','')
           ]},
-        { id:'lsc_safety', title:'E. Housekeeping', items:[
-            checklistPoint('lsc_17','17','Dust/Material Build-up','Check for material build-up on structure affecting balance','Clean, no significant build-up','W')
+        { id:'lsc_own5', title:'D. SCREEN', items:[
+            checklistPoint('lsc_own5_1','1','','Inspect side plates, cross members for cracks, fatigue, corrosion','No cracks, structurally sound',''),
+            checklistPoint('lsc_own5_2','2','','Inspect coil springs or rubber isolators for cracking, sagging, breakage','No cracks, even loading, no broken springs',''),
+            checklistPoint('lsc_own5_3','3','','Check feed chute/box for wear, liner condition, correct feed distribution','Liners within wear limit, even feed spread',''),
+            checklistPoint('lsc_own5_4','4','','Inspect discharge end for wear and blockage','No excessive wear, unobstructed','')
+          ]},
+        { id:'lsc_own6', title:'SCREEN CLOTH / MEDIA', items:[
+            checklistPoint('lsc_own6_1','5','','Inspect for tears, holes, blinding, stretching, wear','No tears/holes beyond spec, aperture size within tolerance',''),
+            checklistPoint('lsc_own6_2','6','','Check tensioning bolts/rails for correct, even tension','Evenly tensioned per OEM, no slack sections',''),
+            checklistPoint('lsc_own6_3','7','','Check retaining clips/rails secure, no missing panels','All panels secure, none missing',''),
+            checklistPoint('lsc_own6_4','8','','Inspect support rails/rubber for wear allowing cloth sag','Intact, adequately supporting cloth','')
+          ]},
+        { id:'lsc_own7', title:'E. VIBRATING MECHANISM / DRIVE', items:[
+            checklistPoint('lsc_own7_1','1','','Check unbalance weight settings match both motors, security of weights','Weights matched and secure per stroke design',''),
+            checklistPoint('lsc_own7_2','2','','Check bearing temperature and vibration','< 80°C, ISO 10816-3 within limit',''),
+            checklistPoint('lsc_own7_3','3','','Inspect belt tension, wear, alignment','Correct tension, no cracking, aligned pulleys',''),
+            checklistPoint('lsc_own7_4','4','','Verify counter-rotating motors synchronised (phase angle)','Correct phase relationship maintained',''),
+            checklistPoint('lsc_own7_5','5','','Measure screen stroke amplitude and frequency','Within OEM design specification','')
+          ]},
+        { id:'lsc_own8', title:'BEARINGS & LUBRICATION', items:[
+            checklistPoint('lsc_own8_1','6','','Check grease/oil level and re-lubrication per schedule','Per OEM lubrication schedule',''),
+            checklistPoint('lsc_own8_2','7','','Check all structural and mechanical bolted joints for tightness (fretting risk)','All bolts tight, no fretting/witness marks','')
+          ]},
+        { id:'lsc_own9', title:'HOUSEKEEPING', items:[
+            checklistPoint('lsc_own9_1','8','','Check for material build-up on structure affecting balance','Clean, no significant build-up','')
           ]}
-      ]},
+      ]))},
 
     { id:'mineral-sizer-standard', title:'Mineral Sizer — Standard Checklist', dept:'Condition Monitoring — Rotating Equipment',
       category:'rotating', sourceSheet:'Mineral Sizer', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. MSZ-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('msz')].concat(buildMotorSections('msz_mtr').concat(buildCouplingSections('msz_cpl'), [
-        { id:'msz_general', title:'A. General / Structure', items:[
-            checklistPoint('msz_1','1','Frame & Housing','Inspect main frame, side plates for cracks, wear, weld integrity','No cracks, welds sound','M'),
-            checklistPoint('msz_2','2','Foundation / Mounting','Check hold-down bolts and mounting for tightness','All bolts tight, no cracked grout','Q'),
-            checklistPoint('msz_3','3','Feed & Discharge Chutes/Liners','Inspect liners for wear, blockage points','Within wear allowance, unobstructed','W')
+        { id:'msz_own1', title:'C. GENERAL / VISUAL', items:[
+            checklistPoint('msz_own1_1','1','','Inspect casing for cracks, corrosion, oil weeping at joints/seams','No cracks, no leaks',''),
+            checklistPoint('msz_own1_2','2','','Check hold-down bolts, torque arm/foot mounting for tightness','All bolts tight, no cracked grout',''),
+            checklistPoint('msz_own1_3','3','','Check breather clear, not blocked or missing','Clean, functional, correctly fitted','')
           ]},
-        { id:'msz_rolls', title:'B. Rolls & Teeth', readingNote:'< 80°C, ISO 10816-3 within limit', items:[
-            checklistPoint('msz_4','4','Roll Tooth/Pick Condition','Inspect teeth/picks for wear, breakage, looseness','Within OEM wear limit, none broken/loose','W'),
-            checklistPoint('msz_5','5','Roll Shaft Runout/Alignment','Check roll shafts for straightness and correct inter-roll clearance/timing','Within OEM tolerance','A'),
-            checklistPoint('msz_6','6','Roll Shaft Bearings','Check bearing temperature and vibration','< 80°C, ISO 10816-3 within limit','D/W'),
-            checklistPoint('msz_7','7','Bearing Lubrication','Check auto-lube system function, grease level/flow','System functional, correct flow rate','W')
-          ], readings:[
-            {id:'msz_roll', label:'Roll shaft bearing', unit:'°C'}
+        { id:'msz_own2', title:'LUBRICATION', items:[
+            checklistPoint('msz_own2_1','4','','Check oil level via sight glass/dipstick','Between min/max marks',''),
+            checklistPoint('msz_own2_2','5','','Check colour, clarity, water/metal contamination; take sample if due','Clean, no water/metallic particles, per oil analysis program',''),
+            checklistPoint('msz_own2_3','6','','Check operating oil/housing temperature','< 80-90°C or per OEM',''),
+            checklistPoint('msz_own2_4','7','','Inspect shaft seals for leakage','No leaks','')
           ]},
-        { id:'msz_drive', title:'C. Drive System', items:[
-            checklistPoint('msz_9','9','Gearbox(es)','Refer to Gearbox checklist','Per Gearbox checklist','-'),
-            checklistPoint('msz_10','10','Chain/Coupling Drive between Rolls','Inspect drive chain or coupling linking rolls for wear, tension, lubrication','Correct tension, lubricated, within wear limit','M'),
-            checklistPoint('msz_11','11','Torque Limiting Device','Verify shear pin/torque limiter/overload clutch condition and setting','Correct rating fitted, undamaged','6M')
+        { id:'msz_own3', title:'GEARS & BEARINGS', items:[
+            checklistPoint('msz_own3_1','8','','Listen for whining, knocking, rattling indicating wear/misalignment','Smooth, consistent mesh noise',''),
+            checklistPoint('msz_own3_2','9','','Check gear backlash against OEM spec','Within OEM tolerance',''),
+            checklistPoint('msz_own3_3','10','','Check bearing housing temperatures (input/output)','< 80°C or per OEM, stable trend',''),
+            checklistPoint('msz_own3_4','11','','Measure vibration at bearing positions','ISO 10816-3 Zone A/B or OEM limit',''),
+            checklistPoint('msz_own3_5','12','','Lab analysis for Fe/Cu/Cr particles trending','Within baseline trend, no step change','')
           ]},
-        { id:'msz_hydraulic', title:'D. Hydraulic Tramp Release System (if fitted)', items:[
-            checklistPoint('msz_12','12','Hydraulic Power Pack','Check oil level, filter condition, pressure setting','Correct level, clean filter, set pressure per spec','W'),
-            checklistPoint('msz_13','13','Hydraulic Cylinders/Hoses','Inspect for leaks, damage, chafing','No leaks, hoses undamaged','W'),
-            checklistPoint('msz_14','14','Tramp Release Function','Test tramp metal release/reset function','Releases and resets correctly','Q')
+        { id:'msz_own4', title:'E. COUPLINGS & ALIGNMENT', items:[
+            checklistPoint('msz_own4_1','1','','Verify motor-to-gearbox alignment (see Coupling checklist)','Per OEM tolerance',''),
+            checklistPoint('msz_own4_2','2','','Verify gearbox-to-driven equipment alignment','Per OEM tolerance',''),
+            checklistPoint('msz_own4_3','3','','Check condition and mounting of torque arm (shaft-mount gearboxes)','Secure, no cracking, rubber bushes intact','')
           ]},
-        { id:'msz_monitoring', title:'E. Monitoring', items:[
-            checklistPoint('msz_15','15','Vibration Monitoring (rolls/bearings)','Trend vibration levels on all bearing points','Within baseline/ISO limit','M'),
-            checklistPoint('msz_16','16','Motor Current / Load','Monitor motor current for overload/blockage trend','Within nameplate FLA, no sustained spikes','D')
+        { id:'msz_own5', title:'GENERAL / STRUCTURE', items:[
+            checklistPoint('msz_own5_1','4','','Inspect main frame, side plates for cracks, wear, weld integrity','No cracks, welds sound',''),
+            checklistPoint('msz_own5_2','5','','Check hold-down bolts and mounting for tightness','All bolts tight, no cracked grout',''),
+            checklistPoint('msz_own5_3','6','','Inspect liners for wear, blockage points','Within wear allowance, unobstructed','')
+          ]},
+        { id:'msz_own6', title:'ROLLS & TEETH', items:[
+            checklistPoint('msz_own6_1','7','','Inspect teeth/picks for wear, breakage, looseness','Within OEM wear limit, none broken/loose',''),
+            checklistPoint('msz_own6_2','8','','Check roll shafts for straightness and correct inter-roll clearance/timing','Within OEM tolerance',''),
+            checklistPoint('msz_own6_3','9','','Check bearing temperature and vibration','< 80°C, ISO 10816-3 within limit',''),
+            checklistPoint('msz_own6_4','10','','Check auto-lube system function, grease level/flow','System functional, correct flow rate','')
+          ]},
+        { id:'msz_own7', title:'D. DRIVE SYSTEM', items:[
+            checklistPoint('msz_own7_1','1','','Refer to Induction Motor checklist','Per Motor checklist',''),
+            checklistPoint('msz_own7_2','2','','Refer to Gearbox checklist','Per Gearbox checklist',''),
+            checklistPoint('msz_own7_3','3','','Inspect drive chain or coupling linking rolls for wear, tension, lubrication','Correct tension, lubricated, within wear limit',''),
+            checklistPoint('msz_own7_4','4','','Verify shear pin/torque limiter/overload clutch condition and setting','Correct rating fitted, undamaged','')
+          ]},
+        { id:'msz_own8', title:'HYDRAULIC TRAMP RELEASE SYSTEM (if fitted)', items:[
+            checklistPoint('msz_own8_1','5','','Check oil level, filter condition, pressure setting','Correct level, clean filter, set pressure per spec',''),
+            checklistPoint('msz_own8_2','6','','Inspect for leaks, damage, chafing','No leaks, hoses undamaged',''),
+            checklistPoint('msz_own8_3','7','','Test tramp metal release/reset function','Releases and resets correctly','')
+          ]},
+        { id:'msz_own9', title:'MONITORING', items:[
+            checklistPoint('msz_own9_1','8','','Trend vibration levels on all bearing points','Within baseline/ISO limit',''),
+            checklistPoint('msz_own9_2','9','','Monitor motor current for overload/blockage trend','Within nameplate FLA, no sustained spikes','')
           ]}
       ]))},
 
@@ -826,39 +854,38 @@
       category:'rotating', sourceSheet:'Jaw Crusher', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. JC-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('jcr')].concat(buildMotorSections('jcr_mtr').concat(buildCouplingSections('jcr_cpl'), [
-        { id:'jcr_general', title:'A. General / Structure', items:[
-            checklistPoint('jcr_1','1','Main Frame','Inspect frame welds/castings for cracks','No cracks, sound welds','M'),
-            checklistPoint('jcr_2','2','Foundation & Hold-down Bolts','Check foundation bolts, grouting condition','All bolts tight, no cracked grout','Q')
+        { id:'jcr_own1', title:'C. JAW CRUSHER', items:[
+            checklistPoint('jcr_own1_1','1','','Inspect frame welds/castings for cracks','No cracks, sound welds',''),
+            checklistPoint('jcr_own1_2','2','','Check foundation bolts, grouting condition','All bolts tight, no cracked grout','')
           ]},
-        { id:'jcr_chamber', title:'B. Crushing Chamber', items:[
-            checklistPoint('jcr_3','3','Jaw Dies (Fixed & Movable/Swing Jaw)','Inspect dies for wear, cracking, bolt security','Within wear allowance, no cracks, bolts tight','D/W'),
-            checklistPoint('jcr_4','4','Cheek Plates','Inspect side liners for wear','Within wear allowance','W'),
-            checklistPoint('jcr_5','5','Toggle Plate','Inspect toggle plate for wear, cracking at seats','No cracks, seated correctly','W'),
-            checklistPoint('jcr_6','6','Toggle Seat / Beam','Check toggle seat and pitman toggle seat for wear','Within wear allowance','M'),
-            checklistPoint('jcr_7','7','Tension Rod & Springs','Check tension rod, spring condition and pre-load','Springs intact, correct pre-load maintained','M')
+        { id:'jcr_own2', title:'CRUSHING CHAMBER', items:[
+            checklistPoint('jcr_own2_1','3','','Inspect dies for wear, cracking, bolt security','Within wear allowance, no cracks, bolts tight',''),
+            checklistPoint('jcr_own2_2','4','','Inspect side liners for wear','Within wear allowance',''),
+            checklistPoint('jcr_own2_3','5','','Inspect toggle plate for wear, cracking at seats','No cracks, seated correctly',''),
+            checklistPoint('jcr_own2_4','6','','Check toggle seat and pitman toggle seat for wear','Within wear allowance',''),
+            checklistPoint('jcr_own2_5','7','','Check tension rod, spring condition and pre-load','Springs intact, correct pre-load maintained','')
           ]},
-        { id:'jcr_pitman', title:'C. Pitman & Eccentric Shaft', readingNote:'< 80°C, ISO 10816-3 within limit, lubricated', items:[
-            checklistPoint('jcr_8','8','Pitman Assembly','Inspect pitman for cracks, wear at bearing bores','No cracks, within wear limit','6M'),
-            checklistPoint('jcr_9','9','Eccentric Shaft','Check shaft for wear, straightness, surface condition','Within OEM tolerance','A'),
-            checklistPoint('jcr_10','10','Eccentric Shaft Bearings','Check bearing temperature, vibration, lubrication','< 80°C, ISO 10816-3 within limit, lubricated','D/W'),
-            checklistPoint('jcr_11','11','Pitman Bearings/Bushings','Inspect for wear, correct clearance, lubrication','Within OEM clearance, lubricated','6M')
-          ], readings:[
-            {id:'jcr_ecc', label:'Eccentric shaft bearing', unit:'°C'}
+        { id:'jcr_own3', title:'PITMAN & ECCENTRIC SHAFT', items:[
+            checklistPoint('jcr_own3_1','8','','Inspect pitman for cracks, wear at bearing bores','No cracks, within wear limit',''),
+            checklistPoint('jcr_own3_2','9','','Check shaft for wear, straightness, surface condition','Within OEM tolerance',''),
+            checklistPoint('jcr_own3_3','10','','Check bearing temperature, vibration, lubrication','< 80°C, ISO 10816-3 within limit, lubricated',''),
+            checklistPoint('jcr_own3_4','11','','Inspect for wear, correct clearance, lubrication','Within OEM clearance, lubricated','')
           ]},
-        { id:'jcr_flywheel', title:'D. Flywheel & Drive', items:[
-            checklistPoint('jcr_12','12','Flywheel','Inspect for cracks, balance, guard condition','No cracks, balanced, guarded','M'),
-            checklistPoint('jcr_13','13','Drive Belts/Sheaves','Check belt tension, wear, sheave alignment','Correct tension, no cracking, aligned','M'),
+        { id:'jcr_own4', title:'FLYWHEEL & DRIVE', items:[
+            checklistPoint('jcr_own4_1','12','','Inspect for cracks, balance, guard condition','No cracks, balanced, guarded',''),
+            checklistPoint('jcr_own4_2','13','','Check belt tension, wear, sheave alignment','Correct tension, no cracking, aligned',''),
+            checklistPoint('jcr_own4_3','14','','Refer to Motor and Coupling checklists','Per respective checklists','')
           ]},
-        { id:'jcr_lube', title:'E. Lubrication System', items:[
-            checklistPoint('jcr_15','15','Central Lubrication System','Check oil level, filter condition, pump operation, flow to all points','Correct level, clean, system functional','D/W'),
-            checklistPoint('jcr_16','16','Oil Temperature/Pressure','Monitor lube oil temperature and pressure alarms','Within OEM operating range','D')
+        { id:'jcr_own5', title:'D. LUBRICATION SYSTEM', items:[
+            checklistPoint('jcr_own5_1','1','','Check Greasel level, filter condition, pump operation, flow to all points','Correct level, clean, system functional',''),
+            checklistPoint('jcr_own5_2','2','','Monitor lube oil temperature and pressure alarms','Within OEM operating range','')
           ]},
-        { id:'jcr_setting', title:'F. Setting & Protection', items:[
-            checklistPoint('jcr_17','17','Closed Side Setting (CSS)','Verify CSS within target product spec','Within target range','W or per production check'),
-            checklistPoint('jcr_18','18','Overload Protection (relief system)','Check hydraulic/mechanical relief system for tramp iron protection','Functional, resets correctly','Q')
+        { id:'jcr_own6', title:'SETTING & PROTECTION', items:[
+            checklistPoint('jcr_own6_1','3','','Verify CSS within target product spec','Within target range',''),
+            checklistPoint('jcr_own6_2','4','','Check hydraulic/mechanical relief system for tramp iron protection','Functional, resets correctly','')
           ]},
-        { id:'jcr_safety', title:'G. Vibration Monitoring', items:[
-            checklistPoint('jcr_20','20','Vibration Monitoring','Trend vibration on bearing housings','Within baseline/ISO limit','M')
+        { id:'jcr_own7', title:'H. VIBRATION MONITORING', items:[
+            checklistPoint('jcr_own7_1','1','','Trend vibration on bearing housings','Within baseline/ISO limit','')
           ]}
       ]))},
 
@@ -866,65 +893,60 @@
       category:'rotating', sourceSheet:'Centrifugal Fan', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. CF-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('cnf')].concat(buildMotorSections('cnf_mtr').concat(buildCouplingSections('cnf_cpl'), [
-        { id:'cnf_general', title:'A. General / Visual', items:[
-            checklistPoint('cnf_1','1','Fan Casing/Housing','Inspect for corrosion, cracks, erosion, dust build-up','No cracks, minimal build-up','M'),
-            checklistPoint('cnf_2','2','Foundation & Mounting','Check hold-down bolts, anti-vibration mounts','Bolts tight, mounts intact','Q'),
-            checklistPoint('cnf_3','3','Inlet/Outlet Ducting & Dampers','Check duct connections, expansion joints, damper operation','No leaks, dampers operate freely','M')
+        { id:'cnf_own1', title:'C. FAN', items:[
+            checklistPoint('cnf_own1_1','1','','Check hold-down bolts, anti-vibration mounts','Bolts tight, mounts intact',''),
+            checklistPoint('cnf_own1_2','2','','Check duct connections, expansion joints, damper operation','No leaks, dampers operate freely','')
           ]},
-        { id:'cnf_impeller', title:'B. Impeller', items:[
-            checklistPoint('cnf_4','4','Impeller/Blades Condition','Inspect blades for erosion, corrosion, build-up, cracking, imbalance','No cracks, minimal wear/build-up','M / on shutdown'),
-            checklistPoint('cnf_5','5','Impeller Balance','Check for excessive vibration indicating imbalance from wear/build-up','Within ISO 10816 limit','M'),
-            checklistPoint('cnf_6','6','Shaft & Impeller Fastening','Check impeller hub set screws/keys for security','Torqued, locking device intact','6M')
+        { id:'cnf_own2', title:'IMPELLER', items:[
+            checklistPoint('cnf_own2_1','3','','Inspect blades for erosion, corrosion, build-up, cracking, imbalance','No cracks, minimal wear/build-up',''),
+            checklistPoint('cnf_own2_2','4','','Check for excessive vibration indicating imbalance from wear/build-up','Within ISO 10816 limit',''),
+            checklistPoint('cnf_own2_3','5','','Check impeller hub set screws/keys for security','Torqued, locking device intact','')
           ]},
-        { id:'cnf_bearings', title:'C. Bearings & Drive', readingNote:'< 80°C or per OEM', items:[
-            checklistPoint('cnf_7','7','Bearing Temperature','Check DE/NDE bearing temperature','< 80°C or per OEM','D/W'),
-            checklistPoint('cnf_8','8','Bearing Lubrication','Check grease/oil level and re-lubrication per schedule','Per OEM schedule, correct grade','Per schedule'),
-            checklistPoint('cnf_9','9','Vibration Levels','Measure vibration at bearing housings','ISO 10816-3 Zone A/B','M'),
-            checklistPoint('cnf_10','10','Drive Belts/Sheaves (if belt driven)','Check belt tension, wear, sheave alignment','Correct tension, aligned, no cracking','M'),
-            checklistPoint('cnf_12','12','Shaft Seals (bearing pedestal)','Check for oil/grease leakage at shaft seals','No leaks','W')
-          ], readings:[
-            {id:'cnf_de', label:'DE', unit:'°C'}, {id:'cnf_nde', label:'NDE', unit:'°C'}
+        { id:'cnf_own3', title:'BEARINGS & DRIVE', items:[
+            checklistPoint('cnf_own3_1','6','','Check DE/NDE bearing temperature','< 80°C or per OEM',''),
+            checklistPoint('cnf_own3_2','7','','Check grease/oil level and re-lubrication per schedule','Per OEM schedule, correct grade',''),
+            checklistPoint('cnf_own3_3','8','','Measure vibration at bearing housings','ISO 10816-3 Zone A/B',''),
+            checklistPoint('cnf_own3_4','9','','Check belt tension, wear, sheave alignment','Correct tension, aligned, no cracking',''),
+            checklistPoint('cnf_own3_5','10','','Refer to Coupling checklist','Per Coupling checklist',''),
+            checklistPoint('cnf_own3_6','11','','Check for oil/grease leakage at shaft seals','No leaks','')
           ]},
-        { id:'cnf_performance', title:'D. Performance', items:[
-            checklistPoint('cnf_13','13','Airflow / Static Pressure','Check flow/pressure against design duty','Within design operating range','Q'),
-            checklistPoint('cnf_14','14','Motor Current','Check motor amp draw','Within nameplate FLA','M'),
-            checklistPoint('cnf_15','15','Noise Levels','Check for abnormal noise (surge, rubbing, bearing)','No abnormal noise','W')
-          ]},
-              ]))},
+        { id:'cnf_own4', title:'PERFORMANCE', items:[
+            checklistPoint('cnf_own4_1','12','','Check flow/pressure against design duty','Within design operating range',''),
+            checklistPoint('cnf_own4_2','13','','Check motor amp draw','Within nameplate FLA',''),
+            checklistPoint('cnf_own4_3','14','','Check for abnormal noise (surge, rubbing, bearing)','No abnormal noise','')
+          ]}
+      ]))},
 
     { id:'blower', title:'Blower', dept:'Condition Monitoring — Rotating Equipment',
       category:'rotating', sourceSheet:'Blower', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. BLW-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('blw')].concat(buildMotorSections('blw_mtr').concat(buildCouplingSections('blw_cpl'), [
-        { id:'blw_general', title:'A. General / Visual', items:[
-            checklistPoint('blw_1','1','Casing','Inspect blower casing for cracks, corrosion, leaks','No cracks, no leaks','W'),
-            checklistPoint('blw_2','2','Foundation & Mounting','Check hold-down bolts, base condition','Bolts tight, base sound','Q'),
-            checklistPoint('blw_3','3','Inlet Filter/Silencer','Check inlet air filter condition, clean/replace as required','Clean, low pressure-drop','W'),
-            checklistPoint('blw_4','4','Discharge Silencer','Inspect for damage, excessive noise transmission','Intact, effective','M')
+        { id:'blw_own1', title:'C. BLOWER', items:[
+            checklistPoint('blw_own1_1','1','','Inspect blower casing for cracks, corrosion, leaks','No cracks, no leaks',''),
+            checklistPoint('blw_own1_2','2','','Check hold-down bolts, base condition','Bolts tight, base sound',''),
+            checklistPoint('blw_own1_3','3','','Check inlet air filter condition, clean/replace as required','Clean, low pressure-drop',''),
+            checklistPoint('blw_own1_4','4','','Inspect for damage, excessive noise transmission','Intact, effective','')
           ]},
-        { id:'blw_rotating', title:'B. Rotating Element', items:[
-            checklistPoint('blw_5','5','Rotor/Lobe Clearances','Check inter-lobe and lobe-to-casing clearance (on strip/inspection)','Within OEM tolerance','A'),
-            checklistPoint('blw_6','6','Timing Gears','Check gear backlash, tooth condition, gear-case oil','Within OEM tolerance, oil clean & correct level','A / per schedule'),
-            checklistPoint('blw_7','7','Shaft Seals','Check for oil or process leakage at shaft seals','No leaks','W')
+        { id:'blw_own2', title:'ROTATING ELEMENT', items:[
+            checklistPoint('blw_own2_1','5','','Check inter-lobe and lobe-to-casing clearance (on strip/inspection)','Within OEM tolerance',''),
+            checklistPoint('blw_own2_2','6','','Check gear backlash, tooth condition, gear-case oil','Within OEM tolerance, oil clean & correct level',''),
+            checklistPoint('blw_own2_3','7','','Check for oil or process leakage at shaft seals','No leaks','')
           ]},
-        { id:'blw_lube', title:'C. Lubrication & Bearings', readingNote:'< 80°C or per OEM', items:[
-            checklistPoint('blw_8','8','Gear-case Oil Level/Condition','Check oil level, colour, contamination','Correct level, clean','D/W'),
-            checklistPoint('blw_9','9','Bearing Temperature','Check DE/NDE bearing temperature','< 80°C or per OEM','D/W'),
-            checklistPoint('blw_10','10','Vibration Levels','Measure vibration at bearing housings','ISO 10816-3 Zone A/B','M')
-          ], readings:[
-            {id:'blw_de', label:'DE', unit:'°C'}, {id:'blw_nde', label:'NDE', unit:'°C'}
+        { id:'blw_own3', title:'LUBRICATION & BEARINGS', items:[
+            checklistPoint('blw_own3_1','8','','Check oil level, colour, contamination','Correct level, clean',''),
+            checklistPoint('blw_own3_2','9','','Check DE/NDE bearing temperature','< 80°C or per OEM',''),
+            checklistPoint('blw_own3_3','10','','Measure vibration at bearing housings','ISO 10816-3 Zone A/B','')
           ]},
-        { id:'blw_drive', title:'D. Drive & Protection', items:[
-            checklistPoint('blw_11','11','Drive Belts/Coupling','Check belt tension/coupling condition (see Coupling checklist)','Correct tension / per Coupling checklist','M'),
-            checklistPoint('blw_12','12','Pressure Relief Valve','Verify relief valve set point and function','Set per system MAWP, tested per schedule','A'),
-            checklistPoint('blw_13','13','Temperature Trip/Interlock','Verify high discharge temperature trip functional','Trips at set point','Q')
+        { id:'blw_own4', title:'DRIVE & PROTECTION', items:[
+            checklistPoint('blw_own4_1','11','','Verify relief valve set point and function','Set per system MAWP, tested per schedule',''),
+            checklistPoint('blw_own4_2','12','','Verify high discharge temperature trip functional','Trips at set point','')
           ]},
-        { id:'blw_performance', title:'E. Performance', items:[
-            checklistPoint('blw_14','14','Discharge Pressure/Flow','Monitor against design duty point','Within design operating range','D'),
-            checklistPoint('blw_15','15','Motor Current','Check motor amp draw','Within nameplate FLA','M')
+        { id:'blw_own5', title:'F. PERFORMANCE', items:[
+            checklistPoint('blw_own5_1','1','','Monitor against design duty point','Within design operating range',''),
+            checklistPoint('blw_own5_2','2','','Check motor amp draw','Within nameplate FLA','')
           ]},
-        { id:'blw_safety', title:'F. Noise Enclosure', items:[
-            checklistPoint('blw_17','17','Noise Enclosure (if fitted)','Check acoustic enclosure panels intact, ventilation clear','Intact, vents unobstructed','M')
+        { id:'blw_own6', title:'G. NOISE ENCLOSURE', items:[
+            checklistPoint('blw_own6_1','1','','Check acoustic enclosure panels intact, ventilation clear','Intact, vents unobstructed','')
           ]}
       ]))},
 
@@ -932,35 +954,28 @@
       category:'rotating', sourceSheet:'Centrifuge', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. CTF-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('ctf')].concat(buildMotorSections('ctf_mtr').concat(buildCouplingSections('ctf_cpl'), [
-        { id:'ctf_general', title:'A. General / Visual', items:[
-            checklistPoint('ctf_1','1','Casing/Housing','Inspect casing for cracks, corrosion, leaks','No cracks, no leaks','W'),
-            checklistPoint('ctf_2','2','Foundation & Isolators','Check mounting, vibration isolators/dampers condition','Secure, isolators intact','M'),
-            checklistPoint('ctf_3','3','Feed/Discharge Piping & Chutes','Check for leaks, blockage, wear','No leaks, unobstructed','D')
+        { id:'ctf_own1', title:'C. CENTRIFUGE', items:[
+            checklistPoint('ctf_own1_1','1','','Inspect casing for cracks, corrosion, leaks','No cracks, no leaks',''),
+            checklistPoint('ctf_own1_2','2','','Check mounting, vibration isolators/dampers condition','Secure, isolators intact',''),
+            checklistPoint('ctf_own1_3','3','','Check for leaks, blockage, wear','No leaks, unobstructed','')
           ]},
-        { id:'ctf_bowl', title:'B. Bowl / Basket & Scroll', items:[
-            checklistPoint('ctf_4','4','Bowl/Basket Condition','Inspect for wear, cracking, imbalance, corrosion (borescope/strip)','No cracks, within wear limit','A or per OEM'),
-            checklistPoint('ctf_5','5','Scroll/Conveyor (Decanter type)','Inspect scroll flighting for wear/erosion, tile condition','Within wear allowance, tiles secure','A'),
-            checklistPoint('ctf_6','6','Screen Panels (Screen-bowl type)','Inspect screen panels for blinding, wear, tears','Clear apertures, no tears','W')
+        { id:'ctf_own2', title:'BOWL / BASKET & SCROLL', items:[
+            checklistPoint('ctf_own2_1','4','','Inspect for wear, cracking, imbalance, corrosion (borescope/strip)','No cracks, within wear limit',''),
+            checklistPoint('ctf_own2_2','5','','Inspect scroll flighting for wear/erosion, tile condition','Within wear allowance, tiles secure',''),
+            checklistPoint('ctf_own2_3','6','','Inspect screen panels for blinding, wear, tears','Clear apertures, no tears','')
           ]},
-        { id:'ctf_drive', title:'C. Drive System', items:[
-            checklistPoint('ctf_8','8','Back-drive/Differential Gearbox (Decanter)','Check oil level, condition, torque reading trend','Correct level, clean, torque within normal range','W'),
-            checklistPoint('ctf_9','9','Drive Belts (if fitted)','Check belt tension, wear, alignment','Correct tension, aligned','M')
+        { id:'ctf_own3', title:'BEARINGS & VIBRATION', items:[
+            checklistPoint('ctf_own3_1','7','','Check bowl/bearing housing temperature','< 80°C or per OEM',''),
+            checklistPoint('ctf_own3_2','8','','Monitor vibration (often continuous online monitoring)','Within OEM/ISO trip limits',''),
+            checklistPoint('ctf_own3_3','9','','Inspect condition of anti-vibration mounts','No cracks, even compression','')
           ]},
-        { id:'ctf_bearings', title:'D. Bearings & Vibration', readingNote:'< 80°C or per OEM', items:[
-            checklistPoint('ctf_10','10','Main Bearing Temperature','Check bowl/bearing housing temperature','< 80°C or per OEM','D/W'),
-            checklistPoint('ctf_11','11','Vibration Monitoring','Monitor vibration (often continuous online monitoring)','Within OEM/ISO trip limits','D (online) / M (manual)'),
-            checklistPoint('ctf_12','12','Vibration Dampers/Shock Mounts','Inspect condition of anti-vibration mounts','No cracks, even compression','M')
-          ], readings:[
-            {id:'ctf_bowl_brg', label:'Bowl bearing', unit:'°C'}
+        { id:'ctf_own4', title:'CONTROL SYSTEMS', items:[
+            checklistPoint('ctf_own4_1','10','','Verify bowl speed sensor readings accurate','Matches actual speed ±tolerance',''),
+            checklistPoint('ctf_own4_2','11','','Verify scroll overload/torque limiting protection functional','Trips/alarms at set point','')
           ]},
-        { id:'ctf_control', title:'E. Control Systems', items:[
-            checklistPoint('ctf_13','13','Vibration Trip/Interlock','Test high-vibration automatic shutdown function','Trips at set point','Q'),
-            checklistPoint('ctf_14','14','Speed Sensors','Verify bowl speed sensor readings accurate','Matches actual speed ±tolerance','Q'),
-            checklistPoint('ctf_16','16','Torque/Overload Protection','Verify scroll overload/torque limiting protection functional','Trips/alarms at set point','Q')
-          ]},
-        { id:'ctf_performance', title:'F. Performance', items:[
-            checklistPoint('ctf_17','17','Cake Dryness / Centrate Clarity','Monitor process performance indicators','Within process target','D'),
-            checklistPoint('ctf_18','18','Motor/Back-drive Current','Monitor current draw trend','Within normal operating range','D')
+        { id:'ctf_own5', title:'G. PERFORMANCE', items:[
+            checklistPoint('ctf_own5_1','1','','Monitor process performance indicators','Within process target',''),
+            checklistPoint('ctf_own5_2','2','','Monitor current draw trend','Within normal operating range','')
           ]}
       ]))},
 
@@ -968,28 +983,24 @@
       category:'rotating', sourceSheet:'Rotary Valve', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. RV-01', defaultVisual:true, defaultVibration:false, sections: [buildSafetySection('rov')].concat(buildMotorSections('rov_mtr').concat(buildCouplingSections('rov_cpl'), [
-        { id:'rov_general', title:'A. General / Visual', items:[
-            checklistPoint('rov_1','1','Housing/Casing','Inspect for cracks, corrosion, wear, air/material leakage','No cracks, minimal leakage','W'),
-            checklistPoint('rov_2','2','Inlet/Outlet Flanges','Check gasket condition, bolt tightness','No leaks, bolts tight','M'),
-            checklistPoint('rov_3','3','Mounting/Support','Check support structure and fasteners','Secure, no cracking','Q')
+        { id:'rov_own1', title:'C. GENERAL / VISUAL', items:[
+            checklistPoint('rov_own1_1','1','','Inspect for cracks, corrosion, wear, air/material leakage','No cracks, minimal leakage',''),
+            checklistPoint('rov_own1_2','2','','Check gasket condition, bolt tightness','No leaks, bolts tight',''),
+            checklistPoint('rov_own1_3','3','','Check support structure and fasteners','Secure, no cracking','')
           ]},
-        { id:'rov_rotor', title:'B. Rotor', items:[
-            checklistPoint('rov_4','4','Rotor Tip Clearance','Check clearance between rotor blades and housing','Within OEM tolerance','6M or per wear trend'),
-            checklistPoint('rov_5','5','Rotor Blade/Tip Wear','Inspect blade tips/wear strips for wear, damage','Within OEM wear limit','M'),
-            checklistPoint('rov_6','6','Rotor Shaft & Bearings','Check shaft for wear, bearing condition, lubrication','Within tolerance, lubricated','M')
+        { id:'rov_own2', title:'ROTOR', items:[
+            checklistPoint('rov_own2_1','4','','Check clearance between rotor blades and housing','Within OEM tolerance',''),
+            checklistPoint('rov_own2_2','5','','Inspect blade tips/wear strips for wear, damage','Within OEM wear limit',''),
+            checklistPoint('rov_own2_3','6','','Check shaft for wear, bearing condition, lubrication','Within tolerance, lubricated','')
           ]},
-        { id:'rov_sealing', title:'C. Sealing', items:[
-            checklistPoint('rov_7','7','Shaft Seals / Packing Glands','Check for leakage at shaft penetrations','No leaks','W'),
-            checklistPoint('rov_8','8','Air Purge System (if fitted)','Check purge air pressure/flow to shaft seals','Per design spec','W')
+        { id:'rov_own3', title:'SEALING', items:[
+            checklistPoint('rov_own3_1','7','','Check for leakage at shaft penetrations','No leaks',''),
+            checklistPoint('rov_own3_2','8','','Check purge air pressure/flow to shaft seals','Per design spec','')
           ]},
-        { id:'rov_drive', title:'D. Drive', items:[
-            checklistPoint('rov_10','10','Shear Pin / Torque Limiter','Check condition and correct rating of overload protection','Correct rating, intact','6M'),
-            checklistPoint('rov_11','11','Coupling/Chain Drive','Refer to Coupling checklist / check chain tension and lubrication','Per Coupling checklist / correct tension','M')
-          ]},
-        { id:'rov_performance', title:'E. Performance', items:[
-            checklistPoint('rov_12','12','Rotational Speed','Verify rotor speed matches process control set point','Within ±5% of set point','M'),
-            checklistPoint('rov_13','13','Motor Current','Monitor for blockage/overload trend','Within nameplate FLA','D'),
-            checklistPoint('rov_15','15','Explosion/Isolation Rating (if applicable)','Verify valve maintains required rotary airlock isolation (dust/explosion)','Meets required isolation/ATEX rating','A')
+        { id:'rov_own4', title:'PERFORMANCE', items:[
+            checklistPoint('rov_own4_1','9','','Verify rotor speed matches process control set point','Within ±5% of set point',''),
+            checklistPoint('rov_own4_2','10','','Monitor for blockage/overload trend','Within nameplate FLA',''),
+            checklistPoint('rov_own4_3','11','','Verify valve maintains required rotary airlock isolation (dust/explosion)','Meets required isolation/ATEX rating','')
           ]}
       ]))},
 
@@ -997,79 +1008,80 @@
       category:'rotating', sourceSheet:'Conveyor Belt-Pulleys', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. CV-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('cbp')].concat(buildMotorSections('cbp_mtr').concat(buildCouplingSections('cbp_cpl'), [
-        { id:'cbp_belt', title:'A. Belt', items:[
-            checklistPoint('cbp_1','1','Belt Surface/Carcass Condition','Inspect top/bottom cover for cuts, gouges, exposed carcass, delamination','No exposed carcass, wear within allowance','D/W'),
-            checklistPoint('cbp_2','2','Belt Splices','Inspect vulcanised/mechanical splices for separation, damage','Intact, no separation','W'),
-            checklistPoint('cbp_3','3','Belt Tracking','Check belt runs centrally on all pulleys/idlers','Centred, no persistent edge contact','D'),
-            checklistPoint('cbp_4','4','Belt Edge Damage/Fraying','Inspect belt edges for fraying, cracking','No significant fraying','W')
+        { id:'cbp_own1', title:'C. BELT', items:[
+            checklistPoint('cbp_own1_1','1','','Inspect top/bottom cover for cuts, gouges, exposed carcass, delamination','No exposed carcass, wear within allowance',''),
+            checklistPoint('cbp_own1_2','2','','Inspect vulcanised/mechanical splices for separation, damage','Intact, no separation',''),
+            checklistPoint('cbp_own1_3','3','','Check belt runs centrally on all pulleys/idlers','Centred, no persistent edge contact',''),
+            checklistPoint('cbp_own1_4','4','','Inspect belt edges for fraying, cracking','No significant fraying','')
           ]},
-        { id:'cbp_head', title:'B. Head Pulley', readingNote:'< 80°C, ISO 10816-3 within limit', items:[
-            checklistPoint('cbp_5','5','Lagging Condition','Inspect lagging for wear, delamination, embedded material','Within wear allowance, bonded, clear grooves','W'),
-            checklistPoint('cbp_6','6','Bearing Temperature & Vibration','Check DE/NDE bearing condition','< 80°C, ISO 10816-3 within limit','D/W'),
-            checklistPoint('cbp_7','7','Shaft & Hub Condition','Inspect for cracking, fretting at shaft/hub interface','No cracks, no fretting','6M'),
-            checklistPoint('cbp_8','8','Drive Coupling/Guard','Refer to Coupling checklist; verify guard fitted','Per Coupling checklist, guard secure','M')
-          ], readings:[
-            {id:'cbp_head_de', label:'Head pulley DE', unit:'°C'}, {id:'cbp_head_nde', label:'Head pulley NDE', unit:'°C'}
+        { id:'cbp_own2', title:'D. HEAD PULLEY', items:[
+            checklistPoint('cbp_own2_1','1','','Inspect lagging for wear, delamination, embedded material','Within wear allowance, bonded, clear grooves',''),
+            checklistPoint('cbp_own2_2','2','','Check DE/NDE bearing condition','< 80°C, ISO 10816-3 within limit',''),
+            checklistPoint('cbp_own2_3','3','','Inspect for cracking, fretting at shaft/hub interface','No cracks, no fretting',''),
+            checklistPoint('cbp_own2_4','4','','Refer to Coupling checklist; verify guard fitted','Per Coupling checklist, guard secure','')
           ]},
-        { id:'cbp_snub', title:'C. Snub Pulley', items:[
-            checklistPoint('cbp_9','9','Lagging/Shell Condition','Inspect for wear, material build-up, damage','Within wear allowance, minimal build-up','W'),
-            checklistPoint('cbp_10','10','Bearing Condition','Check temperature and vibration','< 80°C, ISO 10816-3 within limit','M'),
-            checklistPoint('cbp_11','11','Wrap Angle/Alignment','Verify pulley alignment maintains correct belt wrap on drive pulley','Per design geometry, no belt slip','Q')
+        { id:'cbp_own3', title:'E. SNUB PULLEY(if applicable)', items:[
+            checklistPoint('cbp_own3_1','1','','Inspect for wear, material build-up, damage','Within wear allowance, minimal build-up',''),
+            checklistPoint('cbp_own3_2','2','','Check temperature and vibration','< 80°C, ISO 10816-3 within limit',''),
+            checklistPoint('cbp_own3_3','3','','Verify pulley alignment maintains correct belt wrap on drive pulley','Per design geometry, no belt slip','')
           ]},
-        { id:'cbp_bend', title:'D. Bend Pulley', items:[
-            checklistPoint('cbp_12','12','Shell/Lagging Condition','Inspect for wear, corrosion, build-up','Within allowance, minimal build-up','W'),
-            checklistPoint('cbp_13','13','Bearing Condition','Check temperature and vibration','< 80°C, ISO 10816-3 within limit','M'),
-            checklistPoint('cbp_14','14','Alignment (Squareness to belt line)','Verify pulley square to conveyor centreline','Within OEM tolerance','A')
+        { id:'cbp_own4', title:'F. BEND PULLEY(if applicable)', items:[
+            checklistPoint('cbp_own4_1','1','','Inspect for wear, corrosion, build-up','Within allowance, minimal build-up',''),
+            checklistPoint('cbp_own4_2','2','','Check temperature and vibration','< 80°C, ISO 10816-3 within limit',''),
+            checklistPoint('cbp_own4_3','3','','Verify pulley square to conveyor centreline','Within OEM tolerance','')
           ]},
-        { id:'cbp_takeup', title:'E. Take-up Pulley & Tensioning System', items:[
-            checklistPoint('cbp_15','15','Take-up Frame/Carriage','Inspect guide rails, rollers/wheels for wear, alignment','Free movement, within wear limit','M'),
-            checklistPoint('cbp_16','16','Counterweight / Tensioning Device','Check counterweight condition, cables/chains, or screw take-up mechanism','Correct tension maintained, no cable fraying','W'),
-            checklistPoint('cbp_17','17','Take-up Travel/Position','Verify take-up position within travel limits (not at end of travel)','Within marked travel range','W'),
-            checklistPoint('cbp_18','18','Bearing Condition','Check temperature and vibration','< 80°C, ISO 10816-3 within limit','M'),
-            checklistPoint('cbp_19','19','Limit Switches','Test take-up travel limit switches','Functional, correctly set','Q')
+        { id:'cbp_own5', title:'G. TAKE-UP PULLEY & TENSIONING SYSTEM(if applicable)', items:[
+            checklistPoint('cbp_own5_1','1','','Inspect guide rails, rollers/wheels for wear, alignment','Free movement, within wear limit',''),
+            checklistPoint('cbp_own5_2','2','','Check counterweight condition, cables/chains, or screw take-up mechanism','Correct tension maintained, no cable fraying',''),
+            checklistPoint('cbp_own5_3','3','','Verify take-up position within travel limits (not at end of travel)','Within marked travel range',''),
+            checklistPoint('cbp_own5_4','4','','Check temperature and vibration','< 80°C, ISO 10816-3 within limit',''),
+            checklistPoint('cbp_own5_5','5','','Test take-up travel limit switches','Functional, correctly set','')
           ]},
-        { id:'cbp_tail', title:'F. Tail Pulley', items:[
-            checklistPoint('cbp_20','20','Lagging/Shell Condition','Inspect for wear, material build-up, corrosion','Within allowance, minimal build-up','W'),
-            checklistPoint('cbp_21','21','Bearing Condition','Check temperature and vibration','< 80°C, ISO 10816-3 within limit','M'),
-            checklistPoint('cbp_22','22','Tail Guard / Nip Point Guarding','Verify nip-point guards fitted at tail pulley','Fitted per guarding standard','M')
+        { id:'cbp_own6', title:'H. TAIL PULLEY', items:[
+            checklistPoint('cbp_own6_1','1','','Inspect for wear, material build-up, corrosion','Within allowance, minimal build-up',''),
+            checklistPoint('cbp_own6_2','2','','Check temperature and vibration','< 80°C, ISO 10816-3 within limit',''),
+            checklistPoint('cbp_own6_3','3','','Verify nip-point guards fitted at tail pulley','Fitted per guarding standard','')
           ]},
-        { id:'cbp_generalidlers', title:'G. General — Idlers, Structure, Drive', items:[
-            checklistPoint('cbp_23','23','Troughing/Return Idlers','Check for seized, worn, missing idler rollers','Free rotating, none seized/missing','W'),
-            checklistPoint('cbp_24','24','Impact Idlers/Bars (loading zone)','Inspect impact rollers/bars for wear, damage','Within wear allowance','M'),
-            checklistPoint('cbp_25','25','Skirting & Sealing','Check skirt rubber condition and adjustment at loading points','Sealed, minimal spillage','W'),
-            checklistPoint('cbp_26','26','Belt Cleaners/Scrapers','Check primary/secondary scraper blade condition and tension','Effective cleaning, blades within wear limit','W'),
-            checklistPoint('cbp_27','27','Structure/Gantry','Inspect conveyor structure, walkways, handrails for corrosion/damage','Structurally sound, compliant','Q'),
-          ]},
-              ]))},
+        { id:'cbp_own7', title:'I. GENERAL - IDLERS, STRUCTURE, DRIVE', items:[
+            checklistPoint('cbp_own7_1','1','','Check for seized, worn, missing idler rollers','Free rotating, none seized/missing',''),
+            checklistPoint('cbp_own7_2','2','','Inspect impact rollers/bars for wear, damage','Within wear allowance',''),
+            checklistPoint('cbp_own7_3','3','','Check skirt rubber condition and adjustment at loading points','Sealed, minimal spillage',''),
+            checklistPoint('cbp_own7_4','4','','Check primary/secondary scraper blade condition and tension','Effective cleaning, blades within wear limit',''),
+            checklistPoint('cbp_own7_5','5','','Inspect conveyor structure, walkways, handrails for corrosion/damage','Structurally sound, compliant',''),
+            checklistPoint('cbp_own7_6','6','','Refer to Motor and Gearbox checklists','Per respective checklists','')
+          ]}
+      ]))},
 
     { id:'screw-conveyor', title:'Screw Conveyor', dept:'Condition Monitoring — Rotating Equipment',
       category:'rotating', sourceSheet:'Screw Conveyor', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. SC-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('scc')].concat(buildMotorSections('scc_mtr').concat(buildCouplingSections('scc_cpl'), [
-        { id:'scc_general', title:'A. General / Structure', items:[
-            checklistPoint('scc_1','1','Trough/Casing','Inspect trough/tube for wear-through, corrosion, cracked welds','No wear-through, sound welds','M'),
-            checklistPoint('scc_2','2','Cover Plates/Access Doors','Check covers fitted, sealed, secured (dust/safety)','Fitted, sealed, secure','W'),
-            checklistPoint('scc_3','3','Support Structure/Saddles','Check mounting supports for corrosion, looseness','Secure, sound condition','Q')
+        { id:'scc_own1', title:'C. SCREW CONVEYOR', items:[
+            checklistPoint('scc_own1_1','1','','Trough/Casing','Inspect trough/tube for wear-through, corrosion, cracked welds',''),
+            checklistPoint('scc_own1_2','2','','Cover Plates/Access Doors','Check covers fitted, sealed, secured (dust/safety)',''),
+            checklistPoint('scc_own1_3','3','','Support Structure/Saddles','Check mounting supports for corrosion, looseness','')
           ]},
-        { id:'scc_screw', title:'B. Screw / Flight', items:[
-            checklistPoint('scc_4','4','Screw Flight Wear','Inspect flighting edges for wear, thinning, deformation','Within OEM wear allowance','6M'),
-            checklistPoint('scc_5','5','Flight-to-Trough Clearance','Check running clearance between flight OD and trough','Within OEM tolerance','6M'),
-            checklistPoint('scc_6','6','Shaft Straightness','Check for shaft bow/whip during operation','No visible whip','M')
+        { id:'scc_own2', title:'SCREW / FLIGHT', items:[
+            checklistPoint('scc_own2_1','4','','Screw Flight Wear','Inspect flighting edges for wear, thinning, deformation',''),
+            checklistPoint('scc_own2_2','5','','Flight-to-Trough Clearance','Check running clearance between flight OD and trough',''),
+            checklistPoint('scc_own2_3','6','','Shaft Straightness','Check for shaft bow/whip during operation','')
           ]},
-        { id:'scc_bearings', title:'C. Bearings', readingNote:'< 80°C, ISO 10816-3 within limit, lubricated', items:[
-            checklistPoint('scc_7','7','End Bearings (Drive & Tail)','Check temperature, vibration, lubrication, leakage','< 80°C, ISO 10816-3 within limit, lubricated','D/W'),
-            checklistPoint('scc_8','8','Hanger Bearings (intermediate)','Inspect hanger bearings for wear, play, lubrication; listen for noise','Within wear limit, lubricated, no abnormal noise','W')
+        { id:'scc_own3', title:'BEARINGS', items:[
+            checklistPoint('scc_own3_1','7','','End Bearings (Drive & Tail)','Check temperature, vibration, lubrication, leakage',''),
+            checklistPoint('scc_own3_2','8','','Hanger Bearings (intermediate)','Inspect hanger bearings for wear, play, lubrication; listen for noise','')
           ]},
-        { id:'scc_drive', title:'D. Drive', items:[
-            checklistPoint('scc_11','11','Shear Pin/Torque Limiter','Check condition and rating of overload protection','Correct rating, intact','6M')
+        { id:'scc_own4', title:'DRIVE', items:[
+            checklistPoint('scc_own4_1','9','','Drive Motor & Gearbox','Refer to Motor and Gearbox checklists',''),
+            checklistPoint('scc_own4_2','10','','Coupling','Refer to Coupling checklist',''),
+            checklistPoint('scc_own4_3','11','','Shear Pin/Torque Limiter','Check condition and rating of overload protection','')
           ]},
-        { id:'scc_inout', title:'E. Inlet / Outlet', items:[
-            checklistPoint('scc_12','12','Inlet Gate/Feed Opening','Check for blockage, correct feed rate control','Unobstructed, correctly controlled','D'),
-            checklistPoint('scc_13','13','Outlet Gate/Discharge','Check discharge gate operation, wear','Free operation, within wear limit','W'),
-            checklistPoint('scc_14','14','Material Build-up','Check for material carry-over/build-up in trough affecting flow','Clear, no significant build-up','W')
+        { id:'scc_own5', title:'INLET / OUTLET', items:[
+            checklistPoint('scc_own5_1','12','','Inlet Gate/Feed Opening','Check for blockage, correct feed rate control',''),
+            checklistPoint('scc_own5_2','13','','Outlet Gate/Discharge','Check discharge gate operation, wear',''),
+            checklistPoint('scc_own5_3','14','','Material Build-up','Check for material carry-over/build-up in trough affecting flow','')
           ]},
-        { id:'scc_safety', title:'F. Monitoring', items:[
-            checklistPoint('scc_16','16','Motor Current / Overload Trend','Monitor for jamming/overload indication','Within nameplate FLA','D')
+        { id:'scc_own6', title:'MONITORING', items:[
+            checklistPoint('scc_own6_1','15','','Monitor motor current for overload/blockage trend','Within nameplate FLA, no sustained spikes','')
           ]}
       ]))},
 
@@ -1077,65 +1089,64 @@
       category:'rotating', sourceSheet:'Ball SAG Rod Mill', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. MILL-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('bsr')].concat(buildMotorSections('bsr_mtr').concat(buildCouplingSections('bsr_cpl'), [
-        { id:'bsr_shell', title:'A. Shell & Liners', items:[
-            checklistPoint('bsr_1','1','Mill Shell','Inspect for cracks, deformation, weld integrity','No cracks, sound welds','Per shutdown'),
-            checklistPoint('bsr_2','2','Liners (Shell & Lifter)','Inspect for wear, cracking, loose bolts','Within wear allowance, bolts tight','Per shutdown/M visual'),
-            checklistPoint('bsr_3','3','Feed & Discharge End Liners/Trommel','Inspect for wear, blinding (trommel), cracking','Within wear allowance, apertures clear','W')
+        { id:'bsr_own1', title:'C. MILL', items:[
+            checklistPoint('bsr_own1_1','1','','Inspect for cracks, deformation, weld integrity','No cracks, sound welds',''),
+            checklistPoint('bsr_own1_2','2','','Inspect for wear, cracking, loose bolts','Within wear allowance, bolts tight',''),
+            checklistPoint('bsr_own1_3','3','','Inspect for wear, blinding (trommel), cracking','Within wear allowance, apertures clear','')
           ]},
-        { id:'bsr_trunnion', title:'B. Trunnion & Bearings', readingNote:'< 60-70°C or per OEM', items:[
-            checklistPoint('bsr_4','4','Trunnion Bearing Temperature','Check feed/discharge trunnion bearing temperature','< 60-70°C or per OEM','D'),
-            checklistPoint('bsr_5','5','Trunnion Bearing Lubrication','Check oil flow, filtration, pressure of lube system','Per OEM spec, filters clean','D'),
-            checklistPoint('bsr_6','6','Trunnion Seals','Check for slurry/oil leakage at trunnion seals','No leaks','D')
-          ], readings:[
-            {id:'bsr_feed_trunnion', label:'Feed trunnion', unit:'°C'}, {id:'bsr_disch_trunnion', label:'Discharge trunnion', unit:'°C'}
+        { id:'bsr_own2', title:'C. TRUNNION & BEARINGS', items:[
+            checklistPoint('bsr_own2_1','1','','Check feed/discharge trunnion bearing temperature','< 60-70°C or per OEM',''),
+            checklistPoint('bsr_own2_2','2','','Check oil flow, filtration, pressure of lube system','Per OEM spec, filters clean',''),
+            checklistPoint('bsr_own2_3','3','','Check for slurry/oil leakage at trunnion seals','No leaks','')
           ]},
-        { id:'bsr_drive', title:'C. Drive System', items:[
-            checklistPoint('bsr_7','7','Girth Gear & Pinion','Inspect tooth contact pattern, wear, lubrication (spray system)','Correct contact pattern, adequate lubrication film','W'),
-            checklistPoint('bsr_8','8','Pinion Bearings','Check temperature and vibration','< 80°C, within OEM vibration limit','D'),
-            checklistPoint('bsr_10','10','Inching Drive','Test inching drive function for maintenance positioning','Functional, engages/disengages correctly','Per shutdown')
+        { id:'bsr_own3', title:'DRIVE SYSTEM', items:[
+            checklistPoint('bsr_own3_1','4','','Inspect tooth contact pattern, wear, lubrication (spray system)','Correct contact pattern, adequate lubrication film',''),
+            checklistPoint('bsr_own3_2','5','','Check temperature and vibration','< 80°C, within OEM vibration limit',''),
+            checklistPoint('bsr_own3_3','6','','Refer to Motor checklist / specialist GMD procedures','Per Motor checklist / OEM GMD procedure',''),
+            checklistPoint('bsr_own3_4','7','','Test inching drive function for maintenance positioning','Functional, engages/disengages correctly','')
           ]},
-        { id:'bsr_monitoring', title:'D. Monitoring', items:[
-            checklistPoint('bsr_11','11','Mill Vibration Monitoring','Monitor bearing and structure vibration trend','Within baseline/OEM limit','D'),
-            checklistPoint('bsr_12','12','Mill Sound/Load (Mill Ear)','Monitor mill charge noise for optimal ball/pulp level','Within target range','D')
+        { id:'bsr_own4', title:'MONITORING', items:[
+            checklistPoint('bsr_own4_1','8','','Monitor bearing and structure vibration trend','Within baseline/OEM limit',''),
+            checklistPoint('bsr_own4_2','9','','Monitor mill charge noise for optimal ball/pulp level','Within target range','')
           ]}
       ]))},
 
     { id:'vibrating-feeder', title:'Vibrating Feeder', dept:'Condition Monitoring — Rotating Equipment',
-      category:'rotating', sourceSheet:'Vibrating Feeder',
-      tagPlaceholder:'e.g. VF-01', defaultVisual:true, defaultVibration:true, sections:[
-        buildSafetySection('vbf'),
-        { id:'vbf_structure', title:'A. Structure & Isolators', items:[
-            checklistPoint('vbf_1','1','Feeder Pan/Tray','Inspect for wear-through, cracking, liner condition','Within wear allowance, no cracks','W'),
-            checklistPoint('vbf_2','2','Springs/Rubber Isolators','Inspect for cracking, sagging, uneven compression','No cracks, even loading','M'),
-            checklistPoint('vbf_3','3','Grizzly Bars (if fitted)','Inspect bars for wear, bending, gap consistency','Within wear allowance, correct gap','W')
+      category:'rotating', sourceSheet:'Vibrating Feeder', driveCouplingField:true,
+      driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
+      tagPlaceholder:'e.g. VF-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('vbf')].concat(buildMotorSections('vbf_mtr').concat(buildCouplingSections('vbf_cpl'), [
+        { id:'vbf_own1', title:'C. VIBRATION FEEDER', items:[
+            checklistPoint('vbf_own1_1','1','','Inspect for wear-through, cracking, liner condition','Within wear allowance, no cracks',''),
+            checklistPoint('vbf_own1_2','2','','Inspect for cracking, sagging, uneven compression','No cracks, even loading',''),
+            checklistPoint('vbf_own1_3','3','','Inspect bars for wear, bending, gap consistency','Within wear allowance, correct gap','')
           ]},
-        { id:'vbf_drive', title:'B. Drive / Exciter', readingNote:'< 80°C, within ISO limit, weights matched', items:[
-            checklistPoint('vbf_4','4','Vibrating Motor(s)/Exciter','Check bearing temperature, vibration, unbalance weight setting','< 80°C, within ISO limit, weights matched','D/W'),
-            checklistPoint('vbf_5','5','Synchronisation (dual drive)','Verify counter-rotating motors synchronised','Correct phase relationship','6M')
-          ], readings:[
-            {id:'vbf_exciter', label:'Exciter bearing', unit:'°C'}
+        { id:'vbf_own2', title:'DRIVE / EXCITER', items:[
+            checklistPoint('vbf_own2_1','4','','Check bearing temperature, vibration, unbalance weight setting','< 80°C, within ISO limit, weights matched',''),
+            checklistPoint('vbf_own2_2','5','','Verify counter-rotating motors synchronised','Correct phase relationship','')
           ]},
-        { id:'vbf_safety', title:'C. Structural Connections', items:[
-            checklistPoint('vbf_7','7','Bolted Connections','Check structural and drive bolts for tightness/fretting','All tight, no fretting','M')
+        { id:'vbf_own3', title:'STRUCTURAL CONNECTIONS', items:[
+            checklistPoint('vbf_own3_1','6','','Check structural and drive bolts for tightness/fretting','All tight, no fretting','')
           ]}
-      ]},
+      ]))},
 
     { id:'thickener-rake-standard', title:'Thickener Rake — Standard Checklist', dept:'Condition Monitoring — Rotating Equipment',
       category:'rotating', sourceSheet:'Thickener Rake', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. TKR-01', defaultVisual:true, defaultVibration:false, sections: [buildSafetySection('thr')].concat(buildMotorSections('thr_mtr').concat(buildCouplingSections('thr_cpl'), [
-        { id:'thr_drivehead', title:'A. Drive Head', items:[
-            checklistPoint('thr_2','2','Torque Tube/Cage','Inspect for cracking, corrosion','No cracks','6M'),
-            checklistPoint('thr_3','3','Rake Lifting Mechanism','Check auto-lift function for high-torque protection','Functional, raises rake on overload','Q'),
-            checklistPoint('thr_4','4','Torque Indicator/Alarm','Verify torque monitoring instrument calibrated and alarming correctly','Calibrated, alarms at set points','Q')
+        { id:'thr_own1', title:'C. DRIVE HEAD', items:[
+            checklistPoint('thr_own1_1','1','','Refer to Motor and Gearbox checklists','Per respective checklists',''),
+            checklistPoint('thr_own1_2','2','','Inspect for cracking, corrosion','No cracks',''),
+            checklistPoint('thr_own1_3','3','','Check auto-lift function for high-torque protection','Functional, raises rake on overload',''),
+            checklistPoint('thr_own1_4','4','','Verify torque monitoring instrument calibrated and alarming correctly','Calibrated, alarms at set points','')
           ]},
-        { id:'thr_rakearms', title:'B. Rake Arms & Tank', items:[
-            checklistPoint('thr_5','5','Rake Arms & Blades','Inspect for wear, bending, corrosion (via drained inspection)','Within wear allowance, straight','A or per shutdown'),
-            checklistPoint('thr_6','6','Centre Column/Bearing','Check centre bearing/bushing wear and lubrication','Within wear limit, lubricated','6M'),
-            checklistPoint('thr_7','7','Tank Structure/Walkway','Inspect bridge/walkway structure for corrosion','Structurally sound','Q')
+        { id:'thr_own2', title:'C. RAKE ARMS & TANK', items:[
+            checklistPoint('thr_own2_1','1','','Inspect for wear, bending, corrosion (via drained inspection)','Within wear allowance, straight',''),
+            checklistPoint('thr_own2_2','2','','Check centre bearing/bushing wear and lubrication','Within wear limit, lubricated',''),
+            checklistPoint('thr_own2_3','3','','Inspect bridge/walkway structure for corrosion','Structurally sound','')
           ]},
-        { id:'thr_safety', title:'C. Housekeeping', items:[
-            checklistPoint('thr_9','9','Housekeeping/Cleaning','Check housekeeping surrounding the unit','No debris or spillage or unused materials','D')
+        { id:'thr_own3', title:'D. HOUSEKEEPING', items:[
+            checklistPoint('thr_own3_1','1','','Check housekeeping surrounding the unit','No debris or spillage or unused materials',''),
+            checklistPoint('thr_own3_2','2','','Verify motor terminal box for signs of loose connections or water ingress','No loose connections, no water ingress','')
           ]}
       ]))},
 
@@ -1143,36 +1154,33 @@
       category:'rotating', sourceSheet:'Apron Feeder', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. AF-01', defaultVisual:true, defaultVibration:false, sections: [buildSafetySection('apf')].concat(buildMotorSections('apf_mtr').concat(buildCouplingSections('apf_cpl'), [
-        { id:'apf_pan', title:'A. Pan/Flight Assembly', items:[
-            checklistPoint('apf_1','1','Pans/Flights','Inspect for wear, cracking, deformation','Within wear allowance, no cracks','W'),
-            checklistPoint('apf_2','2','Chain & Links','Inspect chain for wear elongation, cracked links, lubrication','Within OEM elongation limit, lubricated','M'),
-            checklistPoint('apf_3','3','Chain Rollers/Wheels','Check for wear, flat spots, seized rollers','Free rotating, within wear limit','M')
+        { id:'apf_own1', title:'B. APRON', items:[
+            checklistPoint('apf_own1_1','1','','Inspect for wear, cracking, deformation','Within wear allowance, no cracks',''),
+            checklistPoint('apf_own1_2','2','','Inspect chain for wear elongation, cracked links, lubrication','Within OEM elongation limit, lubricated',''),
+            checklistPoint('apf_own1_3','3','','Check for wear, flat spots, seized rollers','Free rotating, within wear limit','')
           ]},
-        { id:'apf_sprockets', title:'B. Sprockets & Drive', items:[
-            checklistPoint('apf_4','4','Drive & Tail Sprockets','Inspect tooth wear, alignment','Within wear allowance, aligned','M'),
-            checklistPoint('apf_5','5','Tensioning System (Tail Take-up)','Check chain tension and take-up travel','Correct tension per OEM, within travel','W'),
-            checklistPoint('apf_7','7','Overload Protection','Check shear pin/torque limiter/hydraulic overload system','Correct rating, functional','6M')
-          ]},
-              ]))},
+        { id:'apf_own2', title:'C. SPROCKETS & DRIVE', items:[
+            checklistPoint('apf_own2_1','1','','Inspect tooth wear, alignment','Within wear allowance, aligned',''),
+            checklistPoint('apf_own2_2','2','','Check chain tension and take-up travel','Correct tension per OEM, within travel',''),
+            checklistPoint('apf_own2_3','3','','Check shear pin/torque limiter/hydraulic overload system','Correct rating, functional','')
+          ]}
+      ]))},
 
     { id:'air-compressor', title:'Air Compressor', dept:'Condition Monitoring — Rotating Equipment',
       category:'rotating', sourceSheet:'Air Compressor', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. AC-01', defaultVisual:true, defaultVibration:false, sections: [buildSafetySection('aic')].concat(buildMotorSections('aic_mtr').concat(buildCouplingSections('aic_cpl'), [
-        { id:'aic_general', title:'A. General', items:[
-            checklistPoint('aic_1','1','Housing/Enclosure','Inspect for damage, ventilation clear','Intact, vents unobstructed','W'),
-            checklistPoint('aic_2','2','Foundation/Mounting','Check anti-vibration mounts and bolts','Secure, isolators intact','Q')
+        { id:'aic_own1', title:'C.COMPRESSOR', items:[
+            checklistPoint('aic_own1_1','1','','Inspect for damage, ventilation clear','Intact, vents unobstructed',''),
+            checklistPoint('aic_own1_2','2','','Check anti-vibration mounts and bolts','Secure, isolators intact','')
           ]},
-        { id:'aic_airend', title:'B. Air End & Lubrication', items:[
-            checklistPoint('aic_3','3','Oil Level & Condition (oil-flooded types)','Check oil level, colour, contamination','Correct level, clean','D/W'),
-            checklistPoint('aic_4','4','Air/Oil Separator Element','Check differential pressure, replace per schedule','Within OEM differential pressure limit','Per schedule'),
-            checklistPoint('aic_5','5','Intake Filter','Check condition and differential pressure','Clean, low pressure drop','W')
+        { id:'aic_own2', title:'AIR END & LUBRICATION', items:[
+            checklistPoint('aic_own2_1','3','','Check oil level, colour, contamination','Correct level, clean',''),
+            checklistPoint('aic_own2_2','4','','Check differential pressure, replace per schedule','Within OEM differential pressure limit',''),
+            checklistPoint('aic_own2_3','5','','Check condition and differential pressure','Clean, low pressure drop','')
           ]},
-        { id:'aic_bearings', title:'C. Bearings & Drive', items:[
-            checklistPoint('aic_7','7','Drive Coupling/Belts','Refer to Coupling checklist / check belt tension','Per Coupling checklist / correct tension','M')
-          ]},
-        { id:'aic_safety', title:'D. Condensate Management', items:[
-            checklistPoint('aic_10','10','Condensate Drain/Trap','Check auto-drain function','Functional, no water carryover','W')
+        { id:'aic_own3', title:'CONDENSATE MANAGEMENT', items:[
+            checklistPoint('aic_own3_1','6','','Check auto-drain function','Functional, no water carryover','')
           ]}
       ]))},
 
@@ -1199,36 +1207,34 @@
       category:'rotating', sourceSheet:'Flotation Cell', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. FLT-01', defaultVisual:true, defaultVibration:false, sections: [buildSafetySection('flc')].concat(buildMotorSections('flc_mtr').concat(buildCouplingSections('flc_cpl'), [
-        { id:'flc_mechanism', title:'A. Mechanism', items:[
-            checklistPoint('flc_1','1','Impeller/Rotor Condition','Inspect for wear, erosion, cracking (via drained inspection)','Within wear allowance, no cracks','6M or per shutdown'),
-            checklistPoint('flc_2','2','Stator/Diffuser','Inspect for wear, blockage','Within wear allowance, unobstructed','6M'),
-            checklistPoint('flc_3','3','Drive Shaft & Steady Bearing','Check for wear, alignment, lubrication','Within tolerance, lubricated','M')
+        { id:'flc_own1', title:'C. MECHANISM', items:[
+            checklistPoint('flc_own1_1','1','','Impeller/Rotor Condition','Inspect for wear, erosion, cracking (via drained inspection)',''),
+            checklistPoint('flc_own1_2','2','','Stator/Diffuser','Inspect for wear, blockage',''),
+            checklistPoint('flc_own1_3','3','','Drive Shaft & Steady Bearing','Check for wear, alignment, lubrication','')
           ]},
-        { id:'flc_drive', title:'B. Gearbox / Drive', items:[
-            checklistPoint('flc_4','4','Gearbox','Refer to Gearbox checklist','Per Gearbox checklist','-'),
-          ]},
-        { id:'flc_air', title:'C. Air / Froth System', items:[
-            checklistPoint('flc_6','6','Air Supply/Blower Connection','Check air flow rate/pressure to cell','Within design range','D'),
-            checklistPoint('flc_7','7','Launders & Froth Paddles (if fitted)','Check condition, paddle motor operation','Functional, undamaged','W')
-          ]},
-              ]))},
+        { id:'flc_own2', title:'D. AIR / FROTH SYSTEM', items:[
+            checklistPoint('flc_own2_1','1','','Air Supply/Blower Connection','Check air flow rate/pressure to cell',''),
+            checklistPoint('flc_own2_2','2','','Launders & Froth Paddles (if fitted)','Check condition, paddle motor operation','')
+          ]}
+      ]))},
 
     { id:'magnetic-separator', title:'Magnetic Separator', dept:'Condition Monitoring — Rotating Equipment',
       category:'rotating', sourceSheet:'Magnetic Separator', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. MGS-01', defaultVisual:true, defaultVibration:false, sections: [buildSafetySection('mgs')].concat(buildMotorSections('mgs_mtr').concat(buildCouplingSections('mgs_cpl'), [
-        { id:'mgs_drum', title:'A. Drum & Magnet', items:[
-            checklistPoint('mgs_1','1','Drum Shell','Inspect for wear, dents, weld cracking','No cracks, within wear allowance','M'),
-            checklistPoint('mgs_2','2','Magnet Assembly','Check magnetic field strength against baseline','Within OEM specified field strength','A'),
-            checklistPoint('mgs_3','3','Drum Bearings/Seals','Check bearing temperature, seal leakage','< 80°C, no leaks','W')
+        { id:'mgs_own1', title:'B. DRUM & MAGNET', items:[
+            checklistPoint('mgs_own1_1','1','','Inspect for wear, dents, weld cracking','No cracks, within wear allowance',''),
+            checklistPoint('mgs_own1_2','2','','Check magnetic field strength against baseline','Within OEM specified field strength',''),
+            checklistPoint('mgs_own1_3','3','','Check bearing temperature, seal leakage','< 80°C, no leaks','')
           ]},
-        { id:'mgs_drive', title:'B. Drive', items:[
+        { id:'mgs_own2', title:'C. DRIVE', items:[
+            checklistPoint('mgs_own2_1','1','','Refer to Motor and Gearbox checklists','Per respective checklists','')
           ]},
-        { id:'mgs_tank', title:'C. Tank & Discharge', items:[
-            checklistPoint('mgs_5','5','Tank/Trough Liners','Inspect for wear','Within wear allowance','M'),
-            checklistPoint('mgs_6','6','Concentrate/Tailings Discharge','Check discharge chutes clear, no blockage','Unobstructed','D')
-          ]},
-              ]))},
+        { id:'mgs_own3', title:'D. TANK & DISCHARGE', items:[
+            checklistPoint('mgs_own3_1','1','','Inspect for wear','Within wear allowance',''),
+            checklistPoint('mgs_own3_2','2','','Check discharge chutes clear, no blockage','Unobstructed','')
+          ]}
+      ]))},
 
     { id:'yard-conveyor', title:'Yard Conveyor Belt', dept:'Ambatovy Maintenance Asset Management',
       category:'rotating',
@@ -2795,7 +2801,7 @@
         row.className = item.detailed ? 'item-row detailed' : 'item-row';
 
         const labelHtml = item.detailed
-          ? `<span class="item-label">${item.no ? `<span class="item-no">${esc(String(item.no))}.</span>` : ''}<span class="item-component">${esc(item.component)}</span> — ${esc(item.checkpoint)}</span>`
+          ? `<span class="item-label">${item.no ? `<span class="item-no">${esc(String(item.no))}.</span>` : ''}${item.component ? `<span class="item-component">${esc(item.component)}</span> — ` : ''}${esc(item.checkpoint)}</span>`
           : `<span class="item-label">${item.label}</span>`;
 
         row.innerHTML = `

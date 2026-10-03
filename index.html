@@ -3,7 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
-<title>Condition Monitoring Checklists</title>
+<title>CM Inspect — Condition Monitoring & Inspection Checklists</title>
+<meta name="description" content="Condition monitoring and inspection checklists for static, rotating, electrical, safety, gen set, mobile crusher and mobile equipment, with PDF reports.">
+<meta name="theme-color" content="#0f2330">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js"></script>
 <style>
@@ -105,7 +109,7 @@
   .item-row{display:flex; align-items:flex-start; justify-content:space-between; gap:10px; padding:11px 0; border-top:1px solid var(--line);}
   .item-row:first-child{border-top:none;}
   .item-row.detailed{flex-direction:column; align-items:stretch;}
-  .item-top{display:flex; align-items:flex-start; justify-content:space-between; gap:10px;}
+  .item-top{display:flex; align-items:flex-start; justify-content:space-between; gap:10px; flex:1; min-width:0;}
   .item-label{font-size:13.5px; line-height:1.35; padding-top:6px; flex:1;}
   .item-no{font-size:11px; font-weight:700; color:var(--ink-soft); margin-right:5px;}
   .item-component{font-weight:700;}
@@ -184,34 +188,255 @@
   .qr-modal-head{position:absolute; top:0; left:0; right:0; display:flex; justify-content:space-between; align-items:center; padding:10px 12px; background:linear-gradient(180deg,rgba(0,0,0,.6),transparent); color:#fff; font-size:13px; font-weight:700;}
   .qr-modal-close{background:rgba(255,255,255,.15); border:none; color:#fff; width:28px; height:28px; border-radius:50%; cursor:pointer; font-size:15px; line-height:1;}
   .qr-modal-status{position:absolute; bottom:0; left:0; right:0; padding:10px 12px; background:rgba(0,0,0,.55); color:#cfe3ee; font-size:12px; text-align:center;}
+
+  /* ================= HOME / CATEGORY (redesigned) ================= */
+  body{font-family:"IBM Plex Sans","Segoe UI",Roboto,-apple-system,BlinkMacSystemFont,Arial,sans-serif;}
+  .home-band{background:var(--navy-deep); color:#fff; position:relative; overflow:hidden;}
+  .home-band::after{content:""; position:absolute; inset:auto 0 0 0; height:4px; background:var(--amber);}
+  .home-band .grid-lines{position:absolute; inset:0; opacity:.07; pointer-events:none;
+    background-image:linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px); background-size:32px 32px;}
+  .home-inner{max-width:1080px; margin:0 auto; padding:22px 20px 34px; position:relative;}
+  .org-row{display:flex; align-items:center; gap:10px; font-size:13.5px; color:#b9cbd6;}
+  .org-mark{width:30px; height:30px; border-radius:7px; background:var(--amber); color:var(--navy-deep); display:flex; align-items:center; justify-content:center; flex:none;}
+  .org-mark svg{width:18px; height:18px;}
+  .org-row strong{color:#fff; font-weight:600;}
+  .home-title{font-size:clamp(26px,4.2vw,40px); line-height:1.12; font-weight:700; margin:26px 0 10px; letter-spacing:-.01em; max-width:760px;}
+  .home-lead{font-size:16px; line-height:1.55; color:#c9d8e1; max-width:640px; margin:0;}
+  .search-wrap{margin-top:24px; max-width:640px; position:relative;}
+  .search-wrap svg{position:absolute; left:16px; top:50%; transform:translateY(-50%); width:20px; height:20px; color:var(--ink-soft);}
+  .search-input{width:100%; font:inherit; font-size:16px; padding:15px 44px 15px 48px; border-radius:10px; border:2px solid transparent; background:#fff; color:var(--ink); box-shadow:0 6px 24px rgba(0,0,0,.25);}
+  .search-input:focus{outline:none; border-color:var(--amber);}
+  input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none; display:none;}
+  .search-clear{position:absolute; right:10px; top:50%; transform:translateY(-50%); border:none; background:#eef1f3; color:var(--ink-soft); width:28px; height:28px; border-radius:50%; cursor:pointer; font-size:14px; display:none;}
+  .search-clear.show{display:block;}
+  .home-facts{display:flex; flex-wrap:wrap; gap:6px 22px; margin-top:18px; font-size:14px; color:#b9cbd6;}
+  .home-facts b{color:#fff; font-weight:600;}
+
+  .home-main{max-width:1080px; margin:0 auto; padding:8px 20px 40px;}
+  .home-section{margin-top:30px;}
+  .home-section h2{font-size:19px; font-weight:700; margin:0 0 4px; color:var(--ink);}
+  .home-section .section-sub{font-size:14px; color:var(--ink-soft); margin:0 0 14px;}
+
+  .disc-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:14px;}
+  @media (max-width:900px){ .disc-grid{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:560px){ .disc-grid{grid-template-columns:1fr;} }
+  .disc-card{background:#fff; border:1px solid var(--line); border-radius:12px; padding:18px; cursor:pointer; display:flex; flex-direction:column; gap:8px; text-align:left; font:inherit; color:inherit; transition:border-color .15s ease, box-shadow .15s ease;}
+  .disc-card:hover{border-color:var(--navy); box-shadow:0 6px 18px rgba(15,35,48,.10);}
+  .disc-card:focus-visible{outline:3px solid var(--amber); outline-offset:2px;}
+  .disc-top{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .disc-icon{width:42px; height:42px; border-radius:10px; background:var(--navy); color:#fff; display:flex; align-items:center; justify-content:center; flex:none;}
+  .disc-icon svg{width:22px; height:22px;}
+  .disc-count{font-size:13px; font-weight:600; color:var(--navy); background:#e7edf1; border-radius:999px; padding:3px 10px;}
+  .disc-name{font-size:16.5px; font-weight:700; line-height:1.25; margin-top:4px;}
+  .disc-desc{font-size:13.5px; color:var(--ink-soft); line-height:1.45;}
+  .disc-drafts{font-size:12.5px; font-weight:600; color:var(--amber-deep);}
+
+  .draft-row{display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:12px;}
+  .draft-card{background:#fff; border:1px solid var(--line); border-left:4px solid var(--amber); border-radius:10px; padding:14px 16px; cursor:pointer; font:inherit; text-align:left; color:inherit; display:flex; flex-direction:column; gap:5px;}
+  .draft-card:hover{box-shadow:0 6px 18px rgba(15,35,48,.10);}
+  .draft-card .dc-title{font-weight:700; font-size:14.5px; line-height:1.3;}
+  .draft-card .dc-meta{font-size:12.5px; color:var(--ink-soft);}
+  .dc-bar{height:5px; background:#e3e7ea; border-radius:999px; overflow:hidden; margin-top:4px;}
+  .dc-bar span{display:block; height:100%; background:var(--amber);}
+  .dc-chips{display:flex; gap:6px; flex-wrap:wrap; margin-top:2px;}
+  .chip{font-size:11.5px; font-weight:600; padding:2px 8px; border-radius:999px; background:#eef1f3; color:var(--ink-soft);}
+  .chip.good{background:var(--ok-bg); color:var(--ok);} .chip.fair{background:var(--amber-bg); color:var(--amber-deep);}
+  .chip.poor{background:var(--poor-bg); color:var(--poor);} .chip.critical{background:var(--notok-bg); color:var(--notok);}
+  .chip.draft{background:var(--amber-bg); color:var(--amber-deep);}
+
+  .steps{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; counter-reset:step;}
+  @media (max-width:760px){ .steps{grid-template-columns:1fr;} }
+  .step{background:#fff; border:1px solid var(--line); border-radius:12px; padding:18px; position:relative;}
+  .step::before{counter-increment:step; content:counter(step); width:28px; height:28px; border-radius:50%; background:var(--amber); color:var(--navy-deep); font-weight:700; display:flex; align-items:center; justify-content:center; font-size:14px; margin-bottom:10px;}
+  .step h3{font-size:15.5px; margin:0 0 6px;}
+  .step p{font-size:13.5px; color:var(--ink-soft); line-height:1.5; margin:0;}
+
+  .std-list{display:flex; flex-wrap:wrap; gap:8px;}
+  .std-list span{font-size:13px; background:#fff; border:1px solid var(--line); border-radius:6px; padding:5px 10px; color:var(--ink);}
+
+  .result-list{display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:12px;}
+  .empty-note{background:#fff; border:1px dashed #b7c3cb; border-radius:10px; padding:20px; font-size:14px; color:var(--ink-soft);}
+
+  .home-footer{border-top:1px solid var(--line); margin-top:40px; padding-top:18px; font-size:12.5px; color:var(--ink-soft); display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px;}
+
+  /* checklist cards (category + search) */
+  .eq-card{background:#fff; border:1px solid var(--line); border-radius:10px; padding:14px 16px; cursor:pointer; display:flex; flex-direction:column; gap:6px; font:inherit; color:inherit; text-align:left;}
+  .eq-card:hover{border-color:var(--navy); box-shadow:0 6px 18px rgba(15,35,48,.10);}
+  .eq-card:focus-visible{outline:3px solid var(--amber); outline-offset:2px;}
+  .eq-card .eq-cat{font-size:12px; color:var(--amber-deep); font-weight:600;}
+  .eq-card .eq-title{font-size:15px; font-weight:700; line-height:1.3;}
+  .eq-card .eq-std{font-size:12.5px; color:var(--ink-soft); line-height:1.4;}
+  .eq-card .eq-meta{font-size:12.5px; color:var(--ink-soft);}
+
+  .cat-band .home-inner{padding-bottom:26px;}
+  .cat-head{display:flex; align-items:center; gap:14px; margin-top:18px;}
+  .cat-head .disc-icon{width:50px; height:50px; background:var(--amber); color:var(--navy-deep);}
+  .cat-head .disc-icon svg{width:26px; height:26px;}
+  .cat-head h1{font-size:clamp(22px,3.4vw,30px); margin:0; line-height:1.15;}
+  .cat-desc{font-size:15px; color:#c9d8e1; margin:10px 0 0; max-width:680px; line-height:1.5;}
+  .cat-tools{display:flex; gap:10px; align-items:center; margin:18px 0 14px; flex-wrap:wrap;}
+  .cat-filter{flex:1; min-width:220px; font:inherit; font-size:15px; padding:11px 14px; border:1px solid var(--line); border-radius:10px; background:#fff;}
+  .cat-filter:focus{outline:2px solid var(--amber); border-color:var(--amber);}
+  .cat-count{font-size:13.5px; color:var(--ink-soft);}
+  .home-back{background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.25); color:#fff; font:inherit; font-size:13.5px; font-weight:600; padding:7px 12px; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;}
+
+  .print-only{display:none;}
+
+  /* ================= PRINT (browser Ctrl+P) ================= */
+  @media print{
+    @page{size:A4; margin:12mm 11mm 14mm;}
+    html,body{background:#fff !important; padding:0 !important; font-size:10pt;}
+    *{-webkit-print-color-adjust:exact; print-color-adjust:exact; box-shadow:none !important;}
+    #hubView, #catView, .actionbar, .save-note, .toast, .qr-modal, .back-row, .qr-btn, .chevron,
+    .photo-add, .photo-thumb button, .progress-wrap, .drivetype-card .hint{display:none !important;}
+    .topbar{position:static !important; background:#fff !important; color:var(--ink) !important; padding:0 0 8px !important; border-bottom:2.5px solid var(--navy);}
+    .brand .eyebrow{color:var(--ink-soft) !important;}
+    .brand .title{font-size:16pt !important;}
+    .tag-pill, .health-pill{background:#fff !important; color:var(--ink) !important; border:1px solid #9aa8b2 !important;}
+    .health-pill.good{color:var(--ok) !important; border-color:var(--ok) !important;}
+    .health-pill.fair{color:var(--amber-deep) !important; border-color:var(--amber) !important;}
+    .health-pill.poor, .health-pill.critical{color:var(--notok) !important; border-color:var(--notok) !important;}
+    .print-only{display:block !important;}
+    .container{max-width:none !important; padding:8px 0 0 !important;}
+    .card, .section{border:1px solid #c5ced5 !important; border-radius:4px !important; margin-bottom:8px !important;}
+    .header-card{padding:8px 10px !important; break-inside:avoid;}
+    .field-grid{grid-template-columns:repeat(3,1fr) !important; gap:6px 10px !important;}
+    .field.span2{grid-column:auto !important;}
+    label.small-label{font-size:7.5pt !important;}
+    input[type=text], input[type=date], textarea, select{font-size:9.5pt !important; padding:3px 6px !important; background:#fff !important; border:1px solid #c5ced5 !important; border-radius:3px !important;}
+    ::placeholder{color:transparent !important;}
+    .chk{padding:3px 8px !important; font-size:9pt !important;}
+    .section-head{background:#e9eef2 !important; padding:5px 8px !important; break-after:avoid;}
+    .section-index{background:var(--navy) !important;}
+    .section-title{font-size:10.5pt !important;}
+    .section-body{display:block !important; padding:0 8px 6px !important;}
+    .item-row{padding:4px 0 !important; break-inside:avoid;}
+    .item-label{font-size:9pt !important; padding-top:2px !important;}
+    .item-meta{font-size:7.5pt !important;}
+    .seg-btn{display:none !important;}
+    .seg-btn.active{display:block !important; padding:2px 8px !important; font-size:8pt !important; min-width:0 !important;}
+    .segmented{border:none !important; min-width:52px; justify-content:flex-end;}
+    .seg-btn.active{border-radius:999px !important; border:none !important;}
+    input[type=date]::-webkit-calendar-picker-indicator{display:none;}
+    .item-row.detailed .item-meta{margin-top:0 !important;}
+    .segmented:not(:has(.active))::after{content:"\2014"; padding:2px 10px; color:#9aa8b2; font-size:8.5pt;}
+    .item-detail-grid{margin-top:3px !important; gap:4px !important;}
+    .item-detail-grid:not(:has(input:not(:placeholder-shown))){display:none !important;}
+    .item-detail-field label{font-size:7pt !important; margin-bottom:1px !important;}
+    .item-detail-field input{font-size:8.5pt !important;}
+    .comment-block:has(textarea:placeholder-shown){display:none !important;}
+    .photo-block:not(:has(.photo-thumb)){display:none !important;}
+    .reading-block{break-inside:avoid; padding-top:5px !important;}
+    .reading-note{font-size:8pt !important; margin-bottom:4px !important;}
+    .reading-grid{grid-template-columns:repeat(4,1fr) !important; gap:4px 8px !important;}
+    .reading-field label{font-size:7.5pt !important;}
+    .reading-field input{font-size:9pt !important;}
+    .thickness-point{break-inside:avoid; padding:5px !important;}
+    .flag-banner{background:#fff !important; color:var(--notok) !important; border:1px solid var(--notok);}
+    .print-signoff{break-inside:avoid; margin-top:14px;}
+  }
+  .print-signoff h3{font-size:11pt; margin:0 0 6px;}
+  .print-signoff table{width:100%; border-collapse:collapse; font-size:9pt;}
+  .print-signoff td, .print-signoff th{border:1px solid #c5ced5; padding:6px 8px; text-align:left; vertical-align:top;}
+  .print-signoff th{background:#e9eef2; font-weight:700;}
+  .print-signoff td.sig{height:34px;}
+  .print-foot{font-size:8pt; color:var(--ink-soft); margin-top:8px;}
+
 </style>
 </head>
 <body>
 
 <!-- ===================== HUB VIEW ===================== -->
 <div id="hubView">
-  <div class="hub-topbar">
-    <div class="eyebrow">Engineering Department</div>
-    <h1>Condition Monitoring Checklists</h1>
-    <p>Select the equipment you're inspecting. Each checklist saves its own draft and exports its own PDF report.</p>
-  </div>
-  <div class="hub-grid" id="hubGrid"></div>
+  <header class="home-band">
+    <div class="grid-lines"></div>
+    <div class="home-inner">
+      <div class="org-row">
+        <span class="org-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></span>
+        <span><strong>Lotus Africa Uranium Plant</strong> · Engineering Department · Asset Health &amp; Integrity</span>
+      </div>
+      <h1 class="home-title">Condition monitoring &amp; inspection checklists</h1>
+      <p class="home-lead">One place for every field inspection on site. Check each point against a written acceptance standard, record readings and photos, and hand over a signed PDF report with defects and a health score.</p>
+      <div class="search-wrap" role="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input type="search" id="hubSearch" class="search-input" placeholder="Find a checklist — pump, PSV, haul truck prestart, 1000 h service…" aria-label="Search checklists" autocomplete="off">
+        <button type="button" class="search-clear" id="hubSearchClear" aria-label="Clear search">✕</button>
+      </div>
+      <div class="home-facts" id="hubFacts"></div>
+    </div>
+  </header>
+
+  <main class="home-main">
+    <section class="home-section" id="searchSection" style="display:none">
+      <h2 id="searchTitle">Results</h2>
+      <p class="section-sub" id="searchSub"></p>
+      <div class="result-list" id="searchResults"></div>
+    </section>
+
+    <div id="homeContent">
+      <section class="home-section" id="draftSection" style="display:none">
+        <h2>Continue where you left off</h2>
+        <p class="section-sub">Inspections started on this device. Drafts are saved automatically.</p>
+        <div class="draft-row" id="draftList"></div>
+      </section>
+
+      <section class="home-section">
+        <h2>Choose a discipline</h2>
+        <p class="section-sub">Each discipline holds checklists written for the equipment on site.</p>
+        <div class="disc-grid" id="hubGrid"></div>
+      </section>
+
+      <section class="home-section">
+        <h2>How an inspection works</h2>
+        <p class="section-sub">The same three steps on a phone in the field or a PC in the office.</p>
+        <div class="steps">
+          <div class="step"><h3>Select the asset</h3><p>Search or pick the discipline, open the checklist, and enter the tag, work order (or scan its QR code) and inspector.</p></div>
+          <div class="step"><h3>Inspect and record</h3><p>Mark each point OK, NOT OK or N/A against its acceptance standard. NOT OK points need a finding and a corrective action. Add readings, thickness and photos. Everything saves as you go.</p></div>
+          <div class="step"><h3>Report and act</h3><p>Download the PDF report with defects listed first, the health score and remaining life, and a sign-off block. Raise each defect as a Pronto work request.</p></div>
+        </div>
+      </section>
+
+      <section class="home-section">
+        <h2>Built on recognised standards</h2>
+        <p class="section-sub">Acceptance criteria are taken from these codes and from OEM manuals for the site equipment.</p>
+        <div class="std-list">
+          <span>API 510 · 570 · 576 · 653</span><span>ASME VIII · B30</span><span>ISO 20816 / 10816</span><span>ISO 4406 · ICML 55</span>
+          <span>ISO 4309 · 9927</span><span>ISO 3449 · 3471 · 3450</span><span>IEC 60076 · 61511 · 62271</span><span>IEEE 450 · C57.104</span>
+          <span>NFPA 25 · 70E · 72</span><span>ANSI Z358.1</span><span>AS 5062 · MDG 15 · MDG 41</span><span>ISO 55000</span>
+        </div>
+      </section>
+    </div>
+
+    <footer class="home-footer">
+      <span>CM Inspect · Condition Monitoring &amp; Reliability · Engineering Department</span>
+      <span>Drafts are stored on this device only — download the PDF before clearing your browser.</span>
+    </footer>
+  </main>
 </div>
 
 <!-- ===================== CATEGORY VIEW ===================== -->
 <div id="catView" style="display:none">
-  <div class="hub-topbar">
-    <div class="back-row" style="margin-bottom:10px;">
-      <button class="back-btn" id="btnCatBack">
+  <header class="home-band cat-band">
+    <div class="grid-lines"></div>
+    <div class="home-inner">
+      <button class="home-back" id="btnCatBack">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
-        Home
+        All disciplines
       </button>
+      <div class="cat-head">
+        <span class="disc-icon" id="catIcon"></span>
+        <h1 id="catTitle">Category</h1>
+      </div>
+      <p class="cat-desc" id="catDesc"></p>
     </div>
-    <div class="eyebrow">Condition Monitoring</div>
-    <h1 id="catTitle">Category</h1>
-    <p id="catDesc"></p>
-  </div>
-  <div class="hub-grid" id="catGrid"></div>
+  </header>
+  <main class="home-main">
+    <div class="cat-tools">
+      <input type="search" class="cat-filter" id="catFilter" placeholder="Filter this list…" aria-label="Filter checklists">
+      <span class="cat-count" id="catCount"></span>
+    </div>
+    <div class="result-list" id="catGrid"></div>
+  </main>
 </div>
 
 <!-- ===================== FORM VIEW ===================== -->
@@ -220,12 +445,12 @@
     <div class="back-row">
       <button class="back-btn" id="btnBack">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
-        All equipment
+        Back
       </button>
     </div>
     <div class="topbar-row">
       <div class="brand">
-        <span class="eyebrow">Condition Monitoring — Rotating Equipment</span>
+        <span class="eyebrow" id="formEyebrow">Condition Monitoring</span>
         <span class="title" id="formTitle">—</span>
       </div>
       <span class="tag-pill" id="tagPill">Set tag #</span>
@@ -278,6 +503,7 @@
     </div>
 
     <div id="sectionsRoot"></div>
+    <div class="print-only print-signoff" id="printSignoff"></div>
   </div>
 </div>
 
@@ -294,6 +520,7 @@
 <div class="actionbar" id="actionbar">
   <button class="btn btn-ghost" id="btnClear">Clear form</button>
   <button class="btn btn-ghost" id="btnSave">Save draft</button>
+  <button class="btn btn-ghost" id="btnPrint">Print</button>
   <button class="btn btn-primary" id="btnPdf">Download PDF</button>
 </div>
 
@@ -4639,8 +4866,8 @@
 
   const CATEGORIES = [
     { id:'static',   title:'Static Equipment',   desc:'Structures, tanks, piping, pressure vessels & heat exchangers, PSVs, sulphur furnace & boiler, converter & acid towers, dust collectors and valves.' },
-    { id:'rotating',  title:'Rotating Equipment', desc:'Motors, pumps, conveyors, gearboxes, mills and agitators.' },
-    { id:'lube',      title:'Lubrication',        desc:'Grease points, oil sampling and oil change procedures.' },
+    { id:'rotating',  title:'Rotating Equipment', desc:'Motors, pumps, conveyors, gearboxes, mills, agitators, filters, the calciner kiln and cooling towers.' },
+    { id:'lube',      title:'Lubrication',        desc:'Greasing routes, grease pots, oil sampling and oil change procedures to ICML 55.' },
     { id:'ei',        title:'Electrical & Instrumentation', desc:'Transformers and substations, switchgear / MCC / VSD, UPS and battery banks, gas detection and SIS proof testing.' },
     { id:'safety',    title:'Safety & Statutory Systems',   desc:'Overhead cranes and lifting equipment, safety showers and eyewash stations, and fire protection systems.' },
     { id:'genset',    title:'Gen Set',            desc:'Hyundai HiMSEN 9H21/32 power plant gensets (001–006) — full site PM package from shift rounds to 24,000 h overhaul — plus turbocharger fire-risk and standby diesel gen set checks.' },
@@ -4689,58 +4916,165 @@
     } catch(e){ return null; }
   }
 
-  function equipmentCard(eq){
-    const card = document.createElement('div');
-    card.className = 'hub-card';
-    const initials = eq.title.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
-    const sectionCount = eq.sections.length;
+  const CAT_ICONS = {
+    static:'<path d="M6 3h12a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M5 9h14M5 15h14M9 21v-2M15 21v-2"/>',
+    rotating:'<circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M2.5 12h3M18.5 12h3M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/>',
+    lube:'<path d="M12 3s6 6.4 6 11a6 6 0 0 1-12 0c0-4.6 6-11 6-11z"/><path d="M9.5 15a2.5 2.5 0 0 0 2.5 2.5"/>',
+    ei:'<path d="M13 2L4.5 13.5H11L10 22l8.5-11.5H12z"/>',
+    safety:'<path d="M12 3l7.5 3v5.5c0 4.8-3.2 8.2-7.5 9.5-4.3-1.3-7.5-4.7-7.5-9.5V6z"/><path d="M9 12l2.2 2.2L15.5 10"/>',
+    genset:'<rect x="2.5" y="7" width="14" height="10" rx="1.5"/><path d="M16.5 10H19l2.5-2v8L19 14h-2.5M6.5 7V4.5h6V7M9.5 10.5l-1.5 3h3l-1.5 3"/>',
+    mcrusher:'<path d="M3 4l6 14M21 4l-6 14M6 21h12M9 18h6M10 4h4"/>',
+    hme:'<path d="M2.5 15.5V9h8l3 4h7.5v2.5"/><path d="M13.5 9V6h3l2 7"/><circle cx="7" cy="17" r="2.2"/><circle cx="17" cy="17" r="2.2"/>',
+    prestart:'<rect x="5.5" y="4" width="13" height="17" rx="2"/><path d="M9 4V2.8h6V4M9 12.5l2 2 4-4"/>'
+  };
+  function catIcon(id){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' + (CAT_ICONS[id] || CAT_ICONS.static) + '</svg>'; }
+  function catById(id){ return CATEGORIES.find(c => c.id === id) || { title:'' }; }
+  function countChecks(eq){ return eq.sections.reduce((n, s) => n + (s.items || []).filter(i => !i.applicableDriveTypes).length, 0); }
+  function stdLine(eq){
+    const d = String(eq.dept || ''); const i = d.indexOf(' — ');
+    const t = i >= 0 ? d.slice(i + 3) : d;
+    if (!/\d/.test(t)) return '';
+    return t.length > 110 ? t.slice(0, 107) + '…' : t;
+  }
+  function readDraft(eq){
+    try{ const raw = window.localStorage.getItem(draftKey(eq)); return raw ? JSON.parse(raw) : null; } catch(e){ return null; }
+  }
+  function timeAgo(ts){
+    if (!ts) return 'Saved earlier';
+    const m = Math.round((Date.now() - ts) / 60000);
+    if (m < 1) return 'Saved just now';
+    if (m < 60) return 'Saved ' + m + ' min ago';
+    const h = Math.round(m / 60); if (h < 24) return 'Saved ' + h + ' h ago';
+    const d = Math.round(h / 24); return 'Saved ' + d + ' day' + (d > 1 ? 's' : '') + ' ago';
+  }
+
+  function equipmentCard(eq, showCat){
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'eq-card';
     const health = getDraftHealth(eq);
     const rul = getDraftRUL(eq);
-    let chip = health
-      ? `<span class="draft-chip health-chip ${health.band}">Health ${health.score}% · ${health.label}</span>`
-      : (hasDraft(eq) ? '<span class="draft-chip">Draft saved</span>' : '');
+    let chips = '';
+    if (health) chips += `<span class="chip ${health.band}">Health ${health.score}% · ${health.label}</span>`;
+    else if (hasDraft(eq)) chips += '<span class="chip draft">Draft in progress</span>';
     if (rul){
       const lifeText = rul.remainingLife === Infinity ? 'Stable' : rul.remainingLife.toFixed(1) + ' yrs';
-      chip += `<span class="draft-chip health-chip ${rul.band}">RUL ${lifeText}</span>`;
+      chips += `<span class="chip ${rul.band}">RUL ${lifeText}</span>`;
     }
+    const n = countChecks(eq);
     card.innerHTML = `
-      <div class="icon">${initials}</div>
-      <div class="name">${eq.title}</div>
-      <div class="meta">${sectionCount} section${sectionCount>1?'s':''}</div>
-      ${chip}
-    `;
+      ${showCat ? `<span class="eq-cat">${esc(catById(eq.category).title)}</span>` : ''}
+      <span class="eq-title">${esc(eq.title)}</span>
+      ${stdLine(eq) ? `<span class="eq-std">${esc(stdLine(eq))}</span>` : ''}
+      <span class="eq-meta">${eq.sections.filter(sc => !(sc.items || []).length || (sc.items || []).some(i => !i.applicableDriveTypes)).length} sections · ${n} check points</span>
+      ${chips ? `<span class="dc-chips">${chips}</span>` : ''}`;
     card.addEventListener('click', () => openEquipment(eq));
     return card;
   }
 
-
-  /* ---------------- Home: category cards only ---------------- */
+  /* ---------------- Home ---------------- */
   function renderHub(){
+    // facts
+    const totalChecks = EQUIPMENT.reduce((n, e) => n + countChecks(e), 0);
+    document.getElementById('hubFacts').innerHTML =
+      `<span><b>${EQUIPMENT.length}</b> checklists</span><span><b>${totalChecks.toLocaleString()}</b> check points</span><span><b>${CATEGORIES.length}</b> disciplines</span><span>Works on phone, tablet and PC</span>`;
+
+    // disciplines
     hubGrid.innerHTML = '';
     CATEGORIES.forEach(cat => {
-      const count = EQUIPMENT.filter(eq => eq.category === cat.id).length;
-      const card = document.createElement('div');
-      card.className = 'hub-card';
-      const initials = cat.title.split(' ').filter(w=>/^[A-Za-z]/.test(w)).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+      const list = EQUIPMENT.filter(eq => eq.category === cat.id);
+      const drafts = list.filter(hasDraft).length;
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'disc-card';
       card.innerHTML = `
-        <div class="icon">${initials}</div>
-        <div class="name">${cat.title}</div>
-        <div class="meta">${count} checklist${count!==1?'s':''}</div>
-      `;
+        <span class="disc-top"><span class="disc-icon">${catIcon(cat.id)}</span><span class="disc-count">${list.length} checklist${list.length !== 1 ? 's' : ''}</span></span>
+        <span class="disc-name">${esc(cat.title)}</span>
+        <span class="disc-desc">${esc(cat.desc || '')}</span>
+        ${drafts ? `<span class="disc-drafts">${drafts} draft${drafts > 1 ? 's' : ''} in progress</span>` : ''}`;
       card.addEventListener('click', () => openCategory(cat));
       hubGrid.appendChild(card);
     });
+
+    // drafts in progress
+    const drafts = EQUIPMENT.map(eq => ({ eq, d: readDraft(eq) })).filter(x => x.d)
+      .sort((a, b) => (b.d.savedAt || 0) - (a.d.savedAt || 0)).slice(0, 6);
+    const dl = document.getElementById('draftList');
+    dl.innerHTML = '';
+    document.getElementById('draftSection').style.display = drafts.length ? 'block' : 'none';
+    drafts.forEach(({ eq, d }) => {
+      const dt = d.header && d.header.f_drivetype;
+      const vis = i => (!i.applicableDriveTypes && !i.isGeneral) || (dt && (i.isGeneral ? TRUE_COUPLING_TYPES.indexOf(dt) !== -1 : i.applicableDriveTypes.indexOf(dt) !== -1));
+      const visIds = new Set(); eq.sections.forEach(s => (s.items || []).filter(vis).forEach(i => visIds.add(i.id)));
+      const total = visIds.size || 1;
+      const done = Object.keys(d.items || {}).filter(k => visIds.has(k)).length;
+      const pct = Math.min(100, Math.round(done / total * 100));
+      const notok = Object.values(d.items || {}).filter(v => v === 'notok').length;
+      const btn = document.createElement('button');
+      btn.type = 'button'; btn.className = 'draft-card';
+      btn.innerHTML = `
+        <span class="dc-title">${esc(eq.title)}</span>
+        <span class="dc-meta">${esc(catById(eq.category).title)}${d.header && d.header.f_tag ? ' · Tag ' + esc(d.header.f_tag) : ''}</span>
+        <span class="dc-bar"><span style="width:${pct}%"></span></span>
+        <span class="dc-meta">${pct}% recorded · ${timeAgo(d.savedAt)}</span>
+        <span class="dc-chips">${notok ? `<span class="chip critical">${notok} NOT OK</span>` : ''}${d.healthScore ? `<span class="chip ${d.healthScore.band}">Health ${d.healthScore.score}%</span>` : ''}</span>`;
+      btn.addEventListener('click', () => { currentCategory = null; openEquipment(eq); });
+      dl.appendChild(btn);
+    });
+
+    runHubSearch();
   }
 
-  /* ---------------- Category page: only that category's checklists ---------------- */
+  function norm(s){ return String(s || '').toLowerCase(); }
+  function runHubSearch(){
+    const inp = document.getElementById('hubSearch');
+    const q = norm(inp.value).trim();
+    document.getElementById('hubSearchClear').classList.toggle('show', !!q);
+    const res = document.getElementById('searchSection');
+    const home = document.getElementById('homeContent');
+    if (!q){ res.style.display = 'none'; home.style.display = 'block'; return; }
+    const words = q.split(/\s+/);
+    const hits = EQUIPMENT.filter(eq => {
+      const hay = norm(eq.title + ' ' + eq.dept + ' ' + catById(eq.category).title + ' ' + (eq.tagPlaceholder || ''));
+      return words.every(w => hay.indexOf(w) !== -1);
+    });
+    res.style.display = 'block'; home.style.display = 'none';
+    document.getElementById('searchTitle').textContent = hits.length + ' checklist' + (hits.length !== 1 ? 's' : '') + ' found';
+    document.getElementById('searchSub').textContent = 'Matching “' + inp.value.trim() + '”';
+    const grid = document.getElementById('searchResults');
+    grid.innerHTML = '';
+    if (!hits.length){
+      grid.innerHTML = '<div class="empty-note">No checklist matches that search. Try the equipment type (for example “pump”, “conveyor”, “truck”) or browse a discipline below after clearing the search.</div>';
+      return;
+    }
+    hits.forEach(eq => grid.appendChild(equipmentCard(eq, true)));
+  }
+  document.getElementById('hubSearch').addEventListener('input', runHubSearch);
+  document.getElementById('hubSearchClear').addEventListener('click', () => {
+    const inp = document.getElementById('hubSearch'); inp.value = ''; runHubSearch(); inp.focus();
+  });
+
+  /* ---------------- Category page ---------------- */
+  function renderCatList(){
+    const cat = currentCategory; if (!cat) return;
+    const q = norm(document.getElementById('catFilter').value).trim();
+    const list = EQUIPMENT.filter(eq => eq.category === cat.id)
+      .filter(eq => !q || q.split(/\s+/).every(w => norm(eq.title + ' ' + eq.dept).indexOf(w) !== -1));
+    catGrid.innerHTML = '';
+    list.forEach(eq => catGrid.appendChild(equipmentCard(eq)));
+    const total = EQUIPMENT.filter(eq => eq.category === cat.id).length;
+    document.getElementById('catCount').textContent = q ? list.length + ' of ' + total + ' checklists' : total + ' checklists';
+    if (!list.length) catGrid.innerHTML = '<div class="empty-note">No checklist in this discipline matches the filter.</div>';
+  }
+  document.getElementById('catFilter').addEventListener('input', renderCatList);
+
   function openCategory(cat){
     currentCategory = cat;
     document.getElementById('catTitle').textContent = cat.title;
     document.getElementById('catDesc').textContent = cat.desc || '';
-    catGrid.innerHTML = '';
-    EQUIPMENT.filter(eq => eq.category === cat.id).forEach(eq => {
-      catGrid.appendChild(equipmentCard(eq));
-    });
+    document.getElementById('catIcon').innerHTML = catIcon(cat.id);
+    document.getElementById('catFilter').value = '';
+    renderCatList();
     hubView.style.display = 'none';
     formView.style.display = 'none';
     catView.style.display = 'block';
@@ -4762,6 +5096,7 @@
     state = Object.assign({}, STATE_DEFAULTS, { header:{}, items:{}, readings:{}, comments:{}, photos:{}, findings:{}, corrective:{} });
 
     document.getElementById('formTitle').textContent = eq.title;
+    document.getElementById('formEyebrow').textContent = catById(eq.category).title || 'Condition Monitoring';
     document.getElementById('f_tag').placeholder = eq.tagPlaceholder || 'Equipment tag';
     document.getElementById('tagPill').textContent = 'Set tag #';
     document.getElementById('f_date').value = new Date().toISOString().slice(0,10);
@@ -5455,6 +5790,7 @@
   function saveDraft(showMsg){
     if (!currentEquipment) return;
     try{
+      state.savedAt = Date.now();
       window.localStorage.setItem(draftKey(currentEquipment), JSON.stringify(state));
       const t = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
       document.getElementById('saveNote').textContent = 'Saved ' + t;
@@ -5598,155 +5934,249 @@
     return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
 
-  // Builds the PDF natively with jsPDF text/image calls instead of screenshotting
-  // the page with html2canvas. The old screenshot approach rendered the whole
-  // report as one very tall off-screen block and rasterised it in one shot —
-  // once equipment checklists grew (Safety + Motor + Coupling + their own
-  // sections can now be 50-90+ items), that block got tall enough to exceed
-  // browser canvas size/memory limits, which is what broke the page on
-  // download. Native text has no such ceiling and paginates cleanly for any
-  // equipment size.
+  // Native jsPDF report (no screenshots → no canvas size limits on long checklists).
+  function pdfTxt(v){
+    return String(v == null ? '' : v)
+      .replace(/≤/g,'<=').replace(/≥/g,'>=').replace(/Δ/g,'d').replace(/→/g,'->').replace(/≈/g,'~')
+      .replace(/Ω/g,'ohm').replace(/−/g,'-').replace(/✓/g,'OK').replace(/✕/g,'x').replace(/⚠/g,'!')
+      .replace(/[\u2080-\u2089]/g, c => String(c.charCodeAt(0) - 0x2080))
+      .replace(/[\u00B2]/g,'2')
+      .replace(/[^\x00-\xFF\u2013\u2014\u2018\u2019\u201C\u201D\u2022\u2026]/g,'');
+  }
+  const RATING_WORD = {1:'Good',2:'Fair',3:'Poor',4:'Critical',5:'Unsafe'};
+
   function generatePdfDoc(){
-    const eq = currentEquipment;
-    const h = state.header;
+    const eq = currentEquipment, h = state.header || {};
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF('p', 'pt', 'a4');
-    const pageW = doc.internal.pageSize.getWidth();
-    const pageH = doc.internal.pageSize.getHeight();
-    const marginX = 40;
-    const maxW = pageW - marginX * 2;
-    let y = 50;
+    const doc = new jsPDF('p','pt','a4');
+    const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
+    const M = 36, CW = W - M*2, BOTTOM = H - 44;
+    const C = { navy:[27,54,72], deep:[15,35,48], amber:[224,151,44], ok:[47,125,92], nok:[180,67,47], na:[138,151,161],
+                ink:[19,35,48], soft:[75,92,104], line:[215,221,226], light:[238,241,243], okbg:[228,243,236], nokbg:[251,232,228], amberbg:[253,241,224] };
+    const cat = (CATEGORIES.find(c => c.id === eq.category) || {}).title || 'Condition Monitoring';
+    let y = 0;
 
-    function ensureSpace(need){
-      if (y + need > pageH - 36){
-        doc.addPage();
-        y = 50;
-      }
-    }
-    function textLine(text, opts){
-      opts = opts || {};
-      doc.setFont('helvetica', opts.bold ? 'bold' : 'normal');
-      doc.setFontSize(opts.size || 9.5);
-      const indent = opts.indent || 0;
-      const lines = doc.splitTextToSize(String(text), maxW - indent);
-      lines.forEach(line => {
-        ensureSpace(opts.lineH || 12);
-        doc.setTextColor.apply(doc, opts.color || [0,0,0]);
-        doc.text(line, marginX + indent, y);
-        y += opts.lineH || 12;
-      });
-    }
+    const font = (style, size, color) => { doc.setFont('helvetica', style); doc.setFontSize(size); doc.setTextColor.apply(doc, color || C.ink); };
+    const wrap = (t, w) => doc.splitTextToSize(pdfTxt(t), w);
+    function newPage(){ doc.addPage(); y = 40; }
+    function need(hgt){ if (y + hgt > BOTTOM){ newPage(); return true; } return false; }
 
-    // ---- Header ----
-    doc.setFont('helvetica','bold'); doc.setFontSize(15);
-    doc.text(eq.title + ' — Condition Monitoring Check Sheet', marginX, y);
-    y += 18;
-    textLine(eq.dept || '', { size:9, color:[100,100,100] });
+    // ---------- Title band ----------
+    doc.setFillColor.apply(doc, C.deep); doc.rect(0, 0, W, 78, 'F');
+    doc.setFillColor.apply(doc, C.amber); doc.rect(0, 78, W, 3, 'F');
+    font('normal', 8.5, [185,203,214]); doc.text(pdfTxt('Lotus Africa Uranium Plant  ·  Engineering Department  ·  ' + cat), M, 24);
+    font('bold', 17, [255,255,255]); doc.text(wrap(eq.title, CW - 130)[0], M, 46);
+    font('normal', 9, [201,216,225]); doc.text('Inspection report', M, 64);
+    font('bold', 9, [255,255,255]); doc.text(pdfTxt('Tag: ' + (h.f_tag || '—')), W - M, 46, { align:'right' });
+    font('normal', 8.5, [201,216,225]); doc.text(pdfTxt('Date: ' + (h.f_date || '—')), W - M, 62, { align:'right' });
+    y = 96;
+    font('normal', 7.8, C.soft);
+    wrap(eq.dept || '', CW).forEach(l => { doc.text(l, M, y); y += 10; });
     y += 4;
 
-    const metaLines = [
-      'Equipment Tag #: ' + (h.f_tag || '—') + '     Date: ' + (h.f_date || '—'),
-      'WO #: ' + (h.f_wo || '—') + '     Method: ' + ((h.f_visual?'Visual ':'') + (h.f_vibration?'Vibration':'') || '—'),
-      'Check by: ' + (h.f_checkby || '—') + '     Review by: ' + (h.f_reviewby || '—')
+    // ---------- Details grid ----------
+    const method = [h.f_visual ? 'Visual' : '', h.f_vibration ? 'Vibration' : ''].filter(Boolean).join(' + ') || '—';
+    const fields = [['Equipment tag', h.f_tag], ['Inspection date', h.f_date], ['Work order', h.f_wo],
+                    ['Inspected by', h.f_checkby], ['Reviewed by', h.f_reviewby], [eq.driveCouplingField ? 'Drive / coupling' : 'Method', eq.driveCouplingField ? (h.f_drivetype || '—') + ' · ' + method : method]];
+    const fw = CW / 3, fh = 30;
+    fields.forEach((f, i) => {
+      const x = M + (i % 3) * fw, yy = y + Math.floor(i / 3) * fh;
+      doc.setDrawColor.apply(doc, C.line); doc.setLineWidth(0.6); doc.rect(x, yy, fw, fh);
+      font('normal', 7, C.soft); doc.text(f[0], x + 6, yy + 10);
+      font('bold', 9.5, C.ink); doc.text(wrap(f[1] || '—', fw - 12)[0], x + 6, yy + 23);
+    });
+    y += fh * 2 + 12;
+
+    // ---------- Summary tiles ----------
+    const allVisible = eq.sections.reduce((a, s) => a.concat(visibleItems(s)), []);
+    const vals = allVisible.map(i => state.items[i.id]);
+    const ok = vals.filter(v => v === 'ok').length, nok = vals.filter(v => v === 'notok').length, na = vals.filter(v => v === 'na').length;
+    const health = computeHealthScore(eq, state), rul = computeEquipmentRUL(eq, state);
+    const bandCol = b => b === 'good' ? [C.okbg, C.ok] : b === 'fair' ? [C.amberbg, [154,97,19]] : b ? [C.nokbg, C.nok] : [C.light, C.soft];
+    const tiles = [
+      ['Checks recorded', (ok + nok + na) + ' / ' + allVisible.length, [C.light, C.ink]],
+      ['OK', String(ok), [C.okbg, C.ok]],
+      ['NOT OK', String(nok), nok ? [C.nokbg, C.nok] : [C.light, C.ink]],
+      ['N/A', String(na), [C.light, C.ink]],
+      ['Health score', health ? health.score + '%' : '—', bandCol(health && health.band)],
+      ['Remaining life', rul ? (rul.remainingLife === Infinity ? 'Stable' : rul.remainingLife.toFixed(1) + ' yrs') : '—', bandCol(rul && rul.band)]
     ];
-    if (eq.driveCouplingField) metaLines.push('Drive/Coupling Type: ' + (h.f_drivetype || '—'));
-    metaLines.forEach(l => textLine(l, { size:9.5, lineH:13 }));
-    y += 4;
+    const tg = 6, tw = (CW - tg * 5) / 6, th = 42;
+    tiles.forEach((t, i) => {
+      const x = M + i * (tw + tg);
+      doc.setFillColor.apply(doc, t[2][0]); doc.roundedRect(x, y, tw, th, 4, 4, 'F');
+      font('normal', 7, C.soft); doc.text(t[0], x + 7, y + 12);
+      font('bold', 14, t[2][1]); doc.text(pdfTxt(t[1]), x + 7, y + 32);
+    });
+    y += th + 10;
+    const verdict = nok ? nok + ' defect' + (nok > 1 ? 's' : '') + ' recorded — raise each as a work request in Pronto before closing the WO.'
+                        : (ok + nok + na) ? 'No defects recorded.' : 'No checks recorded yet.';
+    doc.setFillColor.apply(doc, nok ? C.nokbg : C.okbg); doc.rect(M, y, CW, 20, 'F');
+    doc.setFillColor.apply(doc, nok ? C.nok : C.ok); doc.rect(M, y, 3, 20, 'F');
+    font('bold', 9, nok ? C.nok : C.ok); doc.text(pdfTxt('Result: ' + verdict + (health ? '  Condition: ' + health.label + '.' : '')), M + 10, y + 13);
+    y += 32;
 
-    const allVisible = eq.sections.reduce((arr,s) => arr.concat(visibleItems(s)), []);
-    const visibleVals = allVisible.map(i => state.items[i.id]);
-    const notOkCount = visibleVals.filter(v => v==='notok').length;
-    const okCount = visibleVals.filter(v => v==='ok').length;
-    const totalItems = allVisible.length;
-    const health = computeHealthScore(eq, state);
-    const worstRUL = computeEquipmentRUL(eq, state);
+    const shortTitle = t => String(t).replace(/^Section \d+\s*—\s*/,'');
 
-    let summary = okCount + ' OK  ·  ' + notOkCount + ' Not OK  ·  ' + totalItems + ' total checks';
-    if (health) summary += '  ·  Health ' + health.score + '% (' + health.label + ')';
-    if (worstRUL) summary += '  ·  Worst-case RUL ' + (worstRUL.remainingLife === Infinity ? 'Stable' : worstRUL.remainingLife.toFixed(1) + ' yrs') + ' (' + worstRUL.pointLabel + ')';
-    textLine(summary, { bold:true, size:9.5, lineH:14 });
-    y += 6;
-
-    // ---- Sections ----
-    eq.sections.forEach(sec => {
-      const items = visibleItems(sec);
-      if (!items.length && !(sec.readings && sec.readings.length) && !state.comments[sec.id]) return;
-
-      ensureSpace(20);
-      doc.setFillColor(27,54,72);
-      doc.rect(marginX, y - 11, maxW, 16, 'F');
-      doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(10);
-      doc.text(sec.title, marginX + 6, y);
-      doc.setTextColor(0,0,0);
+    // ---------- Defects & actions ----------
+    const defects = [];
+    eq.sections.forEach(sec => visibleItems(sec).forEach(it => { if (state.items[it.id] === 'notok') defects.push({ sec, it }); }));
+    function tableHead(cols){
+      doc.setFillColor.apply(doc, C.navy); doc.rect(M, y, CW, 16, 'F');
+      font('bold', 7.8, [255,255,255]); let x = M;
+      cols.forEach(c => { doc.text(c[0], x + 5, y + 11); x += c[1]; });
       y += 16;
+    }
+    font('bold', 12, C.ink); need(40); doc.text('Defects & corrective actions', M, y); y += 8;
+    const dcols = [['#', 22], ['Section', 100], ['Check point', 190], ['Finding / corrective action', CW - 312]];
+    if (!defects.length){
+      y += 6; font('normal', 9, C.soft); doc.text('No NOT OK items in this inspection.', M, y + 8); y += 22;
+    } else {
+      y += 4; tableHead(dcols);
+      defects.forEach((d, k) => {
+        const label = d.it.detailed ? ((d.it.component ? d.it.component + ' — ' : '') + d.it.checkpoint) : d.it.label;
+        const fc = [];
+        if (state.findings[d.it.id]) fc.push('Finding: ' + state.findings[d.it.id]);
+        if (state.corrective[d.it.id]) fc.push('Action: ' + state.corrective[d.it.id]);
+        if (!fc.length) fc.push('No finding entered');
+        doc.setFontSize(8);
+        const c2 = wrap(shortTitle(d.sec.title), dcols[1][1] - 10), c3 = wrap(label, dcols[2][1] - 10), c4 = wrap(fc.join('\n'), dcols[3][1] - 10);
+        const rh = Math.max(c2.length, c3.length, c4.length) * 10 + 8;
+        if (need(rh)) tableHead(dcols);
+        if (k % 2) { doc.setFillColor(248,249,250); doc.rect(M, y, CW, rh, 'F'); }
+        let x = M;
+        font('bold', 8, C.nok); doc.text(String(k + 1), x + 5, y + 11); x += dcols[0][1];
+        font('normal', 8, C.soft); doc.text(c2, x + 5, y + 11); x += dcols[1][1];
+        font('normal', 8, C.ink); doc.text(c3, x + 5, y + 11); x += dcols[2][1];
+        font('normal', 8, C.ink); doc.text(c4, x + 5, y + 11);
+        doc.setDrawColor.apply(doc, C.line); doc.line(M, y + rh, M + CW, y + rh);
+        y += rh;
+      });
+      y += 14;
+    }
 
-      items.forEach(item => {
-        const s = statusLabel(state.items[item.id]);
-        doc.setFont('helvetica','normal'); doc.setFontSize(9);
-        const labelLines = doc.splitTextToSize(item.label, maxW - 55);
-        ensureSpace(labelLines.length * 11 + 2);
-        labelLines.forEach((ln, i) => {
-          doc.setTextColor(0,0,0);
-          doc.text(ln, marginX, y);
-          if (i === 0){
-            doc.setFont('helvetica','bold');
-            const color = s.cls === 'ok' ? [47,125,92] : s.cls === 'notok' ? [180,67,47] : [138,151,161];
-            doc.setTextColor.apply(doc, color);
-            doc.text(s.text, marginX + maxW - 42, y);
-            doc.setFont('helvetica','normal');
-          }
-          y += 11;
-        });
-        if (item.detailed){
-          const finding = state.findings[item.id];
-          const corrective = state.corrective[item.id];
-          let note = '';
-          if (finding) note += 'Findings: ' + finding + '   ';
-          if (corrective) note += 'Corrective Action: ' + corrective;
-          if (note) textLine(note, { size:8.5, indent:10, lineH:10, color:[60,60,60] });
-        }
+    // ---------- Detailed results ----------
+    need(60); font('bold', 12, C.ink); doc.text('Detailed results', M, y); y += 10;
+    function secBar(sec, cont){
+      const its = visibleItems(sec), v = its.map(i => state.items[i.id]);
+      const sum = its.length ? (v.filter(x => x === 'ok').length + ' OK  ·  ' + v.filter(x => x === 'notok').length + ' NOT OK  ·  ' + v.filter(x => !x).length + ' not checked') : '';
+      doc.setFillColor.apply(doc, C.navy); doc.rect(M, y, CW, 17, 'F');
+      font('bold', 9, [255,255,255]); doc.text(wrap(sec.title + (cont ? '  (continued)' : ''), CW - 170)[0], M + 6, y + 12);
+      font('normal', 7.5, [201,216,225]); doc.text(sum, M + CW - 6, y + 12, { align:'right' });
+      y += 20;
+    }
+    function pill(text, col, x, yy){
+      doc.setFillColor.apply(doc, col); doc.roundedRect(x, yy - 8.5, 44, 12, 6, 6, 'F');
+      font('bold', 7, [255,255,255]); doc.text(text, x + 22, yy, { align:'center' });
+    }
+    let running = 0;
+    eq.sections.forEach(sec => {
+      const its = visibleItems(sec);
+      const hasRead = sec.readings && sec.readings.length;
+      if (!its.length && !hasRead && !state.comments[sec.id] && !(state.photos[sec.id] || []).length) return;
+      need(50); secBar(sec, false);
+      its.forEach(it => {
+        running++;
+        const v = state.items[it.id];
+        const label = it.detailed ? ((it.component ? it.component + ' — ' : '') + it.checkpoint) : it.label;
+        doc.setFontSize(8.6); const L = wrap(label, CW - 80);
+        doc.setFontSize(7.2); const A = it.detailed && (it.acceptance || it.freq) ? wrap((it.freq ? '[' + it.freq + ']  ' : '') + (it.acceptance ? 'Acceptance: ' + it.acceptance : ''), CW - 80) : [];
+        const notes = [];
+        if (it.detailed && state.findings[it.id]) notes.push('Finding: ' + state.findings[it.id]);
+        if (it.detailed && state.corrective[it.id]) notes.push('Action: ' + state.corrective[it.id]);
+        doc.setFontSize(7.8); const N = notes.length ? wrap(notes.join('   '), CW - 80) : [];
+        const rh = L.length * 10.5 + A.length * 8.8 + N.length * 9.5 + 7;
+        if (need(rh)) secBar(sec, true);
+        if (v === 'notok'){ doc.setFillColor.apply(doc, C.nokbg); doc.rect(M, y, CW, rh, 'F'); }
+        let yy = y + 10;
+        font('bold', 7.5, C.soft); doc.text(String(it.no || running), M + 4, yy);
+        font('normal', 8.6, C.ink); doc.text(L, M + 26, yy); yy += L.length * 10.5;
+        if (A.length){ font('normal', 7.2, C.soft); doc.text(A, M + 26, yy - 2); yy += A.length * 8.8; }
+        if (N.length){ font('bold', 7.8, C.nok); doc.text(N, M + 26, yy - 1); }
+        const s = v === 'ok' ? ['OK', C.ok] : v === 'notok' ? ['NOT OK', C.nok] : v === 'na' ? ['N/A', C.na] : ['—', [200,206,211]];
+        pill(s[0], s[1], M + CW - 48, y + 10);
+        doc.setDrawColor.apply(doc, C.line); doc.setLineWidth(0.5); doc.line(M, y + rh, M + CW, y + rh);
+        y += rh;
       });
 
-      if (sec.readings && sec.readings.length){
-        const plainReadings = sec.readings.filter(r => r.unit !== 'mm');
-        const thicknessReadings = sec.readings.filter(r => r.unit === 'mm');
-        if (plainReadings.length){
-          const readingsText = 'Readings' + (sec.readingNote ? ' (target ' + sec.readingNote + ')' : '') + ' — ' +
-            plainReadings.map(r => r.label + ': ' + (state.readings[r.id] || '—') + ' ' + r.unit).join(' · ');
-          textLine(readingsText, { size:8.5, indent:10, lineH:11, color:[60,60,60] });
+      if (hasRead){
+        const plain = sec.readings.filter(r => r.unit !== 'mm'), thick = sec.readings.filter(r => r.unit === 'mm');
+        if (plain.length){
+          const isRating = plain.every(r => r.unit === 'rating');
+          const cols = 3, cw = CW / cols, rows = Math.ceil(plain.length / cols);
+          const boxH = 14 + rows * 13 + 4;
+          if (need(boxH)) secBar(sec, true);
+          doc.setFillColor.apply(doc, C.light); doc.rect(M, y + 2, CW, boxH, 'F');
+          font('bold', 7.5, [154,97,19]); doc.text(pdfTxt((isRating ? 'Condition rating' : 'Readings') + (sec.readingNote ? '  ·  ' + (isRating ? sec.readingNote.replace(/^Rating key\s*—\s*/,'') : 'target ' + sec.readingNote.replace(/^target:?\s*/i,'')) : '')).slice(0, 150), M + 6, y + 12);
+          plain.forEach((r, i) => {
+            const x = M + 6 + (i % cols) * cw, yy = y + 26 + Math.floor(i / cols) * 13;
+            const raw = state.readings[r.id];
+            let val = (raw === undefined || raw === '') ? '—' : String(raw);
+            if (r.unit === 'rating' && RATING_WORD[parseInt(val, 10)]) val = val + ' — ' + RATING_WORD[parseInt(val, 10)];
+            else if (val !== '—' && r.unit !== 'rating') val = val + ' ' + r.unit;
+            font('normal', 7.8, C.soft); const lab = wrap(r.label + ':', cw * 0.58)[0];
+            doc.text(lab, x, yy);
+            font('bold', 8, C.ink); doc.text(pdfTxt(val), x + cw * 0.6, yy);
+          });
+          y += boxH + 6;
         }
-        thicknessReadings.forEach(r => {
-          const entry = (state.readings[r.id] && typeof state.readings[r.id] === 'object') ? state.readings[r.id] : {};
-          const result = computeRUL(entry, state.header.f_date);
-          const rulText = result ? (result.error || result.text) : 'No thickness/RUL data entered';
-          const line = r.label + ' — Current: ' + (entry.current||'—') + ' mm · Previous: ' + (entry.previous||'—') +
-            ' mm (' + (entry.previousDate||'—') + ') · Min. allowable: ' + (entry.minAllowable||'—') + ' mm — ' + rulText;
-          textLine(line, { size:8.5, indent:10, lineH:11, color:[60,60,60] });
+        thick.forEach(r => {
+          const e = (state.readings[r.id] && typeof state.readings[r.id] === 'object') ? state.readings[r.id] : {};
+          const res = computeRUL(e, h.f_date);
+          const line = r.label + ':  current ' + (e.current || '—') + ' mm  ·  previous ' + (e.previous || '—') + ' mm (' + (e.previousDate || '—') + ')  ·  t-min ' + (e.minAllowable || '—') + ' mm  —  ' + (res ? (res.error || res.text) : 'no thickness data');
+          doc.setFontSize(7.8); const Lx = wrap(line, CW - 12);
+          if (need(Lx.length * 10 + 4)) secBar(sec, true);
+          font('normal', 7.8, C.ink); doc.text(Lx, M + 6, y + 9); y += Lx.length * 10 + 3;
         });
       }
 
       const comment = state.comments[sec.id];
-      if (comment) textLine('Comments: ' + comment, { size:8.5, indent:10, lineH:11, color:[60,60,60] });
-
+      if (comment){
+        doc.setFontSize(8); const Lc = wrap('Comments: ' + comment, CW - 12);
+        if (need(Lc.length * 10 + 6)) secBar(sec, true);
+        font('italic', 8, C.ink); doc.text(Lc, M + 6, y + 10); y += Lc.length * 10 + 6;
+      }
       const photos = state.photos[sec.id] || [];
       if (photos.length){
-        const imgSize = 70, gap = 6;
-        let x = marginX;
-        ensureSpace(imgSize + 10);
+        const s = 86, g = 8; let x = M;
+        need(s + 10);
         photos.forEach(src => {
-          if (x + imgSize > marginX + maxW){
-            x = marginX;
-            y += imgSize + gap;
-            ensureSpace(imgSize + 10);
-          }
-          try { doc.addImage(src, 'JPEG', x, y, imgSize, imgSize); } catch(e){ /* skip unreadable image, keep report going */ }
-          x += imgSize + gap;
+          if (x + s > M + CW){ x = M; y += s + g; need(s + 10); }
+          try { doc.addImage(src, 'JPEG', x, y + 4, s, s); } catch(e){}
+          x += s + g;
         });
-        y += imgSize + 10;
+        y += s + 12;
       }
-      y += 6;
+      y += 8;
     });
 
+    // ---------- Sign-off ----------
+    if (y + 120 > BOTTOM) newPage();
+    y += 6; font('bold', 12, C.ink); doc.text('Sign-off', M, y); y += 8;
+    const bw = (CW - 12) / 2;
+    [['Inspected by', h.f_checkby], ['Reviewed by', h.f_reviewby]].forEach((r, i) => {
+      const x = M + i * (bw + 12);
+      doc.setDrawColor.apply(doc, C.line); doc.setLineWidth(0.8); doc.rect(x, y, bw, 82);
+      font('normal', 7.5, C.soft); doc.text(r[0], x + 8, y + 13);
+      font('bold', 10, C.ink); doc.text(pdfTxt(r[1] || ''), x + 8, y + 28);
+      font('normal', 7.5, C.soft); doc.text('Signature', x + 8, y + 64); doc.text('Date', x + bw * 0.62, y + 64);
+      doc.setDrawColor(160,170,178); doc.line(x + 8, y + 56, x + bw * 0.55, y + 56); doc.line(x + bw * 0.62, y + 56, x + bw - 8, y + 56);
+      if (i === 0 && h.f_date){ font('normal', 9, C.ink); doc.text(pdfTxt(h.f_date), x + bw * 0.62, y + 52); }
+    });
+    y += 94;
+    font('normal', 7.5, C.soft);
+    doc.text(wrap('Acceptance criteria are taken from the referenced codes and OEM manuals. Items not checked are shown as "—". This report was generated from CM Inspect; drafts are stored on the inspector\u2019s device.', CW), M, y);
+
+    // ---------- Footer on every page ----------
+    const n = doc.getNumberOfPages(), stamp = new Date().toLocaleString();
+    for (let i = 1; i <= n; i++){
+      doc.setPage(i);
+      doc.setDrawColor.apply(doc, C.line); doc.setLineWidth(0.6); doc.line(M, H - 30, W - M, H - 30);
+      font('normal', 7.2, C.soft);
+      doc.text(pdfTxt(eq.title + (h.f_tag ? '  ·  Tag ' + h.f_tag : '') + (h.f_wo ? '  ·  WO ' + h.f_wo : '')).slice(0, 110), M, H - 19);
+      doc.text(pdfTxt('Generated ' + stamp), W / 2 + 40, H - 19, { align:'center' });
+      doc.text('Page ' + i + ' of ' + n, W - M, H - 19, { align:'right' });
+    }
     return doc;
   }
 
@@ -5767,6 +6197,31 @@
       btn.disabled = false; btn.textContent = 'Download PDF';
     }
   });
+
+
+  /* ---------------- Browser print (Ctrl+P / Print button) ---------------- */
+  function preparePrint(){
+    if (!currentEquipment) return;
+    const h = state.header || {};
+    const allVisible = currentEquipment.sections.reduce((a, s) => a.concat(visibleItems(s)), []);
+    const v = allVisible.map(i => state.items[i.id]);
+    const ok = v.filter(x => x === 'ok').length, nok = v.filter(x => x === 'notok').length, na = v.filter(x => x === 'na').length;
+    const health = computeHealthScore(currentEquipment, state);
+    document.getElementById('printSignoff').innerHTML = `
+      <h3>Inspection result &amp; sign-off</h3>
+      <table>
+        <tr><th>Checks recorded</th><th>OK</th><th>NOT OK</th><th>N/A</th><th>Health score</th></tr>
+        <tr><td>${ok + nok + na} of ${allVisible.length}</td><td>${ok}</td><td>${nok}</td><td>${na}</td><td>${health ? health.score + '% — ' + esc(health.label) : '—'}</td></tr>
+      </table>
+      <table style="margin-top:8px">
+        <tr><th style="width:22%">Role</th><th style="width:30%">Name</th><th>Signature</th><th style="width:18%">Date</th></tr>
+        <tr><td>Inspected by</td><td>${esc(h.f_checkby || '')}</td><td class="sig"></td><td>${esc(h.f_date || '')}</td></tr>
+        <tr><td>Reviewed by</td><td>${esc(h.f_reviewby || '')}</td><td class="sig"></td><td></td></tr>
+      </table>
+      <div class="print-foot">Every NOT OK item must be raised as a work request in Pronto. Printed ${new Date().toLocaleString()} · CM Inspect · ${esc(currentEquipment.title)}${h.f_tag ? ' · Tag ' + esc(h.f_tag) : ''}${h.f_wo ? ' · WO ' + esc(h.f_wo) : ''}</div>`;
+  }
+  window.addEventListener('beforeprint', preparePrint);
+  document.getElementById('btnPrint').addEventListener('click', () => { preparePrint(); window.print(); });
 
   /* ---------------- Init ---------------- */
   renderHub();

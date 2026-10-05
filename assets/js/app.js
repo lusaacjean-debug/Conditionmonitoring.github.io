@@ -17,7 +17,7 @@
        (screen, print, PDF): section N, item N.n, independent of how the
        source data was typed ("Section 3 —", "A. MOTOR", "Coupling — B." …).
      ===================================================================== */
-  const APP_VERSION = '1.1.0', APP_RELEASE = '2026-10-04';
+  const APP_VERSION = '1.1.1', APP_RELEASE = '2026-10-05';
   // DOC_REGISTER is loaded from data/document-register.js
   function docOf(eq){ const r = DOC_REGISTER[eq.id]; return r ? { no: r[0], rev: r[1] } : { no: 'CMI-DRAFT', rev: '0' }; }
   const KEEP_UPPER = new Set(['VSD','MCC','PSV','HPP','HV','LV','HME','UPS','DC','AC','GET','ROPS','FOPS','IR','PI','NER','PFC','MEWP','TC','HT','LT','BMS','SIS','CML','UT','NDT','OEM','CW','RIP','SAG','PM','WO','WR','HFO','LO','AVR','PPE','LOTO','JSA','PDF','ISO','API','SO2','DE','NDE','RPM','CIP','LMI','RCI','PTO','ATS','PCB','PLC','DCS','VFD','II','III','IV','HPU','MOV','RTD','SMU','TLB','ADT','LHD','KSB','GSW']);
@@ -44,6 +44,20 @@
       out.push({ sec, num: n, title: cleanTitle(sec.title), items: items.map((it, i) => ({ it, ref: n + '.' + (i + 1) })) });
     }
     return out;
+  }
+  /* Prestart go / no-go: CRITICAL check points (acceptance starts with
+     "CRITICAL") outside the declaration section decide the result. */
+  function goNoGo(eq, st){
+    st = st || state;
+    const ns = numberedSections(eq);
+    const crit = [];
+    ns.forEach(s => { if (/go \/ no-go/i.test(s.title)) return;
+      s.items.forEach(x => { if (x.it.detailed && /^CRITICAL/.test(x.it.acceptance || '')) crit.push(x); }); });
+    if (!crit.length) return null;
+    const nok = crit.filter(x => st.items[x.it.id] === 'notok').map(x => x.ref);
+    const open = crit.filter(x => !st.items[x.it.id]).map(x => x.ref);
+    const decision = nok.length ? 'NO-GO' : open.length ? 'INCOMPLETE' : 'GO';
+    return { decision, nok, open, total: crit.length };
   }
   function readingNoteText(note){
     if (/^rating key/i.test(note)) return note;
@@ -693,7 +707,11 @@
     const pill = document.getElementById('healthPill');
     if (!pill) return;
     if (currentEquipment.healthScoreApplicable === false){
-      pill.style.display = 'none';
+      const g = goNoGo(currentEquipment);
+      if (!g){ pill.style.display = 'none'; return; }
+      pill.style.display = 'inline-flex';
+      pill.textContent = g.decision === 'GO' ? 'GO · fit to operate' : g.decision === 'NO-GO' ? 'NO-GO · ' + g.nok.length + ' critical defect' + (g.nok.length > 1 ? 's' : '') : 'Incomplete · ' + g.open.length + ' critical open';
+      pill.className = 'health-pill ' + (g.decision === 'GO' ? 'good' : g.decision === 'NO-GO' ? 'critical' : '');
       return;
     }
     pill.style.display = 'inline-flex';
@@ -1196,20 +1214,35 @@
       ['Health score', health ? health.score + '%' : '—', bandCol(health && health.band)],
       ['Remaining life', rul ? (rul.remainingLife === Infinity ? 'Stable' : rul.remainingLife.toFixed(1) + ' yrs') : '—', bandCol(rul && rul.band)]
     ];
+    const GNG = eq.healthScoreApplicable === false ? goNoGo(eq) : null;
+    if (GNG){
+      const col = GNG.decision === 'GO' ? [C.okbg, C.ok] : GNG.decision === 'NO-GO' ? [C.nokbg, C.nok] : [C.amberbg, [154,97,19]];
+      tiles[4] = ['Critical NOT OK', String(GNG.nok.length) + ' / ' + GNG.total, GNG.nok.length ? [C.nokbg, C.nok] : [C.light, C.ink]];
+      tiles[5] = ['Decision', GNG.decision, col];
+    }
     const tg = 6, tw = (CW - tg * 5) / 6, th = 42;
     tiles.forEach((t, i) => {
       const x = M + i * (tw + tg);
       doc.setFillColor.apply(doc, t[2][0]); doc.roundedRect(x, y, tw, th, 4, 4, 'F');
       font('normal', 7, C.soft); doc.text(t[0], x + 7, y + 12);
-      font('bold', 14, t[2][1]); doc.text(pdfTxt(t[1]), x + 7, y + 32);
+      let fs = 14; font('bold', fs, t[2][1]); while (doc.getTextWidth(pdfTxt(t[1])) > tw - 12 && fs > 8){ fs--; doc.setFontSize(fs); }
+      doc.text(pdfTxt(t[1]), x + 7, y + 32);
     });
     y += th + 10;
-    const verdict = nok ? nok + ' defect' + (nok > 1 ? 's' : '') + ' recorded — raise each as a work request in Pronto before closing the WO.'
+    let verdict = nok ? nok + ' defect' + (nok > 1 ? 's' : '') + ' recorded — raise each as a work request in Pronto before closing the WO.'
                         : (ok + nok + na) ? 'No defects recorded.' : 'No checks recorded yet.';
-    doc.setFillColor.apply(doc, nok ? C.nokbg : C.okbg); doc.rect(M, y, CW, 20, 'F');
-    doc.setFillColor.apply(doc, nok ? C.nok : C.ok); doc.rect(M, y, 3, 20, 'F');
-    font('bold', 9, nok ? C.nok : C.ok); doc.text(pdfTxt('Result: ' + verdict + (health ? '  Condition: ' + health.label + '.' : '')), M + 10, y + 13);
-    y += 32;
+    let bad = !!nok;
+    if (GNG){
+      if (GNG.decision === 'NO-GO'){ verdict = 'NO-GO — critical defect at item ' + GNG.nok.join(', ') + '. Do not operate: tag out, report, raise a work request.'; bad = true; }
+      else if (GNG.decision === 'INCOMPLETE'){ verdict = 'INCOMPLETE — critical check ' + GNG.open.join(', ') + ' not recorded. Not cleared to operate.'; bad = true; }
+      else verdict = 'GO — all ' + GNG.total + ' critical checks OK' + (nok ? '; ' + nok + ' non-critical defect' + (nok > 1 ? 's' : '') + ' to report.' : '.');
+    }
+    doc.setFontSize(9); const VL = wrap('Result: ' + verdict + (health ? '  Condition: ' + health.label + '.' : ''), CW - 16);
+    const vh = 8 + VL.length * 11;
+    doc.setFillColor.apply(doc, bad ? C.nokbg : C.okbg); doc.rect(M, y, CW, vh, 'F');
+    doc.setFillColor.apply(doc, bad ? C.nok : C.ok); doc.rect(M, y, 3, vh, 'F');
+    font('bold', 9, bad ? C.nok : C.ok); doc.text(VL, M + 10, y + 13);
+    y += vh + 12;
 
     const shortTitle = t => String(t).replace(/^Section \d+\s*—\s*/,'');
 
@@ -1255,7 +1288,7 @@
     function secBar(sec, cont){
       const NSx = NS.find(s => s.sec === sec);
       const its = visibleItems(sec), v = its.map(i => state.items[i.id]);
-      const sum = its.length ? (v.filter(x => x === 'ok').length + ' OK  ·  ' + v.filter(x => x === 'notok').length + ' NOT OK  ·  ' + v.filter(x => !x).length + ' not checked') : '';
+      const sum = its.length ? (v.filter(x => x === 'ok').length + ' OK  ·  ' + v.filter(x => x === 'notok').length + ' NOT OK  ·  ' + v.filter(x => x === 'na').length + ' N/A  ·  ' + v.filter(x => !x).length + ' open') : '';
       doc.setFillColor.apply(doc, C.navy); doc.rect(M, y, CW, 17, 'F');
       font('bold', 9, [255,255,255]); doc.text(wrap((NSx ? NSx.num + '   ' + NSx.title : cleanTitle(sec.title)) + (cont ? '  (continued)' : ''), CW - 170)[0], M + 6, y + 12);
       font('normal', 7.5, [201,216,225]); doc.text(sum, M + CW - 6, y + 12, { align:'right' });
@@ -1304,7 +1337,7 @@
           const boxH = 14 + rows * 13 + 4;
           if (need(boxH)) secBar(sec, true);
           doc.setFillColor.apply(doc, C.light); doc.rect(M, y + 2, CW, boxH, 'F');
-          font('bold', 7.5, [154,97,19]); doc.text(pdfTxt((isRating ? 'Condition rating' : 'Readings') + (sec.readingNote ? '  ·  ' + (isRating ? sec.readingNote.replace(/^Rating key\s*—\s*/,'') : 'target ' + sec.readingNote.replace(/^target:?\s*/i,'')) : '')).slice(0, 150), M + 6, y + 12);
+          font('bold', 7.5, [154,97,19]); doc.text(pdfTxt((isRating ? 'Condition rating' : 'Readings') + (sec.readingNote ? '  ·  ' + (isRating ? sec.readingNote.replace(/^Rating key\s*—\s*/,'') : readingNoteText(sec.readingNote)) : '')).slice(0, 150), M + 6, y + 12);
           plain.forEach((r, i) => {
             const x = M + 6 + (i % cols) * cw, yy = y + 26 + Math.floor(i / cols) * 13;
             const raw = state.readings[r.id];
@@ -1384,6 +1417,16 @@
 
   document.getElementById('btnPdf').addEventListener('click', async () => {
     if (!currentEquipment) return;
+    const hh = state.header || {}, missing = [];
+    if (!hh.f_tag) missing.push('equipment tag'); if (!hh.f_checkby) missing.push('inspected by'); if (!hh.f_date) missing.push('date');
+    const warn = [];
+    if (missing.length) warn.push('Missing: ' + missing.join(', ') + ' — the report will not be traceable.');
+    const g = currentEquipment.healthScoreApplicable === false ? goNoGo(currentEquipment) : null;
+    if (g && g.decision !== 'GO'){
+      const decl = numberedSections(currentEquipment).flatMap(s => s.items).find(x => /^Critical items/.test(x.it.component || ''));
+      if (decl && state.items[decl.it.id] === 'ok') warn.push('Item ' + decl.ref + ' declares all critical items OK, but the result is ' + g.decision + ' (' + (g.nok.length ? 'NOT OK: ' + g.nok.join(', ') : 'not recorded: ' + g.open.join(', ')) + ').');
+    }
+    if (warn.length && !confirm(warn.join('\n\n') + '\n\nDownload the PDF anyway?')) return;
     const btn = document.getElementById('btnPdf');
     btn.disabled = true; btn.textContent = 'Building PDF…';
     try{

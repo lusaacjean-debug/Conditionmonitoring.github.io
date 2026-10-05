@@ -2,6 +2,12 @@
 
 All notable changes to CM Inspect. Versions follow *major.minor.patch*: major = structure or numbering change, minor = new checklists or features, patch = content corrections.
 
+## [1.1.1] — 2026-10-05
+### Fixed
+- Prestart go / no-go: decision calculated from the CRITICAL check points (GO / NO-GO / INCOMPLETE) — shown in the header pill, the PDF result line and the summary tiles (Critical NOT OK, Decision).
+- Warning before the PDF when tag / inspector / date are empty, or when the "Critical items OK" declaration contradicts the recorded result.
+- PDF section summary now counts N/A; reading notes labelled Target / Reference consistently; result line wraps instead of being cut.
+
 ## [1.1.0] — 2026-10-04
 ### Changed
 - Repository restructured: page shell, stylesheet, application, data and checklist families in separate files.

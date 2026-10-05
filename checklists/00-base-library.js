@@ -1,0 +1,2267 @@
+/* CM Inspect — checklists/00-base-library.js
+   Building blocks (motor, coupling, pump…) and the base library: static, rotating and lubrication checklists.
+   Loaded as a classic script; shares global scope with the other files
+   (load order is defined in index.html). © Lotus Africa — internal use only. */
+'use strict';
+
+  /* =====================================================================
+     BUILDING BLOCKS — reusable generators so repeated Motor/Pump/Gearbox
+     patterns across equipment don't have to be typed out by hand each time
+     ===================================================================== */
+
+  function motorBlock(prefix, opts){
+    opts = opts || {};
+    return { id: prefix, title: opts.title || 'Motor', readingNote: opts.readingNote || 'Max. 76°C',
+      items: opts.items || [
+        {id:prefix+'_gen', label:'General condition & unusual noise'},
+        {id:prefix+'_bolts', label:'Hold down bolts and Foundation base plate'},
+        {id:prefix+'_cool', label:'Cooling system and Lube fitting integrity'}
+      ],
+      readings: opts.readings || [
+        {id:prefix+'_nde', label:'NDE', unit:'°C'},
+        {id:prefix+'_de', label:'DE', unit:'°C'},
+        {id:prefix+'_body', label:'Body', unit:'°C'}
+      ]};
+  }
+
+  function couplingBlock(prefix, title, items){
+    return { id: prefix, title: title || 'Coupling',
+      items: items || [
+        {id:prefix+'_gen', label:'General condition & Noise'},
+        {id:prefix+'_hubs', label:'Inspect coupling hubs'}
+      ],
+      readings:[ {id:prefix+'_temp', label:'Coupling Temp', unit:'°C'} ]
+    };
+  }
+
+  function gearboxBlock(prefix, title, shaftCount, tempRange){
+    const readings = [];
+    for (let i=1;i<=shaftCount;i++){ readings.push({id:prefix+'_s'+i, label:'Shaft '+i, unit:'°C'}); }
+    readings.push({id:prefix+'_casing', label:'Casing', unit:'°C'});
+    return { id: prefix, title: title || 'Gearbox', readingNote: tempRange || '87–93°C',
+      items:[
+        {id:prefix+'_gen', label:'General condition & unusual noise'},
+        {id:prefix+'_bolts', label:'Hold down bolts - Adaptor base & frame'},
+        {id:prefix+'_seals', label:'Gearbox input/output shaft - casing oil seal leaks'},
+        {id:prefix+'_lube', label:'Gearbox lube condition and oil level'}
+      ], readings };
+  }
+
+  function coolingSystemBlock(prefix, title){
+    return { id: prefix, title: title, readingNote:'Max. 76°C',
+      items:[
+        {id:prefix+'_gen', label:'General condition & unusual noise'},
+        {id:prefix+'_bolts', label:'Hold down bolts & Foundation base plate'},
+        {id:prefix+'_cores', label:'Cores condition — leaks / product'},
+        {id:prefix+'_cool', label:'Cooling system and Lube fitting integrity'}
+      ], readings:[
+        {id:prefix+'_nde', label:'NDE', unit:'°C'},
+        {id:prefix+'_de', label:'DE', unit:'°C'},
+        {id:prefix+'_body', label:'Body', unit:'°C'},
+        {id:prefix+'_oilin', label:'Oil inlet temp', unit:'°C'},
+        {id:prefix+'_oilout', label:'Oil outlet temp', unit:'°C'}
+      ]};
+  }
+
+  function gearboxDriveBlock(prefix, title){
+    return { id: prefix, title: title,
+      items:[
+        {id:prefix+'_gen', label:'General condition & unusual noise'},
+        {id:prefix+'_bolts', label:'Hold down bolts - Adaptor base & frame'},
+        {id:prefix+'_seals', label:'Gearbox input/output shaft - casing oil seal leaks'}
+      ], readings:[
+        {id:prefix+'_s1de', label:'Shaft 1 DE', unit:'°C'},
+        {id:prefix+'_s1nde', label:'Shaft 1 NDE', unit:'°C'},
+        {id:prefix+'_s2de', label:'Shaft 2 DE', unit:'°C'},
+        {id:prefix+'_s2nde', label:'Shaft 2 NDE', unit:'°C'},
+        {id:prefix+'_casing', label:'Casing temp', unit:'°C'},
+        {id:prefix+'_inletp', label:'Inlet oil line pressure', unit:'bar'},
+        {id:prefix+'_retoil', label:'Return oil temp', unit:'°C'},
+        {id:prefix+'_inletflow', label:'Inlet oil flow', unit:'L/min'}
+      ]};
+  }
+
+  function pumpStation(prefix, label, pumpItems, pumpReadings){
+    return [
+      motorBlock(prefix+'_mtr', {title: label+' — Motor'}),
+      { id: prefix+'_pump', title: label+' — Pump', readingNote:'Max. 76°C', items: pumpItems, readings: pumpReadings }
+    ];
+  }
+
+  /* =====================================================================
+     DRIVE / COUPLING TYPE ENGINE
+     Workbook-sourced inspection points carry structured metadata
+     (component / checkpoint / acceptance / freq) plus, where relevant,
+     applicableDriveTypes + isGeneral so the checklist can be filtered
+     dynamically by the selected Drive/Coupling Type without losing the
+     plain item.label rendering path used by every pre-existing item.
+     ===================================================================== */
+
+  const DRIVE_COUPLING_TYPES = [
+    'Belt Drive',
+    'Rigid – Sleeve',
+    'Rigid – Flanged',
+    'Flexible Elastomeric – Jaw/Spider',
+    'Flexible Elastomeric – Tyre',
+    'Flexible Elastomeric – Pin & Bush',
+    'Gear Coupling',
+    'Grid Coupling',
+    'Disc/Diaphragm Coupling',
+    'Fluid Coupling',
+    'Universal-Joint Coupling',
+    'Direct Drive',
+    'Not Applicable'
+  ];
+
+  // Builds a workbook-style inspection point. `opts.isGeneral` = shown for every
+  // drive/coupling type; `opts.applicableDriveTypes` = shown only when one of
+  // those types is selected (in addition to any general points). Items with
+  // neither flag behave exactly like a plain {id,label} item (always shown) —
+  // this keeps every pre-existing equipment entry completely unaffected.
+  function driveCouplingPoint(id, no, component, checkpoint, acceptance, freq, opts){
+    opts = opts || {};
+    return {
+      id: id,
+      no: no,
+      component: component,
+      checkpoint: checkpoint,
+      label: component + ' — ' + checkpoint,
+      acceptance: acceptance,
+      freq: freq,
+      detailed: true,
+      isGeneral: !!opts.isGeneral,
+      applicableDriveTypes: opts.applicableDriveTypes || null
+    };
+  }
+
+  // Plain workbook-style point (no drive/coupling filtering) — same detailed
+  // rendering (component/checkpoint/acceptance/freq + Findings + Corrective
+  // Action) as driveCouplingPoint, just without the type-based visibility.
+  function checklistPoint(id, no, component, checkpoint, acceptance, freq){
+    return driveCouplingPoint(id, no, component, checkpoint, acceptance, freq, {});
+  }
+
+  // The workbook's "General — All Coupling Types" section applies to the true
+  // coupling types only — never to Belt Drive, Direct Drive or Not Applicable,
+  // which aren't couplings and get no inspection points from this sheet.
+  const TRUE_COUPLING_TYPES = DRIVE_COUPLING_TYPES.filter(t => t !== 'Belt Drive' && t !== 'Direct Drive' && t !== 'Not Applicable');
+
+  function isItemVisible(item){
+    if (!item.applicableDriveTypes && !item.isGeneral) return true; // not drive/coupling-scoped
+    const dt = state.header && state.header.f_drivetype;
+    if (!dt) return false;
+    if (item.isGeneral) return TRUE_COUPLING_TYPES.indexOf(dt) !== -1;
+    return item.applicableDriveTypes && item.applicableDriveTypes.indexOf(dt) !== -1;
+  }
+
+  function visibleItems(sec){
+    return sec.items.filter(isItemVisible);
+  }
+
+  /* =====================================================================
+     EQUIPMENT LIBRARY
+     ===================================================================== */
+
+
+  // ---------------------------------------------------------------------
+  // Shared Motor / Coupling block generators -- every rotating equipment
+  // embeds its own driving Induction Motor and its own Drive/Coupling
+  // Type dropdown (built once here, reused everywhere via id prefix so
+  // ids stay unique and stable per equipment).
+  // ---------------------------------------------------------------------
+  // Standardized Safety section (Structural Inspection's Section 1) — applied
+  // as the first section of every equipment in the app, replacing every
+  // equipment-specific safety/guarding section that used to live elsewhere.
+  function buildSafetySection(prefix){
+    return { id: prefix+'_safety1', title:'Section 1 — Pre-Inspection Safety & Access', items:[
+        {id:prefix+'_saf_1', label:'Conduct Job Safety Analysis (JSA) / Take 5 risk assessment'},
+        {id:prefix+'_saf_2', label:'Don appropriate PPE: hard hat, safety glasses, steel-toe boots, high-vis vest'},
+        {id:prefix+'_saf_3', label:'Verify LOTO procedures completed if required for access'},
+        {id:prefix+'_saf_4', label:'Confirm safe access routes and emergency egress points identified'},
+        {id:prefix+'_saf_5', label:'Inspect scaffolding/elevated work platforms for compliance (if used)'},
+        {id:prefix+'_saf_6', label:'Verify fall protection equipment is in place for heights >1.8 m'},
+        {id:prefix+'_saf_7', label:'Check atmospheric conditions in confined spaces (if applicable)'},
+        {id:prefix+'_saf_8', label:'Notify operations/control room of inspection activity'},
+        {id:prefix+'_saf_9', label:'Establish exclusion zone below elevated inspection areas'}
+      ]};
+  }
+
+  function buildMotorSections(prefix){
+    return [
+        { id:prefix+'_general', title:'A. MOTOR', readingNote:'< 80°C or per OEM, stable trend', items:[
+            checklistPoint(prefix+'_1','1','','Check for cracks, corrosion, oil/grease leakage, physical damage','No cracks, no leaks, paint intact',''),
+            checklistPoint(prefix+'_2','2','','Confirm nameplate data legible and matches duty (kW, V, A, RPM, IP, class)','Legible, matches drive schedule',''),
+            checklistPoint(prefix+'_3','3','','Check hold-down/foundation bolts for tightness, grouting cracks','All bolts tight, no cracked grout',''),
+            checklistPoint(prefix+'_4','4','','Verify earth strap/cable intact and connected','Continuous, resistance per standard',''),
+            checklistPoint(prefix+'_5','5','','Inspect cable terminations, lugs, gland seals for tightness/corrosion','Torqued to spec, no discolouration',''),
+            checklistPoint(prefix+'_6','6','','Check DE/NDE bearing housing temperature','< 80°C or per OEM, stable trend',''),
+            checklistPoint(prefix+'_7','7','','Grease type, quantity, re-greasing interval, condition of purged grease','Per OEM lubrication schedule, no contamination',''),
+            checklistPoint(prefix+'_8','8','','Listen for grinding, whining, rumbling','Smooth, no abnormal noise',''),
+            checklistPoint(prefix+'_9','9','','Overall vibration velocity DE & NDE, horizontal/vertical/axial','ISO 10816-3 Zone A/B',''),
+            checklistPoint(prefix+'_10','10','','Check axial float within tolerance','Per OEM tolerance',''),
+            checklistPoint(prefix+'_11','11','','Inspect external fan blades and cowl for damage/obstruction','Free rotation, undamaged, unobstructed',''),
+            checklistPoint(prefix+'_12','12','','Inspect/clean/replace inlet air filters','Clean, unblocked',''),
+            checklistPoint(prefix+'_13','13','','Check cooling fins/ducts clear of dust build-up','Free of dust/debris','')
+          ], readings:[
+            {id:prefix+'_nde', label:'NDE', unit:'°C'}, {id:prefix+'_de', label:'DE', unit:'°C'}
+          ]}];
+  }
+
+  function buildCouplingSections(prefix){
+    return [
+        { id:prefix+'_general', title:'Coupling — A. General — All Coupling Types', items:[
+            driveCouplingPoint(prefix+'_1','1','Coupling Guard','Inspect guard fitted, secure, no deformation, inspection window intact','Fitted, secure, compliant with guarding standard','M',{isGeneral:true}),
+            driveCouplingPoint(prefix+'_2','2','Alignment - Angular','Check angular alignment of driver/driven shafts','Per OEM tolerance (typ. ≤ 0.05 mm/100mm or laser spec)','A / after maintenance',{isGeneral:true}),
+            driveCouplingPoint(prefix+'_3','3','Alignment - Parallel (Offset)','Check parallel/offset alignment','Per OEM tolerance (typ. ≤ 0.05 mm)','A / after maintenance',{isGeneral:true}),
+            driveCouplingPoint(prefix+'_4','4','Coupling Gap','Verify coupling hub-to-hub gap (DBSE) as specified','Per OEM drawing tolerance','A / after maintenance',{isGeneral:true}),
+            driveCouplingPoint(prefix+'_5','5','Bolt Torque / Fasteners','Check all coupling bolts/nuts for correct torque, locking devices intact','Torqued to spec, lock-wired/nyloc secure','6M',{isGeneral:true}),
+            driveCouplingPoint(prefix+'_6','6','Keyway & Shaft Fit','Inspect key, keyway and hub interference fit for wear/movement','No play, no fretting','A',{isGeneral:true}),
+            driveCouplingPoint(prefix+'_7','7','Vibration at Coupling','Measure vibration near coupling for misalignment signature','Within ISO 10816 limits, no 1x/2x RPM misalignment peaks','M',{isGeneral:true}),
+            driveCouplingPoint(prefix+'_8','8','Noise','Listen for clicking, knocking during start/stop and running','Smooth engagement, no abnormal noise','W',{isGeneral:true}),
+            driveCouplingPoint(prefix+'_9','9','Corrosion / Surface Condition','Inspect hubs and covers for corrosion or cracking','No cracks, corrosion within acceptable limits','6M',{isGeneral:true})
+          ]},
+        { id:prefix+'_rigid', title:'Coupling — B. Rigid Coupling (Sleeve / Flanged)', items:[
+            driveCouplingPoint(prefix+'_10','10','Flange Face Contact','Check flange faces fully mated, no gap','Full metal-to-metal contact','A',{applicableDriveTypes:['Rigid – Sleeve','Rigid – Flanged']}),
+            driveCouplingPoint(prefix+'_11','11','Fit-up Bolts','Check for correct fitted (reamed) bolts, no elongation of holes','Snug fit, no elongation','A',{applicableDriveTypes:['Rigid – Sleeve','Rigid – Flanged']})
+          ]},
+        { id:prefix+'_elastomeric', title:'Coupling — C. Flexible Elastomeric (Jaw/Spider, Tyre, Pin & Bush)', items:[
+            driveCouplingPoint(prefix+'_12','12','Elastomer Element Condition','Inspect spider/tyre/rubber element for cracking, wear, perishing, extrusion','No cracks, <10% wear, no chunks missing','M',{applicableDriveTypes:['Flexible Elastomeric – Jaw/Spider','Flexible Elastomeric – Tyre','Flexible Elastomeric – Pin & Bush']}),
+            driveCouplingPoint(prefix+'_13','13','Element Hardness/Compression Set','Check for hardening or permanent compression set','Original resilience retained','6M',{applicableDriveTypes:['Flexible Elastomeric – Jaw/Spider','Flexible Elastomeric – Tyre','Flexible Elastomeric – Pin & Bush']}),
+            driveCouplingPoint(prefix+'_14','14','Pin & Bush Wear (if applicable)','Check pin bushings for wear and play','Within OEM wear limit','A',{applicableDriveTypes:['Flexible Elastomeric – Pin & Bush']})
+          ]},
+        { id:prefix+'_gear', title:'Coupling — D. Gear Coupling', items:[
+            driveCouplingPoint(prefix+'_15','15','Grease Condition & Fill Level','Check lubricant fill, contamination, metal particles (swarf)','Full per spec, clean, no excessive swarf','6M',{applicableDriveTypes:['Gear Coupling']}),
+            driveCouplingPoint(prefix+'_16','16','Seal Condition','Inspect seals for leakage','No grease leakage','M',{applicableDriveTypes:['Gear Coupling']}),
+            driveCouplingPoint(prefix+'_17','17','Gear Tooth Wear','Inspect gear teeth (on strip-down) for pitting, wear pattern','Within OEM wear limits','A',{applicableDriveTypes:['Gear Coupling']})
+          ]},
+        { id:prefix+'_grid', title:'Coupling — E. Grid (Falk-Type) Coupling', items:[
+            driveCouplingPoint(prefix+'_18','18','Grid Spring Condition','Inspect grid element for cracking, wear at contact points','No cracks, uniform wear','A',{applicableDriveTypes:['Grid Coupling']}),
+            driveCouplingPoint(prefix+'_19','19','Groove Wear (Flanges)','Check hub groove wear from grid contact','Within OEM limit','A',{applicableDriveTypes:['Grid Coupling']}),
+            driveCouplingPoint(prefix+'_20','20','Cover Gasket/Seal','Check cover seals for lubricant retention (if lubricated type)','No leaks','6M',{applicableDriveTypes:['Grid Coupling']})
+          ]},
+        { id:prefix+'_disc', title:'Coupling — F. Disc / Diaphragm Coupling', items:[
+            driveCouplingPoint(prefix+'_21','21','Disc Pack Condition','Inspect discs for cracking, fretting at bolt holes','No cracks, no fretting corrosion','A',{applicableDriveTypes:['Disc/Diaphragm Coupling']}),
+            driveCouplingPoint(prefix+'_22','22','Disc Pack Bolts','Verify all disc-pack bolts torqued evenly','Even torque per OEM sequence','A',{applicableDriveTypes:['Disc/Diaphragm Coupling']})
+          ]},
+        { id:prefix+'_fluid', title:'Coupling — G. Fluid Coupling', items:[
+            driveCouplingPoint(prefix+'_23','23','Oil Level & Condition','Check fluid coupling oil level, colour, contamination','Correct level, clean, no water/metal','M',{applicableDriveTypes:['Fluid Coupling']}),
+            driveCouplingPoint(prefix+'_24','24','Fusible Plug','Verify fusible plug intact and rated correctly (overload protection)','Intact, correct melting point rating','A',{applicableDriveTypes:['Fluid Coupling']}),
+            driveCouplingPoint(prefix+'_25','25','Delay Chamber/Scoop Tube (variable fill)','Check scoop tube mechanism operation','Smooth operation, no leaks','6M',{applicableDriveTypes:['Fluid Coupling']})
+          ]},
+        { id:prefix+'_ujoint', title:'Coupling — H. Universal Joint (Cardan Shaft)', items:[
+            driveCouplingPoint(prefix+'_26','26','U-Joint Cross & Bearings','Check for play, grease nipple condition, wear','No perceptible play, greased per schedule','M',{applicableDriveTypes:['Universal-Joint Coupling']}),
+            driveCouplingPoint(prefix+'_27','27','Slip Spline','Check slip joint for wear, lubrication, freedom of movement','Free movement, lubricated, no excess play','6M',{applicableDriveTypes:['Universal-Joint Coupling']})
+          ]},
+        { id:prefix+'_belt', title:'Coupling — I. Belt Drive', items:[
+            driveCouplingPoint(prefix+'_28','28','Belt Surface','Look for any signs of wear, such as cracks, fraying, or glazed areas on the belt surface','No cracks, fraying or glazing','W',{applicableDriveTypes:['Belt Drive']}),
+            driveCouplingPoint(prefix+'_29','29','Belt Tension','Check the tension of the belt by pressing down on the belt midway between the pulleys — it should deflect slightly','Slight deflection per OEM tension spec','M',{applicableDriveTypes:['Belt Drive']}),
+            driveCouplingPoint(prefix+'_30','30','Belt Alignment','Ensure the belt is properly aligned on the pulleys — misalignment can cause the belt to slip and lead to overheating and cracking','Belt tracks true on pulleys, no slip','M',{applicableDriveTypes:['Belt Drive']}),
+            driveCouplingPoint(prefix+'_31','31','Pulleys','Inspect the pulleys for any buildup of rubber deposits, worn spots, or signs of damage','Clean, no deposits, no wear or damage','M',{applicableDriveTypes:['Belt Drive']}),
+            driveCouplingPoint(prefix+'_32','32','Drive Belt Condition','Determine the condition of the drive belt by visual inspection','Serviceable condition, no replacement due','W',{applicableDriveTypes:['Belt Drive']}),
+            driveCouplingPoint(prefix+'_33','33','Belt Irregularities','Look for any irregularities such as fraying, chunking, or glazed appearance','No fraying, chunking or glazing','W',{applicableDriveTypes:['Belt Drive']}),
+            driveCouplingPoint(prefix+'_34','34','Motor Pulley Temperature','Record motor pulley temperature','Stable, within OEM/normal operating range','M',{applicableDriveTypes:['Belt Drive']}),
+            driveCouplingPoint(prefix+'_35','35','Driven Pulley Temperature','Record driven pulley temperature','Stable, within OEM/normal operating range','M',{applicableDriveTypes:['Belt Drive']})
+          ]},
+        { id:prefix+'_direct', title:'Coupling — J. Direct Drive', items:[
+            driveCouplingPoint(prefix+'_36','36','Coupling Noise','Listen for abnormal noise','Smooth running, no abnormal noise','W',{applicableDriveTypes:['Direct Drive']}),
+            driveCouplingPoint(prefix+'_37','37','Coupling Leaks','Look for grease or leaks from the coupling','No grease or oil leakage','M',{applicableDriveTypes:['Direct Drive']}),
+            driveCouplingPoint(prefix+'_38','38','Cleanliness & Ventilation','Verify cleanliness and ventilation','Clean, unobstructed ventilation','M',{applicableDriveTypes:['Direct Drive']}),
+            driveCouplingPoint(prefix+'_39','39','Coupling Temperature','Record coupling temperature','Stable, within OEM/normal operating range','M',{applicableDriveTypes:['Direct Drive']})
+          ]}];
+  }
+
+  const EQUIPMENT = [
+
+            { id:'centrifugal-pump', title:'Centrifugal Pump', dept:'Condition Monitoring — Rotating Equipment',
+      category:'rotating', sourceSheet:'Centrifugal Pump', driveCouplingField:true,
+      driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
+      tagPlaceholder:'e.g. CP-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('cnp')].concat(buildMotorSections('cnp_mtr').concat(buildCouplingSections('cnp_cpl'), [
+        { id:'cnp_own1', title:'C. CENTRIFUGAL PUMP', items:[
+            checklistPoint('cnp_own1_1','1','','Inspect for cracks, corrosion, erosion, leakage at joints','No leaks, wear within allowance',''),
+            checklistPoint('cnp_own1_2','2','','Check grouting, hold-down bolts, soft-foot','No cracks, bolts tight, no soft foot',''),
+            checklistPoint('cnp_own1_3','3','','Check for leaks, support, correct alignment (no pipe strain)','No leaks, adequately supported',''),
+            checklistPoint('cnp_own1_4','4','','Verify suction & discharge pressure gauges functional and in range','Reading within design operating range','')
+          ]},
+        { id:'cnp_own2', title:'SEALING SYSTEM', items:[
+            checklistPoint('cnp_own2_1','5','','Check for leakage at seal faces, flush line flow/pressure','Minimal/no visible leakage, flush per plan',''),
+            checklistPoint('cnp_own2_2','6','','Check packing gland leakage rate, adjust as required','Slight drip per OEM (typ. 40-60 drops/min)',''),
+            checklistPoint('cnp_own2_3','7','','Check flush plan reservoir level & pressure (API plan)','Per plan spec, topped up','')
+          ]},
+        { id:'cnp_own3', title:'BEARINGS & LUBRICATION', items:[
+            checklistPoint('cnp_own3_1','8','','Check oil level (sight glass) or grease nipple condition','Between min/max marks, clean, correct grade',''),
+            checklistPoint('cnp_own3_2','9','','Measure DE/NDE bearing temperature','< 70-80°C or per OEM, stable',''),
+            checklistPoint('cnp_own3_3','10','','Measure vibration velocity DE/NDE','ISO 10816-3 Zone A/B','')
+          ]},
+        { id:'cnp_own4', title:'PERFORMANCE & CONDITION MONITORING', items:[
+            checklistPoint('cnp_own4_1','11','','Compare actual flow against duty point','Within ±10% of design duty',''),
+            checklistPoint('cnp_own4_2','12','','Listen for cavitation (gravel-like noise)','No cavitation noise',''),
+            checklistPoint('cnp_own4_3','13','','Check motor amps against rated/expected load','Within nameplate FLA',''),
+            checklistPoint('cnp_own4_4','14','','General noise check for bearing/cavitation/misalignment issues','No abnormal noise','')
+          ]}
+      ]))},
+
+    { id:'positive-displacement-pump', title:'Positive Displacement Pump', dept:'Condition Monitoring — Rotating Equipment',
+      category:'rotating', sourceSheet:'Positive Displ. Pump', driveCouplingField:true,
+      driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
+      tagPlaceholder:'e.g. PDP-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('pdp')].concat(buildMotorSections('pdp_mtr').concat(buildCouplingSections('pdp_cpl'), [
+        { id:'pdp_own1', title:'C.PUMP', items:[
+            checklistPoint('pdp_own1_1','1','','Inspect for cracks, corrosion, leaks at fasteners/joints','No leaks or cracks',''),
+            checklistPoint('pdp_own1_2','2','','Check grouting and hold-down bolts','No cracks, bolts tight',''),
+            checklistPoint('pdp_own1_3','3','','Inspect valve chest for leakage, listen for valve chatter','No external leaks, smooth valve action',''),
+            checklistPoint('pdp_own1_4','4','','Check pre-charge pressure and mounting','Pre-charge per spec, securely mounted',''),
+            checklistPoint('pdp_own1_5','5','','Verify relief valve set pressure and function (pop test where applicable)','Set per system MAWP, tested per schedule','')
+          ]},
+        { id:'pdp_own2', title:'SEALING & PACKING', items:[
+            checklistPoint('pdp_own2_1','6','','Check packing leakage, adjust gland as necessary','Controlled minimal leakage per OEM',''),
+            checklistPoint('pdp_own2_2','7','','Inspect rod surface for scoring, pitting, wear','Smooth, no scoring',''),
+            checklistPoint('pdp_own2_3','8','','Check diaphragm for cracking/rupture, hydraulic oil level','Intact, oil level correct','')
+          ]},
+        { id:'pdp_own3', title:'POWER END / DRIVE', items:[
+            checklistPoint('pdp_own3_1','9','','Check oil level, colour, water/particle contamination','Correct level, clean',''),
+            checklistPoint('pdp_own3_2','10','','Inspect crosshead guides and bearings for wear, lubrication','Within wear limits, adequately lubricated',''),
+            checklistPoint('pdp_own3_3','11','','Check gear backlash and tooth condition','Within OEM tolerance',''),
+            checklistPoint('pdp_own3_4','12','','Check internal clearances between rotors and casing','Within OEM tolerance','')
+          ]},
+        { id:'pdp_own4', title:'BEARINGS & VIBRATION', items:[
+            checklistPoint('pdp_own4_1','13','','Check bearing housing temperature','< 80°C or per OEM',''),
+            checklistPoint('pdp_own4_2','14','','Measure vibration at bearing housings','ISO 10816-3 Zone A/B','')
+          ]},
+        { id:'pdp_own5', title:'PERFORMANCE', items:[
+            checklistPoint('pdp_own5_1','15','','Monitor against system design pressure','Within design operating range',''),
+            checklistPoint('pdp_own5_2','16','','Verify stroke count / flow rate against duty','Within ±10% of design duty',''),
+            checklistPoint('pdp_own5_3','17','','Check motor amp draw','Within nameplate FLA','')
+          ]}
+      ]))},
+
+    { id:'progressive-cavity-pump', title:'Progressive Cavity Pump', dept:'Condition Monitoring — Rotating Equipment',
+      category:'rotating', sourceSheet:'Progressive Cavity Pump', driveCouplingField:true,
+      driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
+      tagPlaceholder:'e.g. PCP-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('pcp')].concat(buildMotorSections('pcp_mtr').concat(buildCouplingSections('pcp_cpl'), [
+        { id:'pcp_own1', title:'C. PUMP', items:[
+            checklistPoint('pcp_own1_1','1','','Inspect for leaks, cracks, corrosion','No leaks or cracks',''),
+            checklistPoint('pcp_own1_2','2','','Check grouting and hold-down bolts','No cracks, bolts tight',''),
+            checklistPoint('pcp_own1_3','3','','Check for blockage, wear, bridging of material','Free flowing, no build-up','')
+          ]},
+        { id:'pcp_own2', title:'ROTOR / STATOR', items:[
+            checklistPoint('pcp_own2_1','4','','Inspect stator bore (via strip or borescope) for wear, swelling, chemical attack','Within OEM wear limit, no excessive swell',''),
+            checklistPoint('pcp_own2_2','5','','Check rotor chrome plating for wear, pitting, corrosion','Smooth plating intact',''),
+            checklistPoint('pcp_own2_3','6','','Verify pump still develops rated pressure (interference fit check)','Achieves rated discharge pressure at rated speed','')
+          ]},
+        { id:'pcp_own3', title:'D. DRIVE TRAIN', items:[
+            checklistPoint('pcp_own3_1','1','','Check drive-end and pump-end joints for wear/play, lubrication','No excess play, greased per schedule',''),
+            checklistPoint('pcp_own3_2','2','','Inspect for straightness, corrosion, coupling condition','Straight, no corrosion',''),
+            checklistPoint('pcp_own3_3','3','','Refer to Gearbox checklist','Per gearbox checklist','')
+          ]},
+        { id:'pcp_own4', title:'SEALING', items:[
+            checklistPoint('pcp_own4_1','4','','Check leakage rate and gland adjustment','Controlled minimal leakage / no leak (mech seal)',''),
+            checklistPoint('pcp_own4_2','5','','Check flush line pressure/flow','Per design spec','')
+          ]},
+        { id:'pcp_own5', title:'BEARINGS & LUBRICATION', items:[
+            checklistPoint('pcp_own5_1','6','','Check oil level or grease condition','Correct level, clean, correct grade',''),
+            checklistPoint('pcp_own5_2','7','','Measure bearing housing temperature','< 80°C or per OEM',''),
+            checklistPoint('pcp_own5_3','8','','Measure vibration at bearing housing','ISO 10816-3 Zone A/B','')
+          ]},
+        { id:'pcp_own6', title:'PERFORMANCE', items:[
+            checklistPoint('pcp_own6_1','9','','Monitor against system design/rated pressure','Within design operating range',''),
+            checklistPoint('pcp_own6_2','10','','Check motor amp draw','Within nameplate FLA',''),
+            checklistPoint('pcp_own6_3','11','','Verify low-level/dry-run protection functional','Trips pump on low level/no flow','')
+          ]}
+      ]))},
+
+    { id:'gearbox', title:'Gearbox', dept:'Condition Monitoring — Rotating Equipment',
+      category:'rotating', sourceSheet:'Gearbox', driveCouplingField:true,
+      driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
+      tagPlaceholder:'e.g. GBX-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('gbx')].concat(buildMotorSections('gbx_mtr').concat(buildCouplingSections('gbx_cpl'), [
+        { id:'gbx_own1', title:'B. GENERAL / VISUAL', items:[
+            checklistPoint('gbx_own1_1','1','','Inspect casing for cracks, corrosion, oil weeping at joints/seams','No cracks, no leaks',''),
+            checklistPoint('gbx_own1_2','2','','Check hold-down bolts, torque arm/foot mounting for tightness','All bolts tight, no cracked grout',''),
+            checklistPoint('gbx_own1_3','3','','Check breather clear, not blocked or missing','Clean, functional, correctly fitted','')
+          ]},
+        { id:'gbx_own2', title:'C. LUBRICATION', items:[
+            checklistPoint('gbx_own2_1','1','','Check oil level via sight glass/dipstick','Between min/max marks',''),
+            checklistPoint('gbx_own2_2','2','','Check colour, clarity, water/metal contamination; take sample if due','Clean, no water/metallic particles, per oil analysis program',''),
+            checklistPoint('gbx_own2_3','3','','Check operating oil/housing temperature','< 80-90°C or per OEM',''),
+            checklistPoint('gbx_own2_4','4','','Inspect shaft seals for leakage','No leaks','')
+          ]},
+        { id:'gbx_own3', title:'D. GEARS & BEARINGS', items:[
+            checklistPoint('gbx_own3_1','1','','Listen for whining, knocking, rattling indicating wear/misalignment','Smooth, consistent mesh noise',''),
+            checklistPoint('gbx_own3_2','2','','Check gear backlash against OEM spec','Within OEM tolerance',''),
+            checklistPoint('gbx_own3_3','3','','Check bearing housing temperatures (input/output)','< 80°C or per OEM, stable trend',''),
+            checklistPoint('gbx_own3_4','4','','Measure vibration at bearing positions','ISO 10816-3 Zone A/B or OEM limit',''),
+            checklistPoint('gbx_own3_5','5','','Lab analysis for Fe/Cu/Cr particles trending','Within baseline trend, no step change','')
+          ]},
+        { id:'gbx_own4', title:'E. COUPLINGS & ALIGNMENT', items:[
+            checklistPoint('gbx_own4_1','1','','Verify motor-to-gearbox alignment (see Coupling checklist)','Per OEM tolerance',''),
+            checklistPoint('gbx_own4_2','2','','Verify gearbox-to-driven equipment alignment','Per OEM tolerance',''),
+            checklistPoint('gbx_own4_3','3','','Check condition and mounting of torque arm (shaft-mount gearboxes)','Secure, no cracking, rubber bushes intact','')
+          ]}
+      ]))},
+
+    { id:'agitator', title:'Agitator', dept:'Condition Monitoring — Rotating Equipment',
+      category:'rotating', sourceSheet:'Agitator', driveCouplingField:true,
+      driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
+      tagPlaceholder:'e.g. AGT-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('agt')].concat(buildMotorSections('agt_mtr').concat(buildCouplingSections('agt_cpl'), [
+        { id:'agt_own1', title:'C. GEARBOX', items:[
+            checklistPoint('agt_own1_1','1','','Inspect casing for cracks, corrosion, oil weeping at joints/seams','No cracks, no leaks',''),
+            checklistPoint('agt_own1_2','2','','Check hold-down bolts, torque arm/foot mounting for tightness','All bolts tight, no cracked grout',''),
+            checklistPoint('agt_own1_3','3','','Check breather clear, not blocked or missing','Clean, functional, correctly fitted','')
+          ]},
+        { id:'agt_own2', title:'LUBRICATION', items:[
+            checklistPoint('agt_own2_1','4','','Check oil level via sight glass/dipstick','Between min/max marks',''),
+            checklistPoint('agt_own2_2','5','','Check colour, clarity, water/metal contamination; take sample if due','Clean, no water/metallic particles, per oil analysis program',''),
+            checklistPoint('agt_own2_3','6','','Check operating oil/housing temperature','< 80-90°C or per OEM',''),
+            checklistPoint('agt_own2_4','7','','Inspect shaft seals for leakage','No leaks','')
+          ]},
+        { id:'agt_own3', title:'GEARS & BEARINGS', items:[
+            checklistPoint('agt_own3_1','8','','Listen for whining, knocking, rattling indicating wear/misalignment','Smooth, consistent mesh noise',''),
+            checklistPoint('agt_own3_2','9','','Check gear backlash against OEM spec','Within OEM tolerance',''),
+            checklistPoint('agt_own3_3','10','','Check bearing housing temperatures (input/output)','< 80°C or per OEM, stable trend',''),
+            checklistPoint('agt_own3_4','11','','Measure vibration at bearing positions','ISO 10816-3 Zone A/B or OEM limit','')
+          ]},
+        { id:'agt_own4', title:'E. AGITATOR', items:[
+            checklistPoint('agt_own4_1','1','','Check condition and mounting of torque arm (shaft-mount gearboxes)','Secure, no cracking, rubber bushes intact',''),
+            checklistPoint('agt_own4_2','2','','Inspect mounting beam/bridge, tank nozzle for cracks, corrosion','No cracks, structurally sound',''),
+            checklistPoint('agt_own4_3','3','','Check gearbox/motor housing for leaks, damage','No leaks, no damage','')
+          ]},
+        { id:'agt_own5', title:'SHAFT & IMPELLER', items:[
+            checklistPoint('agt_own5_1','4','','Check for visible wobble/whip during operation','No visible wobble, within OEM runout',''),
+            checklistPoint('agt_own5_2','5','','Inspect lower steady bearing for wear, lubrication','Within wear limit, lubricated',''),
+            checklistPoint('agt_own5_3','6','','Inspect blades for wear, erosion, cracking, build-up/scaling','No cracks, wear within allowance, clean',''),
+            checklistPoint('agt_own5_4','7','','Check impeller retaining bolts/set screws tight','Torqued to spec, locking device intact','')
+          ]},
+        { id:'agt_own6', title:'D. SEAL / STUFFING BOX( If applicable', items:[
+            checklistPoint('agt_own6_1','1','','Check for leakage at tank penetration seal','Minimal/no leakage','')
+          ]},
+        { id:'agt_own7', title:'E. BEARINGS & VIBRATION(if applicable)', items:[
+            checklistPoint('agt_own7_1','1','','Check bearing temperature','< 80°C or per OEM',''),
+            checklistPoint('agt_own7_2','2','','Measure vibration on the bearing','ISO 10816-3 Zone A/B',''),
+            checklistPoint('agt_own7_3','3','','Check motor current / torque against normal operating range','Within normal process range','')
+          ]},
+        { id:'agt_own8', title:'G. TANK & PROCESS', items:[
+            checklistPoint('agt_own8_1','1','','Verify liquid level appropriate for impeller submergence','Impeller adequately submerged, no vortex to shaft',''),
+            checklistPoint('agt_own8_2','2','','Observe for excessive vortex or splash indicating level/speed issue','Controlled flow pattern, no air entrainment','')
+          ]}
+      ]))},
+
+    { id:'linear-screen-standard', title:'Linear Screen — Standard Checklist', dept:'Condition Monitoring — Rotating Equipment',
+      category:'rotating', sourceSheet:'Linear Screen', driveCouplingField:true,
+      driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
+      tagPlaceholder:'e.g. LSC-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('lsc')].concat(buildMotorSections('lsc_mtr').concat(buildCouplingSections('lsc_cpl'), [
+        { id:'lsc_own1', title:'C. GEARBOX', items:[
+            checklistPoint('lsc_own1_1','1','','Inspect casing for cracks, corrosion, oil weeping at joints/seams','No cracks, no leaks',''),
+            checklistPoint('lsc_own1_2','2','','Check hold-down bolts, torque arm/foot mounting for tightness','All bolts tight, no cracked grout',''),
+            checklistPoint('lsc_own1_3','3','','Check breather clear, not blocked or missing','Clean, functional, correctly fitted','')
+          ]},
+        { id:'lsc_own2', title:'LUBRICATION', items:[
+            checklistPoint('lsc_own2_1','4','','Check oil level via sight glass/dipstick','Between min/max marks',''),
+            checklistPoint('lsc_own2_2','5','','Check colour, clarity, water/metal contamination; take sample if due','Clean, no water/metallic particles, per oil analysis program',''),
+            checklistPoint('lsc_own2_3','6','','Check operating oil/housing temperature','< 80-90°C or per OEM',''),
+            checklistPoint('lsc_own2_4','7','','Inspect shaft seals for leakage','No leaks','')
+          ]},
+        { id:'lsc_own3', title:'GEARS & BEARINGS', items:[
+            checklistPoint('lsc_own3_1','8','','Listen for whining, knocking, rattling indicating wear/misalignment','Smooth, consistent mesh noise',''),
+            checklistPoint('lsc_own3_2','9','','Check gear backlash against OEM spec','Within OEM tolerance',''),
+            checklistPoint('lsc_own3_3','10','','Check bearing housing temperatures (input/output)','< 80°C or per OEM, stable trend',''),
+            checklistPoint('lsc_own3_4','11','','Measure vibration at bearing positions','ISO 10816-3 Zone A/B or OEM limit',''),
+            checklistPoint('lsc_own3_5','12','','Lab analysis for Fe/Cu/Cr particles trending','Within baseline trend, no step change','')
+          ]},
+        { id:'lsc_own4', title:'E. COUPLINGS & ALIGNMENT', items:[
+            checklistPoint('lsc_own4_1','1','','Verify motor-to-gearbox alignment (see Coupling checklist)','Per OEM tolerance',''),
+            checklistPoint('lsc_own4_2','2','','Verify gearbox-to-driven equipment alignment','Per OEM tolerance',''),
+            checklistPoint('lsc_own4_3','3','','Check condition and mounting of torque arm (shaft-mount gearboxes)','Secure, no cracking, rubber bushes intact','')
+          ]},
+        { id:'lsc_own5', title:'D. SCREEN', items:[
+            checklistPoint('lsc_own5_1','1','','Inspect side plates, cross members for cracks, fatigue, corrosion','No cracks, structurally sound',''),
+            checklistPoint('lsc_own5_2','2','','Inspect coil springs or rubber isolators for cracking, sagging, breakage','No cracks, even loading, no broken springs',''),
+            checklistPoint('lsc_own5_3','3','','Check feed chute/box for wear, liner condition, correct feed distribution','Liners within wear limit, even feed spread',''),
+            checklistPoint('lsc_own5_4','4','','Inspect discharge end for wear and blockage','No excessive wear, unobstructed','')
+          ]},
+        { id:'lsc_own6', title:'SCREEN CLOTH / MEDIA', items:[
+            checklistPoint('lsc_own6_1','5','','Inspect for tears, holes, blinding, stretching, wear','No tears/holes beyond spec, aperture size within tolerance',''),
+            checklistPoint('lsc_own6_2','6','','Check tensioning bolts/rails for correct, even tension','Evenly tensioned per OEM, no slack sections',''),
+            checklistPoint('lsc_own6_3','7','','Check retaining clips/rails secure, no missing panels','All panels secure, none missing',''),
+            checklistPoint('lsc_own6_4','8','','Inspect support rails/rubber for wear allowing cloth sag','Intact, adequately supporting cloth','')
+          ]},
+        { id:'lsc_own7', title:'E. VIBRATING MECHANISM / DRIVE', items:[
+            checklistPoint('lsc_own7_1','1','','Check unbalance weight settings match both motors, security of weights','Weights matched and secure per stroke design',''),
+            checklistPoint('lsc_own7_2','2','','Check bearing temperature and vibration','< 80°C, ISO 10816-3 within limit',''),
+            checklistPoint('lsc_own7_3','3','','Inspect belt tension, wear, alignment','Correct tension, no cracking, aligned pulleys',''),
+            checklistPoint('lsc_own7_4','4','','Verify counter-rotating motors synchronised (phase angle)','Correct phase relationship maintained',''),
+            checklistPoint('lsc_own7_5','5','','Measure screen stroke amplitude and frequency','Within OEM design specification','')
+          ]},
+        { id:'lsc_own8', title:'BEARINGS & LUBRICATION', items:[
+            checklistPoint('lsc_own8_1','6','','Check grease/oil level and re-lubrication per schedule','Per OEM lubrication schedule',''),
+            checklistPoint('lsc_own8_2','7','','Check all structural and mechanical bolted joints for tightness (fretting risk)','All bolts tight, no fretting/witness marks','')
+          ]},
+        { id:'lsc_own9', title:'HOUSEKEEPING', items:[
+            checklistPoint('lsc_own9_1','8','','Check for material build-up on structure affecting balance','Clean, no significant build-up','')
+          ]}
+      ]))},
+
+    { id:'mineral-sizer-standard', title:'Mineral Sizer — Standard Checklist', dept:'Condition Monitoring — Rotating Equipment',
+      category:'rotating', sourceSheet:'Mineral Sizer', driveCouplingField:true,
+      driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
+      tagPlaceholder:'e.g. MSZ-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('msz')].concat(buildMotorSections('msz_mtr').concat(buildCouplingSections('msz_cpl'), [
+        { id:'msz_own1', title:'C. GENERAL / VISUAL', items:[
+            checklistPoint('msz_own1_1','1','','Inspect casing for cracks, corrosion, oil weeping at joints/seams','No cracks, no leaks',''),
+            checklistPoint('msz_own1_2','2','','Check hold-down bolts, torque arm/foot mounting for tightness','All bolts tight, no cracked grout',''),
+            checklistPoint('msz_own1_3','3','','Check breather clear, not blocked or missing','Clean, functional, correctly fitted','')
+          ]},
+        { id:'msz_own2', title:'LUBRICATION', items:[
+            checklistPoint('msz_own2_1','4','','Check oil level via sight glass/dipstick','Between min/max marks',''),
+            checklistPoint('msz_own2_2','5','','Check colour, clarity, water/metal contamination; take sample if due','Clean, no water/metallic particles, per oil analysis program',''),
+            checklistPoint('msz_own2_3','6','','Check operating oil/housing temperature','< 80-90°C or per OEM',''),
+            checklistPoint('msz_own2_4','7','','Inspect shaft seals for leakage','No leaks','')
+          ]},
+        { id:'msz_own3', title:'GEARS & BEARINGS', items:[
+            checklistPoint('msz_own3_1','8','','Listen for whining, knocking, rattling indicating wear/misalignment','Smooth, consistent mesh noise',''),
+            checklistPoint('msz_own3_2','9','','Check gear backlash against OEM spec','Within OEM tolerance',''),
+            checklistPoint('msz_own3_3','10','','Check bearing housing temperatures (input/output)','< 80°C or per OEM, stable trend',''),
+            checklistPoint('msz_own3_4','11','','Measure vibration at bearing positions','ISO 10816-3 Zone A/B or OEM limit',''),
+            checklistPoint('msz_own3_5','12','','Lab analysis for Fe/Cu/Cr particles trending','Within baseline trend, no step change','')
+          ]},
+        { id:'msz_own4', title:'E. COUPLINGS & ALIGNMENT', items:[
+            checklistPoint('msz_own4_1','1','','Verify motor-to-gearbox alignment (see Coupling checklist)','Per OEM tolerance',''),
+            checklistPoint('msz_own4_2','2','','Verify gearbox-to-driven equipment alignment','Per OEM tolerance',''),
+            checklistPoint('msz_own4_3','3','','Check condition and mounting of torque arm (shaft-mount gearboxes)','Secure, no cracking, rubber bushes intact','')
+          ]},
+        { id:'msz_own5', title:'GENERAL / STRUCTURE', items:[
+            checklistPoint('msz_own5_1','4','','Inspect main frame, side plates for cracks, wear, weld integrity','No cracks, welds sound',''),
+            checklistPoint('msz_own5_2','5','','Check hold-down bolts and mounting for tightness','All bolts tight, no cracked grout',''),
+            checklistPoint('msz_own5_3','6','','Inspect liners for wear, blockage points','Within wear allowance, unobstructed','')
+          ]},
+        { id:'msz_own6', title:'ROLLS & TEETH', items:[
+            checklistPoint('msz_own6_1','7','','Inspect teeth/picks for wear, breakage, looseness','Within OEM wear limit, none broken/loose',''),
+            checklistPoint('msz_own6_2','8','','Check roll shafts for straightness and correct inter-roll clearance/timing','Within OEM tolerance',''),
+            checklistPoint('msz_own6_3','9','','Check bearing temperature and vibration','< 80°C, ISO 10816-3 within limit',''),
+            checklistPoint('msz_own6_4','10','','Check auto-lube system function, grease level/flow','System functional, correct flow rate','')
+          ]},
+        { id:'msz_own7', title:'D. DRIVE SYSTEM', items:[
+            checklistPoint('msz_own7_1','1','','Refer to Induction Motor checklist','Per Motor checklist',''),
+            checklistPoint('msz_own7_2','2','','Refer to Gearbox checklist','Per Gearbox checklist',''),
+            checklistPoint('msz_own7_3','3','','Inspect drive chain or coupling linking rolls for wear, tension, lubrication','Correct tension, lubricated, within wear limit',''),
+            checklistPoint('msz_own7_4','4','','Verify shear pin/torque limiter/overload clutch condition and setting','Correct rating fitted, undamaged','')
+          ]},
+        { id:'msz_own8', title:'HYDRAULIC TRAMP RELEASE SYSTEM (if fitted)', items:[
+            checklistPoint('msz_own8_1','5','','Check oil level, filter condition, pressure setting','Correct level, clean filter, set pressure per spec',''),
+            checklistPoint('msz_own8_2','6','','Inspect for leaks, damage, chafing','No leaks, hoses undamaged',''),
+            checklistPoint('msz_own8_3','7','','Test tramp metal release/reset function','Releases and resets correctly','')
+          ]},
+        { id:'msz_own9', title:'MONITORING', items:[
+            checklistPoint('msz_own9_1','8','','Trend vibration levels on all bearing points','Within baseline/ISO limit',''),
+            checklistPoint('msz_own9_2','9','','Monitor motor current for overload/blockage trend','Within nameplate FLA, no sustained spikes','')
+          ]}
+      ]))},
+
+    { id:'jaw-crusher', title:'Jaw Crusher', dept:'Condition Monitoring — Rotating Equipment',
+      category:'rotating', sourceSheet:'Jaw Crusher', driveCouplingField:true,
+      driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
+      tagPlaceholder:'e.g. JC-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('jcr')].concat(buildMotorSections('jcr_mtr').concat(buildCouplingSections('jcr_cpl'), [
+        { id:'jcr_own1', title:'C. JAW CRUSHER', items:[
+            checklistPoint('jcr_own1_1','1','','Inspect frame welds/castings for cracks','No cracks, sound welds',''),
+            checklistPoint('jcr_own1_2','2','','Check foundation bolts, grouting condition','All bolts tight, no cracked grout','')
+          ]},
+        { id:'jcr_own2', title:'CRUSHING CHAMBER', items:[
+            checklistPoint('jcr_own2_1','3','','Inspect dies for wear, cracking, bolt security','Within wear allowance, no cracks, bolts tight',''),
+            checklistPoint('jcr_own2_2','4','','Inspect side liners for wear','Within wear allowance',''),
+            checklistPoint('jcr_own2_3','5','','Inspect toggle plate for wear, cracking at seats','No cracks, seated correctly',''),
+            checklistPoint('jcr_own2_4','6','','Check toggle seat and pitman toggle seat for wear','Within wear allowance',''),
+            checklistPoint('jcr_own2_5','7','','Check tension rod, spring condition and pre-load','Springs intact, correct pre-load maintained','')
+          ]},
+        { id:'jcr_own3', title:'PITMAN & ECCENTRIC SHAFT', items:[
+            checklistPoint('jcr_own3_1','8','','Inspect pitman for cracks, wear at bearing bores','No cracks, within wear limit',''),
+            checklistPoint('jcr_own3_2','9','','Check shaft for wear, straightness, surface condition','Within OEM tolerance',''),
+            checklistPoint('jcr_own3_3','10','','Check bearing temperature, vibration, lubrication','< 80°C, ISO 10816-3 within limit, lubricated',''),
+            checklistPoint('jcr_own3_4','11','','Inspect for wear, correct clearance, lubrication','Within OEM clearance, lubricated','')
+          ]},
+        { id:'jcr_own4', title:'FLYWHEEL & DRIVE', items:[
+            checklistPoint('jcr_own4_1','12','','Inspect for cracks, balance, guard condition','No cracks, balanced, guarded',''),
+            checklistPoint('jcr_own4_2','13','','Check belt tension, wear, sheave alignment','Correct tension, no cracking, aligned',''),
+            checklistPoint('jcr_own4_3','14','','Refer to Motor and Coupling checklists','Per respective checklists','')
+          ]},
+        { id:'jcr_own5', title:'D. LUBRICATION SYSTEM', items:[
+            checklistPoint('jcr_own5_1','1','','Check Greasel level, filter condition, pump operation, flow to all points','Correct level, clean, system functional',''),
+            checklistPoint('jcr_own5_2','2','','Monitor lube oil temperature and pressure alarms','Within OEM operating range','')
+          ]},
+        { id:'jcr_own6', title:'SETTING & PROTECTION', items:[
+            checklistPoint('jcr_own6_1','3','','Verify CSS within target product spec','Within target range',''),
+            checklistPoint('jcr_own6_2','4','','Check hydraulic/mechanical relief system for tramp iron protection','Functional, resets correctly','')
+          ]},
+        { id:'jcr_own7', title:'H. VIBRATION MONITORING', items:[
+            checklistPoint('jcr_own7_1','1','','Trend vibration on bearing housings','Within baseline/ISO limit','')
+          ]}
+      ]))},
+
+    { id:'centrifugal-fan', title:'Centrifugal Fan', dept:'Condition Monitoring — Rotating Equipment',
+      category:'rotating', sourceSheet:'Centrifugal Fan', driveCouplingField:true,
+      driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
+      tagPlaceholder:'e.g. CF-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('cnf')].concat(buildMotorSections('cnf_mtr').concat(buildCouplingSections('cnf_cpl'), [
+        { id:'cnf_own1', title:'C. FAN', items:[
+            checklistPoint('cnf_own1_1','1','','Check hold-down bolts, anti-vibration mounts','Bolts tight, mounts intact',''),
+            checklistPoint('cnf_own1_2','2','','Check duct connections, expansion joints, damper operation','No leaks, dampers operate freely','')
+          ]},
+        { id:'cnf_own2', title:'IMPELLER', items:[
+            checklistPoint('cnf_own2_1','3','','Inspect blades for erosion, corrosion, build-up, cracking, imbalance','No cracks, minimal wear/build-up',''),
+            checklistPoint('cnf_own2_2','4','','Check for excessive vibration indicating imbalance from wear/build-up','Within ISO 10816 limit',''),
+            checklistPoint('cnf_own2_3','5','','Check impeller hub set screws/keys for security','Torqued, locking device intact','')
+          ]},
+        { id:'cnf_own3', title:'BEARINGS & DRIVE', items:[
+            checklistPoint('cnf_own3_1','6','','Check DE/NDE bearing temperature','< 80°C or per OEM',''),
+            checklistPoint('cnf_own3_2','7','','Check grease/oil level and re-lubrication per schedule','Per OEM schedule, correct grade',''),
+            checklistPoint('cnf_own3_3','8','','Measure vibration at bearing housings','ISO 10816-3 Zone A/B',''),
+            checklistPoint('cnf_own3_4','9','','Check belt tension, wear, sheave alignment','Correct tension, aligned, no cracking',''),
+            checklistPoint('cnf_own3_5','10','','Refer to Coupling checklist','Per Coupling checklist',''),
+            checklistPoint('cnf_own3_6','11','','Check for oil/grease leakage at shaft seals','No leaks','')
+          ]},
+        { id:'cnf_own4', title:'PERFORMANCE', items:[
+            checklistPoint('cnf_own4_1','12','','Check flow/pressure against design duty','Within design operating range',''),
+            checklistPoint('cnf_own4_2','13','','Check motor amp draw','Within nameplate FLA',''),
+            checklistPoint('cnf_own4_3','14','','Check for abnormal noise (surge, rubbing, bearing)','No abnormal noise','')
+          ]}
+      ]))},
+
+    { id:'blower', title:'Blower', dept:'Condition Monitoring — Rotating Equipment',
+      category:'rotating', sourceSheet:'Blower', driveCouplingField:true,
+      driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
+      tagPlaceholder:'e.g. BLW-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('blw')].concat(buildMotorSections('blw_mtr').concat(buildCouplingSections('blw_cpl'), [
+        { id:'blw_own1', title:'C. BLOWER', items:[
+            checklistPoint('blw_own1_1','1','','Inspect blower casing for cracks, corrosion, leaks','No cracks, no leaks',''),
+            checklistPoint('blw_own1_2','2','','Check hold-down bolts, base condition','Bolts tight, base sound',''),
+            checklistPoint('blw_own1_3','3','','Check inlet air filter condition, clean/replace as required','Clean, low pressure-drop',''),
+            checklistPoint('blw_own1_4','4','','Inspect for damage, excessive noise transmission','Intact, effective','')
+          ]},
+        { id:'blw_own2', title:'ROTATING ELEMENT', items:[
+            checklistPoint('blw_own2_1','5','','Check inter-lobe and lobe-to-casing clearance (on strip/inspection)','Within OEM tolerance',''),
+            checklistPoint('blw_own2_2','6','','Check gear backlash, tooth condition, gear-case oil','Within OEM tolerance, oil clean & correct level',''),
+            checklistPoint('blw_own2_3','7','','Check for oil or process leakage at shaft seals','No leaks','')
+          ]},
+        { id:'blw_own3', title:'LUBRICATION & BEARINGS', items:[
+            checklistPoint('blw_own3_1','8','','Check oil level, colour, contamination','Correct level, clean',''),
+            checklistPoint('blw_own3_2','9','','Check DE/NDE bearing temperature','< 80°C or per OEM',''),
+            checklistPoint('blw_own3_3','10','','Measure vibration at bearing housings','ISO 10816-3 Zone A/B','')
+          ]},
+        { id:'blw_own4', title:'DRIVE & PROTECTION', items:[
+            checklistPoint('blw_own4_1','11','','Verify relief valve set point and function','Set per system MAWP, tested per schedule',''),
+            checklistPoint('blw_own4_2','12','','Verify high discharge temperature trip functional','Trips at set point','')
+          ]},
+        { id:'blw_own5', title:'F. PERFORMANCE', items:[
+            checklistPoint('blw_own5_1','1','','Monitor against design duty point','Within design operating range',''),
+            checklistPoint('blw_own5_2','2','','Check motor amp draw','Within nameplate FLA','')
+          ]},
+        { id:'blw_own6', title:'G. NOISE ENCLOSURE', items:[
+            checklistPoint('blw_own6_1','1','','Check acoustic enclosure panels intact, ventilation clear','Intact, vents unobstructed','')
+          ]}
+      ]))},
+
+    { id:'centrifuge', title:'Centrifuge', dept:'Condition Monitoring — Rotating Equipment',
+      category:'rotating', sourceSheet:'Centrifuge', driveCouplingField:true,
+      driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
+      tagPlaceholder:'e.g. CTF-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('ctf')].concat(buildMotorSections('ctf_mtr').concat(buildCouplingSections('ctf_cpl'), [
+        { id:'ctf_own1', title:'C. CENTRIFUGE', items:[
+            checklistPoint('ctf_own1_1','1','','Inspect casing for cracks, corrosion, leaks','No cracks, no leaks',''),
+            checklistPoint('ctf_own1_2','2','','Check mounting, vibration isolators/dampers condition','Secure, isolators intact',''),
+            checklistPoint('ctf_own1_3','3','','Check for leaks, blockage, wear','No leaks, unobstructed','')
+          ]},
+        { id:'ctf_own2', title:'BOWL / BASKET & SCROLL', items:[
+            checklistPoint('ctf_own2_1','4','','Inspect for wear, cracking, imbalance, corrosion (borescope/strip)','No cracks, within wear limit',''),
+            checklistPoint('ctf_own2_2','5','','Inspect scroll flighting for wear/erosion, tile condition','Within wear allowance, tiles secure',''),
+            checklistPoint('ctf_own2_3','6','','Inspect screen panels for blinding, wear, tears','Clear apertures, no tears','')
+          ]},
+        { id:'ctf_own3', title:'BEARINGS & VIBRATION', items:[
+            checklistPoint('ctf_own3_1','7','','Check bowl/bearing housing temperature','< 80°C or per OEM',''),
+            checklistPoint('ctf_own3_2','8','','Monitor vibration (often continuous online monitoring)','Within OEM/ISO trip limits',''),
+            checklistPoint('ctf_own3_3','9','','Inspect condition of anti-vibration mounts','No cracks, even compression','')
+          ]},
+        { id:'ctf_own4', title:'CONTROL SYSTEMS', items:[
+            checklistPoint('ctf_own4_1','10','','Verify bowl speed sensor readings accurate','Matches actual speed ±tolerance',''),
+            checklistPoint('ctf_own4_2','11','','Verify scroll overload/torque limiting protection functional','Trips/alarms at set point','')
+          ]},
+        { id:'ctf_own5', title:'G. PERFORMANCE', items:[
+            checklistPoint('ctf_own5_1','1','','Monitor process performance indicators','Within process target',''),
+            checklistPoint('ctf_own5_2','2','','Monitor current draw trend','Within normal operating range','')
+          ]}
+      ]))},
+
+    { id:'rotary-valve', title:'Rotary Valve', dept:'Condition Monitoring — Rotating Equipment',
+      category:'rotating', sourceSheet:'Rotary Valve', driveCouplingField:true,
+      driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
+      tagPlaceholder:'e.g. RV-01', defaultVisual:true, defaultVibration:false, sections: [buildSafetySection('rov')].concat(buildMotorSections('rov_mtr').concat(buildCouplingSections('rov_cpl'), [
+        { id:'rov_own1', title:'C. GENERAL / VISUAL', items:[
+            checklistPoint('rov_own1_1','1','','Inspect for cracks, corrosion, wear, air/material leakage','No cracks, minimal leakage',''),
+            checklistPoint('rov_own1_2','2','','Check gasket condition, bolt tightness','No leaks, bolts tight',''),
+            checklistPoint('rov_own1_3','3','','Check support structure and fasteners','Secure, no cracking','')
+          ]},
+        { id:'rov_own2', title:'ROTOR', items:[
+            checklistPoint('rov_own2_1','4','','Check clearance between rotor blades and housing','Within OEM tolerance',''),
+            checklistPoint('rov_own2_2','5','','Inspect blade tips/wear strips for wear, damage','Within OEM wear limit',''),
+            checklistPoint('rov_own2_3','6','','Check shaft for wear, bearing condition, lubrication','Within tolerance, lubricated','')
+          ]},
+        { id:'rov_own3', title:'SEALING', items:[
+            checklistPoint('rov_own3_1','7','','Check for leakage at shaft penetrations','No leaks',''),
+            checklistPoint('rov_own3_2','8','','Check purge air pressure/flow to shaft seals','Per design spec','')
+          ]},
+        { id:'rov_own4', title:'PERFORMANCE', items:[
+            checklistPoint('rov_own4_1','9','','Verify rotor speed matches process control set point','Within ±5% of set point',''),
+            checklistPoint('rov_own4_2','10','','Monitor for blockage/overload trend','Within nameplate FLA',''),
+            checklistPoint('rov_own4_3','11','','Verify valve maintains required rotary airlock isolation (dust/explosion)','Meets required isolation/ATEX rating','')
+          ]}
+      ]))},
+
+    { id:'conveyor-belt-pulleys', title:'Conveyor Belt-Pulleys', dept:'Condition Monitoring — Rotating Equipment',
+      category:'rotating', sourceSheet:'Conveyor Belt-Pulleys', driveCouplingField:true,
+      driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
+      tagPlaceholder:'e.g. CV-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('cbp')].concat(buildMotorSections('cbp_mtr').concat(buildCouplingSections('cbp_cpl'), [
+        { id:'cbp_own1', title:'C. BELT', items:[
+            checklistPoint('cbp_own1_1','1','','Inspect top/bottom cover for cuts, gouges, exposed carcass, delamination','No exposed carcass, wear within allowance',''),
+            checklistPoint('cbp_own1_2','2','','Inspect vulcanised/mechanical splices for separation, damage','Intact, no separation',''),
+            checklistPoint('cbp_own1_3','3','','Check belt runs centrally on all pulleys/idlers','Centred, no persistent edge contact',''),
+            checklistPoint('cbp_own1_4','4','','Inspect belt edges for fraying, cracking','No significant fraying','')
+          ]},
+        { id:'cbp_own2', title:'D. HEAD PULLEY', items:[
+            checklistPoint('cbp_own2_1','1','','Inspect lagging for wear, delamination, embedded material','Within wear allowance, bonded, clear grooves',''),
+            checklistPoint('cbp_own2_2','2','','Check DE/NDE bearing condition','< 80°C, ISO 10816-3 within limit',''),
+            checklistPoint('cbp_own2_3','3','','Inspect for cracking, fretting at shaft/hub interface','No cracks, no fretting',''),
+            checklistPoint('cbp_own2_4','4','','Refer to Coupling checklist; verify guard fitted','Per Coupling checklist, guard secure','')
+          ]},
+        { id:'cbp_own3', title:'E. SNUB PULLEY(if applicable)', items:[
+            checklistPoint('cbp_own3_1','1','','Inspect for wear, material build-up, damage','Within wear allowance, minimal build-up',''),
+            checklistPoint('cbp_own3_2','2','','Check temperature and vibration','< 80°C, ISO 10816-3 within limit',''),
+            checklistPoint('cbp_own3_3','3','','Verify pulley alignment maintains correct belt wrap on drive pulley','Per design geometry, no belt slip','')
+          ]},
+        { id:'cbp_own4', title:'F. BEND PULLEY(if applicable)', items:[
+            checklistPoint('cbp_own4_1','1','','Inspect for wear, corrosion, build-up','Within allowance, minimal build-up',''),
+            checklistPoint('cbp_own4_2','2','','Check temperature and vibration','< 80°C, ISO 10816-3 within limit',''),
+            checklistPoint('cbp_own4_3','3','','Verify pulley square to conveyor centreline','Within OEM tolerance','')
+          ]},
+        { id:'cbp_own5', title:'G. TAKE-UP PULLEY & TENSIONING SYSTEM(if applicable)', items:[
+            checklistPoint('cbp_own5_1','1','','Inspect guide rails, rollers/wheels for wear, alignment','Free movement, within wear limit',''),
+            checklistPoint('cbp_own5_2','2','','Check counterweight condition, cables/chains, or screw take-up mechanism','Correct tension maintained, no cable fraying',''),
+            checklistPoint('cbp_own5_3','3','','Verify take-up position within travel limits (not at end of travel)','Within marked travel range',''),
+            checklistPoint('cbp_own5_4','4','','Check temperature and vibration','< 80°C, ISO 10816-3 within limit',''),
+            checklistPoint('cbp_own5_5','5','','Test take-up travel limit switches','Functional, correctly set','')
+          ]},
+        { id:'cbp_own6', title:'H. TAIL PULLEY', items:[
+            checklistPoint('cbp_own6_1','1','','Inspect for wear, material build-up, corrosion','Within allowance, minimal build-up',''),
+            checklistPoint('cbp_own6_2','2','','Check temperature and vibration','< 80°C, ISO 10816-3 within limit',''),
+            checklistPoint('cbp_own6_3','3','','Verify nip-point guards fitted at tail pulley','Fitted per guarding standard','')
+          ]},
+        { id:'cbp_own7', title:'I. GENERAL - IDLERS, STRUCTURE, DRIVE', items:[
+            checklistPoint('cbp_own7_1','1','','Check for seized, worn, missing idler rollers','Free rotating, none seized/missing',''),
+            checklistPoint('cbp_own7_2','2','','Inspect impact rollers/bars for wear, damage','Within wear allowance',''),
+            checklistPoint('cbp_own7_3','3','','Check skirt rubber condition and adjustment at loading points','Sealed, minimal spillage',''),
+            checklistPoint('cbp_own7_4','4','','Check primary/secondary scraper blade condition and tension','Effective cleaning, blades within wear limit',''),
+            checklistPoint('cbp_own7_5','5','','Inspect conveyor structure, walkways, handrails for corrosion/damage','Structurally sound, compliant',''),
+            checklistPoint('cbp_own7_6','6','','Refer to Motor and Gearbox checklists','Per respective checklists','')
+          ]}
+      ]))},
+
+    { id:'screw-conveyor', title:'Screw Conveyor', dept:'Condition Monitoring — Rotating Equipment',
+      category:'rotating', sourceSheet:'Screw Conveyor', driveCouplingField:true,
+      driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
+      tagPlaceholder:'e.g. SC-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('scc')].concat(buildMotorSections('scc_mtr').concat(buildCouplingSections('scc_cpl'), [
+        { id:'scc_own1', title:'C. SCREW CONVEYOR', items:[
+            checklistPoint('scc_own1_1','1','','Trough/Casing','Inspect trough/tube for wear-through, corrosion, cracked welds',''),
+            checklistPoint('scc_own1_2','2','','Cover Plates/Access Doors','Check covers fitted, sealed, secured (dust/safety)',''),
+            checklistPoint('scc_own1_3','3','','Support Structure/Saddles','Check mounting supports for corrosion, looseness','')
+          ]},
+        { id:'scc_own2', title:'SCREW / FLIGHT', items:[
+            checklistPoint('scc_own2_1','4','','Screw Flight Wear','Inspect flighting edges for wear, thinning, deformation',''),
+            checklistPoint('scc_own2_2','5','','Flight-to-Trough Clearance','Check running clearance between flight OD and trough',''),
+            checklistPoint('scc_own2_3','6','','Shaft Straightness','Check for shaft bow/whip during operation','')
+          ]},
+        { id:'scc_own3', title:'BEARINGS', items:[
+            checklistPoint('scc_own3_1','7','','End Bearings (Drive & Tail)','Check temperature, vibration, lubrication, leakage',''),
+            checklistPoint('scc_own3_2','8','','Hanger Bearings (intermediate)','Inspect hanger bearings for wear, play, lubrication; listen for noise','')
+          ]},
+        { id:'scc_own4', title:'DRIVE', items:[
+            checklistPoint('scc_own4_1','9','','Drive Motor & Gearbox','Refer to Motor and Gearbox checklists',''),
+            checklistPoint('scc_own4_2','10','','Coupling','Refer to Coupling checklist',''),
+            checklistPoint('scc_own4_3','11','','Shear Pin/Torque Limiter','Check condition and rating of overload protection','')
+          ]},
+        { id:'scc_own5', title:'INLET / OUTLET', items:[
+            checklistPoint('scc_own5_1','12','','Inlet Gate/Feed Opening','Check for blockage, correct feed rate control',''),
+            checklistPoint('scc_own5_2','13','','Outlet Gate/Discharge','Check discharge gate operation, wear',''),
+            checklistPoint('scc_own5_3','14','','Material Build-up','Check for material carry-over/build-up in trough affecting flow','')
+          ]},
+        { id:'scc_own6', title:'MONITORING', items:[
+            checklistPoint('scc_own6_1','15','','Monitor motor current for overload/blockage trend','Within nameplate FLA, no sustained spikes','')
+          ]}
+      ]))},
+
+    { id:'ball-sag-rod-mill', title:'Ball / SAG / Rod Mill — Standard Checklist', dept:'Condition Monitoring — Rotating Equipment',
+      category:'rotating', sourceSheet:'Ball SAG Rod Mill', driveCouplingField:true,
+      driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
+      tagPlaceholder:'e.g. MILL-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('bsr')].concat(buildMotorSections('bsr_mtr').concat(buildCouplingSections('bsr_cpl'), [
+        { id:'bsr_own1', title:'C. MILL', items:[
+            checklistPoint('bsr_own1_1','1','','Inspect for cracks, deformation, weld integrity','No cracks, sound welds',''),
+            checklistPoint('bsr_own1_2','2','','Inspect for wear, cracking, loose bolts','Within wear allowance, bolts tight',''),
+            checklistPoint('bsr_own1_3','3','','Inspect for wear, blinding (trommel), cracking','Within wear allowance, apertures clear','')
+          ]},
+        { id:'bsr_own2', title:'C. TRUNNION & BEARINGS', items:[
+            checklistPoint('bsr_own2_1','1','','Check feed/discharge trunnion bearing temperature','< 60-70°C or per OEM',''),
+            checklistPoint('bsr_own2_2','2','','Check oil flow, filtration, pressure of lube system','Per OEM spec, filters clean',''),
+            checklistPoint('bsr_own2_3','3','','Check for slurry/oil leakage at trunnion seals','No leaks','')
+          ]},
+        { id:'bsr_own3', title:'DRIVE SYSTEM', items:[
+            checklistPoint('bsr_own3_1','4','','Inspect tooth contact pattern, wear, lubrication (spray system)','Correct contact pattern, adequate lubrication film',''),
+            checklistPoint('bsr_own3_2','5','','Check temperature and vibration','< 80°C, within OEM vibration limit',''),
+            checklistPoint('bsr_own3_3','6','','Refer to Motor checklist / specialist GMD procedures','Per Motor checklist / OEM GMD procedure',''),
+            checklistPoint('bsr_own3_4','7','','Test inching drive function for maintenance positioning','Functional, engages/disengages correctly','')
+          ]},
+        { id:'bsr_own4', title:'MONITORING', items:[
+            checklistPoint('bsr_own4_1','8','','Monitor bearing and structure vibration trend','Within baseline/OEM limit',''),
+            checklistPoint('bsr_own4_2','9','','Monitor mill charge noise for optimal ball/pulp level','Within target range','')
+          ]}
+      ]))},
+
+    { id:'vibrating-feeder', title:'Vibrating Feeder', dept:'Condition Monitoring — Rotating Equipment',
+      category:'rotating', sourceSheet:'Vibrating Feeder', driveCouplingField:true,
+      driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
+      tagPlaceholder:'e.g. VF-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('vbf')].concat(buildMotorSections('vbf_mtr').concat(buildCouplingSections('vbf_cpl'), [
+        { id:'vbf_own1', title:'C. VIBRATION FEEDER', items:[
+            checklistPoint('vbf_own1_1','1','','Inspect for wear-through, cracking, liner condition','Within wear allowance, no cracks',''),
+            checklistPoint('vbf_own1_2','2','','Inspect for cracking, sagging, uneven compression','No cracks, even loading',''),
+            checklistPoint('vbf_own1_3','3','','Inspect bars for wear, bending, gap consistency','Within wear allowance, correct gap','')
+          ]},
+        { id:'vbf_own2', title:'DRIVE / EXCITER', items:[
+            checklistPoint('vbf_own2_1','4','','Check bearing temperature, vibration, unbalance weight setting','< 80°C, within ISO limit, weights matched',''),
+            checklistPoint('vbf_own2_2','5','','Verify counter-rotating motors synchronised','Correct phase relationship','')
+          ]},
+        { id:'vbf_own3', title:'STRUCTURAL CONNECTIONS', items:[
+            checklistPoint('vbf_own3_1','6','','Check structural and drive bolts for tightness/fretting','All tight, no fretting','')
+          ]}
+      ]))},
+
+    { id:'thickener-rake-standard', title:'Thickener Rake — Standard Checklist', dept:'Condition Monitoring — Rotating Equipment',
+      category:'rotating', sourceSheet:'Thickener Rake', driveCouplingField:true,
+      driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
+      tagPlaceholder:'e.g. TKR-01', defaultVisual:true, defaultVibration:false, sections: [buildSafetySection('thr')].concat(buildMotorSections('thr_mtr').concat(buildCouplingSections('thr_cpl'), [
+        { id:'thr_own1', title:'C. DRIVE HEAD', items:[
+            checklistPoint('thr_own1_1','1','','Refer to Motor and Gearbox checklists','Per respective checklists',''),
+            checklistPoint('thr_own1_2','2','','Inspect for cracking, corrosion','No cracks',''),
+            checklistPoint('thr_own1_3','3','','Check auto-lift function for high-torque protection','Functional, raises rake on overload',''),
+            checklistPoint('thr_own1_4','4','','Verify torque monitoring instrument calibrated and alarming correctly','Calibrated, alarms at set points','')
+          ]},
+        { id:'thr_own2', title:'C. RAKE ARMS & TANK', items:[
+            checklistPoint('thr_own2_1','1','','Inspect for wear, bending, corrosion (via drained inspection)','Within wear allowance, straight',''),
+            checklistPoint('thr_own2_2','2','','Check centre bearing/bushing wear and lubrication','Within wear limit, lubricated',''),
+            checklistPoint('thr_own2_3','3','','Inspect bridge/walkway structure for corrosion','Structurally sound','')
+          ]},
+        { id:'thr_own3', title:'D. HOUSEKEEPING', items:[
+            checklistPoint('thr_own3_1','1','','Check housekeeping surrounding the unit','No debris or spillage or unused materials',''),
+            checklistPoint('thr_own3_2','2','','Verify motor terminal box for signs of loose connections or water ingress','No loose connections, no water ingress','')
+          ]}
+      ]))},
+
+    { id:'apron-feeder', title:'Apron Feeder', dept:'Condition Monitoring — Rotating Equipment',
+      category:'rotating', sourceSheet:'Apron Feeder', driveCouplingField:true,
+      driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
+      tagPlaceholder:'e.g. AF-01', defaultVisual:true, defaultVibration:false, sections: [buildSafetySection('apf')].concat(buildMotorSections('apf_mtr').concat(buildCouplingSections('apf_cpl'), [
+        { id:'apf_own1', title:'B. APRON', items:[
+            checklistPoint('apf_own1_1','1','','Inspect for wear, cracking, deformation','Within wear allowance, no cracks',''),
+            checklistPoint('apf_own1_2','2','','Inspect chain for wear elongation, cracked links, lubrication','Within OEM elongation limit, lubricated',''),
+            checklistPoint('apf_own1_3','3','','Check for wear, flat spots, seized rollers','Free rotating, within wear limit','')
+          ]},
+        { id:'apf_own2', title:'C. SPROCKETS & DRIVE', items:[
+            checklistPoint('apf_own2_1','1','','Inspect tooth wear, alignment','Within wear allowance, aligned',''),
+            checklistPoint('apf_own2_2','2','','Check chain tension and take-up travel','Correct tension per OEM, within travel',''),
+            checklistPoint('apf_own2_3','3','','Check shear pin/torque limiter/hydraulic overload system','Correct rating, functional','')
+          ]}
+      ]))},
+
+    { id:'air-compressor', title:'Air Compressor', dept:'Condition Monitoring — Rotating Equipment',
+      category:'rotating', sourceSheet:'Air Compressor', driveCouplingField:true,
+      driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
+      tagPlaceholder:'e.g. AC-01', defaultVisual:true, defaultVibration:false, sections: [buildSafetySection('aic')].concat(buildMotorSections('aic_mtr').concat(buildCouplingSections('aic_cpl'), [
+        { id:'aic_own1', title:'C.COMPRESSOR', items:[
+            checklistPoint('aic_own1_1','1','','Inspect for damage, ventilation clear','Intact, vents unobstructed',''),
+            checklistPoint('aic_own1_2','2','','Check anti-vibration mounts and bolts','Secure, isolators intact','')
+          ]},
+        { id:'aic_own2', title:'AIR END & LUBRICATION', items:[
+            checklistPoint('aic_own2_1','3','','Check oil level, colour, contamination','Correct level, clean',''),
+            checklistPoint('aic_own2_2','4','','Check differential pressure, replace per schedule','Within OEM differential pressure limit',''),
+            checklistPoint('aic_own2_3','5','','Check condition and differential pressure','Clean, low pressure drop','')
+          ]},
+        { id:'aic_own3', title:'CONDENSATE MANAGEMENT', items:[
+            checklistPoint('aic_own3_1','6','','Check auto-drain function','Functional, no water carryover','')
+          ]}
+      ]))},
+
+    { id:'cyclone-cluster', title:'Cyclone Cluster', dept:'Condition Monitoring — Rotating Equipment',
+      category:'rotating', sourceSheet:'Cyclone Cluster',
+      tagPlaceholder:'e.g. CYC-01', defaultVisual:true, defaultVibration:false, sections:[
+        buildSafetySection('ccl'),
+        { id:'ccl_wear', title:'A. Wear Components', items:[
+            checklistPoint('ccl_1','1','Vortex Finder','Inspect for wear, cracking','Within wear allowance, no cracks','W'),
+            checklistPoint('ccl_2','2','Spigot/Apex','Inspect for wear, correct sizing for duty (roping check)','Within wear allowance, correct size','D/W'),
+            checklistPoint('ccl_3','3','Cyclone Body Liner','Inspect internal liner for wear-through','Within wear allowance','M')
+          ]},
+        { id:'ccl_feed', title:'B. Feed Distribution', items:[
+            checklistPoint('ccl_4','4','Feed Distributor/Manifold','Check for blockage, wear, even distribution to cyclones','Unobstructed, even split','W'),
+            checklistPoint('ccl_5','5','Isolation Valves (per cyclone)','Check valve operation for isolating individual cyclones','Functional, seals correctly','M')
+          ]},
+        { id:'ccl_support', title:'C. Support Structure', items:[
+            checklistPoint('ccl_6','6','Support Frame','Inspect for corrosion, cracking','Structurally sound','Q'),
+            checklistPoint('ccl_7','7','Pressure Gauges','Verify feed pressure gauges functional','Within design operating range','D')
+          ]}
+      ]},
+
+    { id:'flotation-cell', title:'Flotation Cell', dept:'Condition Monitoring — Rotating Equipment',
+      category:'rotating', sourceSheet:'Flotation Cell', driveCouplingField:true,
+      driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
+      tagPlaceholder:'e.g. FLT-01', defaultVisual:true, defaultVibration:false, sections: [buildSafetySection('flc')].concat(buildMotorSections('flc_mtr').concat(buildCouplingSections('flc_cpl'), [
+        { id:'flc_own1', title:'C. MECHANISM', items:[
+            checklistPoint('flc_own1_1','1','','Impeller/Rotor Condition','Inspect for wear, erosion, cracking (via drained inspection)',''),
+            checklistPoint('flc_own1_2','2','','Stator/Diffuser','Inspect for wear, blockage',''),
+            checklistPoint('flc_own1_3','3','','Drive Shaft & Steady Bearing','Check for wear, alignment, lubrication','')
+          ]},
+        { id:'flc_own2', title:'D. AIR / FROTH SYSTEM', items:[
+            checklistPoint('flc_own2_1','1','','Air Supply/Blower Connection','Check air flow rate/pressure to cell',''),
+            checklistPoint('flc_own2_2','2','','Launders & Froth Paddles (if fitted)','Check condition, paddle motor operation','')
+          ]}
+      ]))},
+
+    { id:'magnetic-separator', title:'Magnetic Separator', dept:'Condition Monitoring — Rotating Equipment',
+      category:'rotating', sourceSheet:'Magnetic Separator', driveCouplingField:true,
+      driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
+      tagPlaceholder:'e.g. MGS-01', defaultVisual:true, defaultVibration:false, sections: [buildSafetySection('mgs')].concat(buildMotorSections('mgs_mtr').concat(buildCouplingSections('mgs_cpl'), [
+        { id:'mgs_own1', title:'B. DRUM & MAGNET', items:[
+            checklistPoint('mgs_own1_1','1','','Inspect for wear, dents, weld cracking','No cracks, within wear allowance',''),
+            checklistPoint('mgs_own1_2','2','','Check magnetic field strength against baseline','Within OEM specified field strength',''),
+            checklistPoint('mgs_own1_3','3','','Check bearing temperature, seal leakage','< 80°C, no leaks','')
+          ]},
+        { id:'mgs_own2', title:'C. DRIVE', items:[
+            checklistPoint('mgs_own2_1','1','','Refer to Motor and Gearbox checklists','Per respective checklists','')
+          ]},
+        { id:'mgs_own3', title:'D. TANK & DISCHARGE', items:[
+            checklistPoint('mgs_own3_1','1','','Inspect for wear','Within wear allowance',''),
+            checklistPoint('mgs_own3_2','2','','Check discharge chutes clear, no blockage','Unobstructed','')
+          ]}
+      ]))},
+
+    { id:'yard-conveyor', title:'Yard Conveyor Belt', dept:'Ambatovy Maintenance Asset Management',
+      category:'rotating',
+      tagPlaceholder:'75-CV-03', defaultVisual:false, defaultVibration:true, sections:[
+        buildSafetySection('yc'),
+        motorBlock('yc_motor'),
+        couplingBlock('yc_c1','Grid Coupling — Motor Side'),
+        gearboxBlock('yc_gb','Gearbox',4,'87–93°C'),
+        couplingBlock('yc_c2','Grid Coupling — Output Side',[
+          {id:'yc_c2_gen', label:'General condition & Noise'},
+          {id:'yc_c2_cracks', label:'Inspect coupling hubs for cracks'},
+          {id:'yc_c2_key', label:'Coupling element key and key way'}
+        ]),
+        { id:'yc_pulleys', title:'Head – Snub – Tail Pulley', items:[
+            {id:'yc_p_pillow', label:'General condition pillow block & Noise'},
+            {id:'yc_p_idler', label:'General condition carriage and return idler'},
+            {id:'yc_p_track', label:'Belt tracking, logging, scraper, skirting board, feed chute'}
+          ], readings:[
+            {id:'yc_p_headde', label:'Head DE', unit:'°C'}, {id:'yc_p_headnde', label:'Head NDE', unit:'°C'},
+            {id:'yc_p_snubde', label:'Snub DE', unit:'°C'}, {id:'yc_p_snubnde', label:'Snub NDE', unit:'°C'},
+            {id:'yc_p_tailde', label:'Tail DE', unit:'°C'}, {id:'yc_p_tailnde', label:'Tail NDE', unit:'°C'}
+          ]},
+        { id:'yc_bend', title:'Bend – Counter Weight & Take-up Pulley', items:[
+            {id:'yc_b_pillow', label:'General pillow block condition & Noise'},
+            {id:'yc_b_guard', label:'Safety guard'}
+          ], readings:[
+            {id:'yc_b1de', label:'Bend 1 DE', unit:'°C'}, {id:'yc_b1nde', label:'Bend 1 NDE', unit:'°C'},
+            {id:'yc_b2de', label:'Bend 2 DE', unit:'°C'}, {id:'yc_b2nde', label:'Bend 2 NDE', unit:'°C'},
+            {id:'yc_b3de', label:'Bend 3 DE', unit:'°C'}, {id:'yc_b3nde', label:'Bend 3 NDE', unit:'°C'},
+            {id:'yc_tude', label:'Take-up DE', unit:'°C'}, {id:'yc_tunde', label:'Take-up NDE', unit:'°C'}
+          ]}
+      ]},
+
+    { id:'vbelt-drive-pump', title:'V-Belt Drive Pump', dept:'Engineering Department',
+      category:'rotating',
+      tagPlaceholder:'e.g. 32-PP-01', defaultVisual:true, defaultVibration:true, sections:[
+        buildSafetySection('vb'),
+        motorBlock('vb_motor', { items:[
+            {id:'vb_m_gen', label:'General condition & Noise'},
+            {id:'vb_m_bolts', label:'Hold down bolts and Foundation base plate'},
+            {id:'vb_m_cool', label:'Cooling system and Lube fitting integrity'}
+          ]}),
+        { id:'vb_drive', title:'V-Belt Drive', items:[
+            {id:'vb_d_gen', label:'General condition & Noise'},
+            {id:'vb_d_cond', label:'Drive belt condition (wear, crack, mis-match, loose belt)'},
+            {id:'vb_d_sheaves', label:'Sheaves and grooves condition'}
+          ], readings:[
+            {id:'vb_d_motorsheave', label:'Motor sheave temp', unit:'°C'},
+            {id:'vb_d_pumpsheave', label:'Pump sheave temp', unit:'°C'}
+          ]},
+        { id:'vb_pump', title:'Pump (Centrifugal)', readingNote:'Max. 76°C', items:[
+            {id:'vb_p_gen', label:'General condition & Noise'},
+            {id:'vb_p_bolts', label:'Pedestal hold down bolts and Foundation base plate'},
+            {id:'vb_p_flange', label:'Suction and discharge line flange and bellows'},
+            {id:'vb_p_seal', label:'Seal water piping and instrument integrity'},
+            {id:'vb_p_casing', label:'Casing, inboard and outboard shaft seal condition'},
+            {id:'vb_p_lube', label:'Lube oil condition and oil level'}
+          ], readings:[
+            {id:'vb_p_de', label:'DE Temp', unit:'°C'}, {id:'vb_p_nde', label:'NDE Temp', unit:'°C'},
+            {id:'vb_p_stuffing', label:'Stuffing box / mech. seal temp', unit:'°C'},
+            {id:'vb_p_sealpress', label:'Seal water pressure', unit:'kPa'},
+            {id:'vb_p_sealtemp', label:'Seal water temp', unit:'°C'},
+            {id:'vb_p_sealflow', label:'Seal water flow', unit:'m³/h'},
+            {id:'vb_p_drip', label:'Seal water drip', unit:'drips/min'},
+            {id:'vb_p_dischpress', label:'Pump discharge pressure', unit:'kPa'},
+            {id:'vb_p_dischflow', label:'Pump discharge flow', unit:'m³/h'}
+          ]}
+      ]},
+
+    { id:'vertical-pump', title:'Acid Vertical Pump', dept:'Lotus Engineering Department',
+      category:'rotating',
+      tagPlaceholder:'e.g. VP-01', defaultVisual:false, defaultVibration:true, sections:[
+        buildSafetySection('vp'),
+        motorBlock('vp_motor', { items:[
+            {id:'vp_m_gen', label:'General condition & unusual noise'},
+            {id:'vp_m_bolts', label:'Hold down bolts and Foundation base plate'},
+            {id:'vp_m_cool', label:'Cooling system and Lube fitting integrity'}
+          ]}),
+        couplingBlock('vp_coupling','Coupling',[
+          {id:'vp_c_gen', label:'General condition & unusual noise'},
+          {id:'vp_c_cracks', label:'Inspect coupling hubs for cracks & looseness'}
+        ]),
+        { id:'vp_pump', title:'Pump (Centrifugal)', readingNote:'Max. 76°C', items:[
+            {id:'vp_p_gen', label:'General condition & unusual noise'},
+            {id:'vp_p_bolts', label:'Pedestal hold down bolts and Foundation base plate'},
+            {id:'vp_p_flange', label:'Suction and discharge line flange and bellows'}
+          ], readings:[
+            {id:'vp_p_de', label:'DE Temp', unit:'°C'},
+            {id:'vp_p_level', label:'Tank level', unit:'%'}
+          ]}
+      ]},
+
+    { id:'general-conveyor', title:'General Conveyor', dept:'Lotus Engineering Department',
+      category:'rotating',
+      tagPlaceholder:'e.g. CV-01', defaultVisual:false, defaultVibration:true, sections:[
+        buildSafetySection('gc'),
+        motorBlock('gc_motor', { items:[
+            {id:'gc_m_gen', label:'General condition & unusual noise'},
+            {id:'gc_m_bolts', label:'Hold down bolts and Foundation base plate'}
+          ]}),
+        { id:'gc_fluid', title:'Fluid Coupling', items:[
+            {id:'gc_f_gen', label:'General condition & unusual noise'},
+            {id:'gc_f_cracks', label:'Inspect coupling hubs for cracks'}
+          ], readings:[
+            {id:'gc_f_jaw', label:'Jaw coupling temp', unit:'°C'},
+            {id:'gc_f_fluid', label:'Fluid coupling temp', unit:'°C'}
+          ]},
+        gearboxBlock('gc_gearbox','Gearbox',4,'87–93°C'),
+        couplingBlock('gc_grid','Grid Coupling'),
+        { id:'gc_pulleys', title:'Head – Snub – Tail Pulley', items:[
+            {id:'gc_p_pillow', label:'General condition pillow block & unusual noise'},
+            {id:'gc_p_idler', label:'General condition carriage and return idler'},
+            {id:'gc_p_track', label:'Belt tracking, logging, scraper, skirting board, feed chute'}
+          ], readings:[
+            {id:'gc_p_headde', label:'Head DE', unit:'°C'}, {id:'gc_p_headnde', label:'Head NDE', unit:'°C'},
+            {id:'gc_p_tailde', label:'Tail DE', unit:'°C'}, {id:'gc_p_tailnde', label:'Tail NDE', unit:'°C'},
+            {id:'gc_p_snubde', label:'Snub DE', unit:'°C'}, {id:'gc_p_snubnde', label:'Snub NDE', unit:'°C'}
+          ]},
+        { id:'gc_bend', title:'Bend Pulley – Counter Weight & Take-up Pulley', items:[
+            {id:'gc_b_pillow', label:'General condition pillow block & unusual noise'},
+            {id:'gc_b_guard', label:'Safety guard'}
+          ], readings:[
+            {id:'gc_b1de', label:'Bend 1 DE', unit:'°C'}, {id:'gc_b2de', label:'Bend 2 DE', unit:'°C'},
+            {id:'gc_tude', label:'Take-up DE', unit:'°C'}, {id:'gc_tunde', label:'Take-up NDE', unit:'°C'}
+          ]}
+      ]},
+
+    { id:'linear-screen', title:'Linear Screen', dept:'Lotus Engineering Department',
+      category:'rotating',
+      tagPlaceholder:'e.g. SCR-01', defaultVisual:false, defaultVibration:true, sections:[
+        buildSafetySection('ls'),
+        motorBlock('ls_motor'),
+        { id:'ls_belt', title:'Belt Coupling', items:[
+            {id:'ls_b_gen', label:'General condition & Noise'},
+            {id:'ls_b_cond', label:'Drive belt condition (wear, crack, mis-match, loose belt)'},
+            {id:'ls_b_sheaves', label:'Sheaves and grooves condition'}
+          ], readings:[
+            {id:'ls_b_motorsheave', label:'Motor sheave temp', unit:'°C'},
+            {id:'ls_b_drivensheave', label:'Driven sheave temp', unit:'°C'},
+            {id:'ls_b_lugsdrive', label:'Universal lugs joints — Drive end', unit:'°C'},
+            {id:'ls_b_lugsdriven', label:'Universal lugs joints — Driven end', unit:'°C'}
+          ]},
+        gearboxBlock('ls_gearbox','Gearbox',3,'87–93°C'),
+        { id:'ls_head', title:'Head Pulley', readingNote:'Max. 76°C', items:[
+            {id:'ls_h_gen', label:'General condition & Noise'},
+            {id:'ls_h_housing', label:'Condition housing assembly (wear, crack, loose)'},
+            {id:'ls_h_lube', label:'Lube fitting integrity & damper springs'}
+          ], readings:[
+            {id:'ls_h_de', label:'DE', unit:'°C'}, {id:'ls_h_nde', label:'NDE', unit:'°C'}
+          ]},
+        { id:'ls_panel', title:'Screen Panel', items:[
+            {id:'ls_sp_gen', label:'General condition & Noise'},
+            {id:'ls_sp_tears', label:'Check for tears, holes, wear, or blockages'},
+            {id:'ls_sp_align', label:'Check for excessive misalignment'}
+          ]},
+        { id:'ls_pillow', title:'Pillow Block Bearings', items:[
+            {id:'ls_pb_gen', label:'General condition & Noise'},
+            {id:'ls_pb_block', label:'Check for blockages'},
+            {id:'ls_pb_clear', label:'Check for excessive clearance'}
+          ]}
+      ]},
+
+    { id:'magnetic-conveyor', title:'Magnetic Conveyor', dept:'Lotus Engineering Department',
+      category:'rotating',
+      tagPlaceholder:'e.g. MC-01', defaultVisual:false, defaultVibration:true, sections:[
+        buildSafetySection('mc'),
+        motorBlock('mc_motor'),
+        { id:'mc_vbelt', title:'V-Belt Coupling', items:[
+            {id:'mc_v_gen', label:'General condition & Noise'}
+          ]},
+        gearboxBlock('mc_gearbox','Gearbox',2,'87–93°C'),
+        { id:'mc_pulleys', title:'Head Pulley – Tail Pulley', items:[
+            {id:'mc_p_pillow', label:'General condition pillow block & Noise'},
+            {id:'mc_p_idler', label:'General condition carriage and return idler'},
+            {id:'mc_p_track', label:'Belt tracking, logging, scraper, skirting board, feed chute'}
+          ], readings:[
+            {id:'mc_p_headde', label:'Head DE', unit:'°C'}, {id:'mc_p_headnde', label:'Head NDE', unit:'°C'},
+            {id:'mc_p_tailde', label:'Tail DE', unit:'°C'}, {id:'mc_p_tailnde', label:'Tail NDE', unit:'°C'}
+          ]}
+      ]},
+
+    { id:'mix-tank-agitator', title:'Mix Tank Agitator', dept:'Lotus Engineering Department',
+      category:'rotating',
+      tagPlaceholder:'e.g. MTA-01', defaultVisual:false, defaultVibration:true, sections:[
+        buildSafetySection('mta'),
+        motorBlock('mta_motor', { items:[
+            {id:'mta_m_gen', label:'Motor general condition & Noise level'},
+            {id:'mta_m_bolts', label:'Check motor hold down bolts for looseness'},
+            {id:'mta_m_fan', label:'Motor cooling fan system condition'}
+          ]}),
+        { id:'mta_coupling', title:'Motor to Gearbox Coupling (Jaw Type)', items:[
+            {id:'mta_c_noise', label:'Listen for any abnormal noise coming from coupling'},
+            {id:'mta_c_gen', label:'General condition of coupling'}
+          ], readings:[
+            {id:'mta_c_speed', label:'Shaft speed', unit:'RPM'},
+            {id:'mta_c_temp', label:'Coupling temp', unit:'°C'}
+          ]},
+        { id:'mta_gearbox', title:'Gearbox', readingNote:'Max. 76°C', items:[
+            {id:'mta_g_noise', label:'Listen for any abnormal noise coming from gearbox'},
+            {id:'mta_g_gen', label:'Check general condition of gearbox'},
+            {id:'mta_g_leak', label:'Check lube oil leak on gearbox'},
+            {id:'mta_g_cond', label:'Check lube oil condition'}
+          ], readings:[
+            {id:'mta_g_nde', label:'NDE', unit:'°C'}, {id:'mta_g_de', label:'DE', unit:'°C'}
+          ]},
+        { id:'mta_shaft', title:'Agitator Shaft', items:[
+            {id:'mta_sh1', label:'Listen for unusual sound from agitator shaft assembly'},
+            {id:'mta_sh2', label:'Visually inspect agitator shaft coupling flanges for loose or missing bolts'},
+            {id:'mta_sh3', label:'Check for excessive agitator shaft deflection'},
+            {id:'mta_sh4', label:'Listen for unusual sound from agitator steady bearing'}
+          ], readings:[
+            {id:'mta_sh_stuffing', label:'Stuffing box temp', unit:'°C'},
+            {id:'mta_sh_level', label:'Tank level', unit:'%'}
+          ]}
+      ]},
+
+    { id:'neutralization-tank-agitator', title:'Neutralization Tank Agitator', dept:'Lotus Engineering Department',
+      category:'rotating',
+      tagPlaceholder:'e.g. NTA-01', defaultVisual:true, defaultVibration:true, sections:[
+        buildSafetySection('nta'),
+        motorBlock('nta_motor', { items:[
+            {id:'nta_m_gen', label:'General condition and Noise'},
+            {id:'nta_m_bolts', label:'Hold down bolts - Foundation base plate'},
+            {id:'nta_m_cool', label:'Cooling system and Lube fitting integrity'}
+          ]}),
+        { id:'nta_coupling', title:'Motor to Gearbox Coupling (Jaw Type)', items:[
+            {id:'nta_c_gen', label:'General condition & Noise'},
+            {id:'nta_c_key', label:'Coupling element and key / key way'}
+          ], readings:[ {id:'nta_c_temp', label:'Coupling temp', unit:'°C'} ]},
+        gearboxBlock('nta_gearbox','Gearbox',4,'—'),
+        { id:'nta_shaft', title:'Agitator Shaft', items:[
+            {id:'nta_sh_gen', label:'General condition & Noise'},
+            {id:'nta_sh_defl', label:'Check for excessive agitator shaft deflection'},
+            {id:'nta_sh_seal', label:'Tank seal condition and water lute level'}
+          ], readings:[ {id:'nta_sh_level', label:'Tank level', unit:'%'} ]}
+      ]},
+
+    { id:'thickener-rake-hpp', title:'Thickener Rake Drive Hydraulic Power Pack', dept:'Lotus Engineering Department',
+      category:'rotating',
+      tagPlaceholder:'e.g. THK-HPP-01', defaultVisual:true, defaultVibration:true, sections:[
+        buildSafetySection('thk'),
+        { id:'thk_rake', title:'General Rake Operating Condition', items:[], readings:[
+            {id:'thk_r_drive', label:'Drive hydraulic supply oil pressure', unit:'MPa'},
+            {id:'thk_r_lift', label:'Rake lift pressure at constant elevation', unit:'MPa'},
+            {id:'thk_r_torque', label:'Rake torque pressure', unit:'MPa'}
+          ]},
+        { id:'thk_reservoir', title:'Reservoir', items:[
+            {id:'thk_res_leaks', label:'Check hydraulic oil reservoir for oil leaks'},
+            {id:'thk_res_cond', label:'Check hydraulic oil reservoir for condensate built up'},
+            {id:'thk_res_contam', label:'Check hydraulic oil for contamination (dirty/milky)'},
+            {id:'thk_res_fit', label:'Check instrument and fittings on panel for oil leaks'},
+            {id:'thk_res_breather', label:'Check reservoir breather condition'}
+          ]},
+        { id:'thk_drive', title:'Hydraulic Drive Unit', items:[
+            {id:'thk_hd_gen', label:'General condition & Noise'},
+            {id:'thk_hd_bolts', label:'Hold down bolts and Foundation base plate'},
+            {id:'thk_hd_cool', label:'Cooling system and Lube fitting integrity'}
+          ]},
+        { id:'thk_oilpump', title:'Hydraulic Oil Supply Pump', items:[
+            {id:'thk_op_gen', label:'General condition & Noise'},
+            {id:'thk_op_bolts', label:'Pedestal hold down bolts and Foundation base plate'},
+            {id:'thk_op_casing', label:'Pump casing & suction/discharge line fittings'},
+            {id:'thk_op_hoses', label:'Check flexible hose supply lines for chafe and cracks'}
+          ], readings:[ {id:'thk_op_temp', label:'Pump temperature', unit:'°C'} ]},
+        { id:'thk_rakelift', title:'Rake Lift Supply', items:[
+            {id:'thk_rl_gen', label:'General condition & Noise'},
+            {id:'thk_rl_bolts', label:'Hold down bolts and Foundation base plate'},
+            {id:'thk_rl_cool', label:'Cooling system and Lube fitting integrity'}
+          ]},
+        { id:'thk_motorcheck', title:'Motor — Visual Health Checks', items:[
+            {id:'thk_mc1', label:'Listen for grinding, humming, knocking, or high-pitched whining/vibration'},
+            {id:'thk_mc2', label:'Excessive/irregular vibration or loose mounting bolts / base movement'},
+            {id:'thk_mc3', label:'Discoloration, burnt smell, paint blistering or smoke'},
+            {id:'thk_mc4', label:'Fan rotating freely; vents clean and unobstructed'},
+            {id:'thk_mc5', label:'Loose or frayed wires, signs of arcing/burning, secure terminal cover'},
+            {id:'thk_mc6', label:'Cracks, dents, oil stains, rust, corrosion, impact or wear'},
+            {id:'thk_mc7', label:'Bearings and seals for oil/grease leaks, dirt or sludge near lube points'}
+          ]},
+        { id:'thk_rotary', title:'Rotary Hydraulic Drive Motor and Pump', items:[
+            {id:'thk_rd1', label:'Listen for any unusual sound coming from motor'},
+            {id:'thk_rd2', label:'Check motor adaptor base for loose hold-down bolts'},
+            {id:'thk_rd3', label:'Check for excess pulsation of the casing drain hose'},
+            {id:'thk_rd4', label:'Check motor casing for seal leaks'},
+            {id:'thk_rd5', label:'Check hydraulic supply line fittings for leaks'},
+            {id:'thk_rd6', label:'Check all flexible hose lines for chafe and cracks'},
+            {id:'thk_rd7', label:'Check hoses have sufficient length'}
+          ]},
+        { id:'thk_planet1', title:'Planetary Gear Reducer (Primary)', readingNote:'Target 30–35°C', items:[
+            {id:'thk_p1_gen', label:'General condition & Noise'},
+            {id:'thk_p1_bolts', label:'Hold down bolts and Foundation base plate'},
+            {id:'thk_p1_cool', label:'Cooling system'},
+            {id:'thk_p1_seals', label:'Gearbox input/output shaft - casing oil seal leaks'},
+            {id:'thk_p1_lube', label:'Gearbox lube condition and oil level'}
+          ], readings:[ {id:'thk_p1_temp', label:'Gearbox max temperature', unit:'°C'} ]},
+        { id:'thk_planet2', title:'Planetary Gearbox — Secondary Stage (D1)', readingNote:'Target 30–35°C', items:[
+            {id:'thk_p2_gen', label:'General condition & Noise'},
+            {id:'thk_p2_bolts', label:'Hold down bolts and Foundation base plate'},
+            {id:'thk_p2_cool', label:'Cooling system'},
+            {id:'thk_p2_seals', label:'Gearbox input/output shaft - casing oil seal leaks'},
+            {id:'thk_p2_lube', label:'Gearbox lube condition and oil level'}
+          ], readings:[ {id:'thk_p2_temp', label:'Gearbox max temperature', unit:'°C'} ]},
+        { id:'thk_cylinder', title:'Hydraulic Cylinder', items:[
+            {id:'thk_hc1', label:'Check for hydraulic fluid leaks around cylinder seals'},
+            {id:'thk_hc2', label:'Inspect piston rod: scratches, dents, corrosion, bending, misalignment, smooth movement'},
+            {id:'thk_hc3', label:'Bolts, pins and brackets secure, free from cracks/wear, not vibrating excessively'},
+            {id:'thk_hc4', label:'Hoses and fittings: abrasions, bulges, loose/corroded fittings, hose routing'}
+          ]}
+      ]},
+
+    { id:'sag-mill', title:'SAG Mill (Ball Mill)', dept:'Lotus Engineering Department',
+      category:'rotating',
+      tagPlaceholder:'e.g. SAG-01', defaultVisual:false, defaultVibration:true, sections:(function(){
+        const sections = [];
+        sections.push(buildSafetySection('sag'));
+
+        sections.push({ id:'sag_m1', title:'Motor M1', readingNote:'Max. 76°C', items:[
+            {id:'sag_m1_gen', label:'General condition & unusual noise'},
+            {id:'sag_m1_bolts', label:'Hold down bolts & Foundation base plate'},
+            {id:'sag_m1_lube', label:'NDE & DE lube condition and circulating'}
+          ], readings:[
+            {id:'sag_m1_ttnde', label:'Temp NDE', unit:'°C'}, {id:'sag_m1_ttde', label:'Temp DE', unit:'°C'},
+            {id:'sag_m1_ftnde', label:'Oil flow NDE', unit:'L/min'}, {id:'sag_m1_ftde', label:'Oil flow DE', unit:'L/min'}
+          ]});
+        sections.push(couplingBlock('sag_c1','Coupling'));
+        sections.push(gearboxDriveBlock('sag_gb1','Gearbox — Drive 1'));
+
+        sections.push({ id:'sag_m2', title:'Motor M2', readingNote:'Max. 76°C', items:[
+            {id:'sag_m2_gen', label:'General condition & unusual noise'},
+            {id:'sag_m2_bolts', label:'Hold down bolts & Foundation base plate'},
+            {id:'sag_m2_lube', label:'NDE & DE lube condition and circulating'}
+          ], readings:[
+            {id:'sag_m2_ttnde', label:'Temp NDE', unit:'°C'}, {id:'sag_m2_ttde', label:'Temp DE', unit:'°C'},
+            {id:'sag_m2_ftnde', label:'Oil flow NDE', unit:'L/min'}, {id:'sag_m2_ftde', label:'Oil flow DE', unit:'L/min'}
+          ]});
+        sections.push(couplingBlock('sag_grid','Grid Coupling'));
+        sections.push(gearboxDriveBlock('sag_gb2','Gearbox — Drive 2'));
+
+        sections.push({ id:'sag_pinion', title:'Pinion & Bull Gear', readingNote:'Pinion max. 76°C', items:[
+            {id:'sag_pin_gen', label:'General condition & unusual noise'},
+            {id:'sag_pin_bolts', label:'Hold down bolts & grouting'},
+            {id:'sag_pin_seals', label:'Pillow block DE & NDE oil seal leaks'},
+            {id:'sag_pin_supply', label:'Lube supply & return line pillow block'},
+            {id:'sag_pin_grease', label:'Lube grease storage level / supply piping & fitting'}
+          ], readings:[
+            {id:'sag_pin_de', label:'Pinion DE Temp', unit:'°C'}, {id:'sag_pin_nde', label:'Pinion NDE Temp', unit:'°C'},
+            {id:'sag_pin_fsa', label:'Lube oil flow FS A', unit:'L/min'}, {id:'sag_pin_fsb', label:'Lube oil flow FS B', unit:'L/min'},
+            {id:'sag_pin_ret1', label:'Return oil temp 1', unit:'°C'}, {id:'sag_pin_ret2', label:'Return oil temp 2', unit:'°C'},
+            {id:'sag_pin_sec1', label:'Pinion profile — Section 1', unit:'°C'}, {id:'sag_pin_sec2', label:'Pinion profile — Section 2', unit:'°C'},
+            {id:'sag_pin_sec3', label:'Pinion profile — Section 3', unit:'°C'}, {id:'sag_pin_bull', label:'Bull gear profile temp', unit:'°C'}
+          ]});
+
+        sections.push({ id:'sag_feedend', title:'Mill Feed End Bearing & Chute', items:[
+            {id:'sag_fe_gen', label:'General condition & unusual noise'},
+            {id:'sag_fe_seal', label:'Seal water line / chute / product leaks / flow'},
+            {id:'sag_fe_bolts', label:'Hold down bolts & cap bearing'},
+            {id:'sag_fe_dmg', label:'Assembly seal damage / oil leaks'},
+            {id:'sag_fe_gauges', label:'Integrity of supply instrument and gauges'}
+          ], readings:[
+            {id:'sag_fe_flow', label:'Oil flow rate', unit:'LPM'}, {id:'sag_fe_pde', label:'Oil pressure DE', unit:'bar'},
+            {id:'sag_fe_pnde', label:'Oil pressure NDE', unit:'bar'}, {id:'sag_fe_tde', label:'Temp DE', unit:'°C'},
+            {id:'sag_fe_tmid', label:'Temp mid', unit:'°C'}, {id:'sag_fe_tnde', label:'Temp NDE', unit:'°C'},
+            {id:'sag_fe_ret', label:'Return oil line temp', unit:'°C'}
+          ]});
+
+        sections.push({ id:'sag_discharge', title:'Mill Discharge End Trunnion', items:[
+            {id:'sag_de_gen', label:'General condition & unusual noise'},
+            {id:'sag_de_bolts', label:'Hold down bolts & cap bearing'},
+            {id:'sag_de_dmg', label:'Assembly seal damage / oil leaks'},
+            {id:'sag_de_gauges', label:'Integrity of supply instrument and gauges'}
+          ], readings:[
+            {id:'sag_de_pde', label:'Oil pressure DE', unit:'bar'}, {id:'sag_de_pnde', label:'Oil pressure NDE', unit:'bar'},
+            {id:'sag_de_tde', label:'Temp DE', unit:'°C'}, {id:'sag_de_tmid', label:'Temp mid', unit:'°C'},
+            {id:'sag_de_tnde', label:'Temp NDE', unit:'°C'}, {id:'sag_de_ret', label:'Return oil line temp', unit:'°C'}
+          ]});
+
+        sections.push({ id:'sag_oilfilm', title:'Bearing Oil Film Thickness', items:[], readings:[
+            {id:'sag_of_feedde', label:'Feed end DE', unit:'µm'}, {id:'sag_of_feednde', label:'Feed end NDE', unit:'µm'},
+            {id:'sag_of_dischde', label:'Discharge end DE', unit:'µm'}, {id:'sag_of_dischnde', label:'Discharge end NDE', unit:'µm'}
+          ]});
+
+        sections.push(coolingSystemBlock('sag_cool1','Motor Lube Oil Cooling System — FN1'));
+        sections.push(coolingSystemBlock('sag_cool2','Motor Lube Oil Cooling System — FN2'));
+        sections.push(coolingSystemBlock('sag_cool3','Gearbox Lube Oil Cooling System — FN'));
+        sections.push(coolingSystemBlock('sag_cool4','Motor Lube Oil Cooling System — FN3'));
+
+        sections.push.apply(sections, pumpStation('sag_hp1','HP Pump A/B — Station 1', [
+            {id:'sag_hp1_gen', label:'General condition & Noise / flex hose'},
+            {id:'sag_hp1_leak1', label:'Suction, discharge, casing leaks'},
+            {id:'sag_hp1_leak2', label:'Casing leaks, suction bellow'},
+            {id:'sag_hp1_prv', label:'Relieve valve discharging (PRV) — should be No'}
+          ], [
+            {id:'sag_hp1_de', label:'DE Temp', unit:'°C'}, {id:'sag_hp1_nde', label:'NDE Temp', unit:'°C'},
+            {id:'sag_hp1_disch', label:'Discharge pressure', unit:'MPa'}, {id:'sag_hp1_coupling', label:'Coupling temp', unit:'°C'}
+          ]));
+
+        sections.push.apply(sections, pumpStation('sag_circ','Circulation Pump A/B', [
+            {id:'sag_circ_gen', label:'General condition & Noise / flex hose'},
+            {id:'sag_circ_leak', label:'Suction, discharge, casing, filter leaks'},
+            {id:'sag_circ_oil', label:'General condition lube oil'},
+            {id:'sag_circ_res', label:'Reservoir oil level & breather'},
+            {id:'sag_circ_prv', label:'Relieve valve discharging — should be No'}
+          ], [
+            {id:'sag_circ_de', label:'DE Temp', unit:'°C'}, {id:'sag_circ_nde', label:'NDE Temp', unit:'°C'},
+            {id:'sag_circ_disch', label:'Discharge pressure', unit:'kPa'}, {id:'sag_circ_coupling', label:'Coupling temp', unit:'°C'},
+            {id:'sag_circ_retline', label:'Oil return line temp', unit:'°C'}, {id:'sag_circ_resoil', label:'Reservoir oil temp', unit:'°C'}
+          ]));
+
+        sections.push.apply(sections, pumpStation('sag_gbpin','Gearbox & Pinion Lube Oil Pump A/B', [
+            {id:'sag_gbpin_gen', label:'General condition & Noise / flex hose'},
+            {id:'sag_gbpin_leak1', label:'Suction, discharge, casing, filter leaks'},
+            {id:'sag_gbpin_leak2', label:'Casing leaks, suction bellow'},
+            {id:'sag_gbpin_oil', label:'General condition lube oil'},
+            {id:'sag_gbpin_prv', label:'Relieve valve discharging — should be No'}
+          ], [
+            {id:'sag_gbpin_de', label:'DE Temp', unit:'°C'}, {id:'sag_gbpin_nde', label:'NDE Temp', unit:'°C'},
+            {id:'sag_gbpin_disch', label:'Discharge pressure', unit:'kPa'}, {id:'sag_gbpin_coupling', label:'Coupling temp', unit:'°C'},
+            {id:'sag_gbpin_retline', label:'Oil return line temp', unit:'°C'}, {id:'sag_gbpin_resoil', label:'Reservoir oil temp', unit:'°C'}
+          ]));
+
+        sections.push.apply(sections, pumpStation('sag_hp2','HP Pump A/B — Station 2', [
+            {id:'sag_hp2_gen', label:'General condition & Noise / flex hose'},
+            {id:'sag_hp2_leak1', label:'Suction, discharge, casing, filter leaks'},
+            {id:'sag_hp2_leak2', label:'Casing leaks, suction bellow'},
+            {id:'sag_hp2_oil', label:'General condition lube oil'}
+          ], [
+            {id:'sag_hp2_de', label:'DE Temp', unit:'°C'}, {id:'sag_hp2_nde', label:'NDE Temp', unit:'°C'},
+            {id:'sag_hp2_inletde', label:'Inlet line pressure DE', unit:'bar'}, {id:'sag_hp2_inlet', label:'Inlet line pressure', unit:'bar'}
+          ]));
+
+        sections.push.apply(sections, pumpStation('sag_lp','LP Pump A/B', [
+            {id:'sag_lp_gen', label:'General condition & Noise / flex hose'},
+            {id:'sag_lp_leak1', label:'Suction, discharge, casing, filter leaks'},
+            {id:'sag_lp_leak2', label:'Casing leaks, suction bellow'},
+            {id:'sag_lp_oil', label:'General condition lube oil'},
+            {id:'sag_lp_res', label:'Reservoir oil level & breather'}
+          ], [
+            {id:'sag_lp_de', label:'DE Temp', unit:'°C'}, {id:'sag_lp_nde', label:'NDE Temp', unit:'°C'},
+            {id:'sag_lp_disch', label:'Discharge pressure', unit:'kPa'}
+          ]));
+
+        return sections;
+      })() },
+
+    { id:'mineral-sizer', title:'Mineral Sizer', dept:'Lotus Engineering Department',
+      category:'rotating',
+      tagPlaceholder:'e.g. SZ-01', defaultVisual:false, defaultVibration:true, sections:[
+        buildSafetySection('sz'),
+        motorBlock('sz_motor'),
+        { id:'sz_voith', title:'Voith Coupling', items:[
+            {id:'sz_v_gen', label:'General condition & Noise, leaks'},
+            {id:'sz_v_cracks', label:'Inspect coupling hubs for cracks'},
+            {id:'sz_v_key', label:'Coupling element key and key way'}
+          ], readings:[ {id:'sz_v_temp', label:'Coupling Temp', unit:'°C'} ]},
+        { id:'sz_mill', title:'Sizer Mill', items:[
+            {id:'sz_m_gen', label:'General condition, Noise, mill casing'},
+            {id:'sz_m_bolts', label:'Hold down bolts & pedestal base'},
+            {id:'sz_m_seal', label:'Bearing seal & mill housing leaks'},
+            {id:'sz_m_probe', label:'Condition of online temperature probe'}
+          ], readings:[
+            {id:'sz_m_de', label:'Mill DE', unit:'°C'}, {id:'sz_m_nde', label:'Mill NDE', unit:'°C'}
+          ]},
+        { id:'sz_lube', title:'Lubrication Oil Distribution System — Motor', readingNote:'Max. 76°C', items:[
+            {id:'sz_l_gen', label:'General condition & Noise'},
+            {id:'sz_l_bolts', label:'Hold down bolts and Foundation base plate'},
+            {id:'sz_l_cool', label:'Cooling system and Lube fitting integrity'}
+          ], readings:[
+            {id:'sz_l_nde', label:'NDE', unit:'°C'}, {id:'sz_l_de', label:'DE', unit:'°C'}, {id:'sz_l_body', label:'Body', unit:'°C'}
+          ]},
+        { id:'sz_pump', title:'Pump (External Gear Pump)', items:[
+            {id:'sz_p_gen', label:'General condition & Noise'},
+            {id:'sz_p_bolts', label:'Pump hold down bolts and base plate'},
+            {id:'sz_p_line', label:'Suction/Discharge line - Relief valve - Casing'}
+          ], readings:[
+            {id:'sz_p_suction', label:'Suction line temp', unit:'°C'},
+            {id:'sz_p_disch', label:'Discharge line temp', unit:'°C'},
+            {id:'sz_p_ib', label:'Pump IB temp', unit:'°C'}
+          ]}
+      ]},
+
+    { id:'grease-pot', title:'Automatic Grease Lubricator (Grease Pot)', dept:'Condition Monitoring — Lubrication Maintenance Program',
+      category:'lube',
+      tagPlaceholder:'e.g. GP-01', defaultVisual:true, defaultVibration:false, sections:[
+        buildSafetySection('gp'),
+        { id:'gp_info', title:'Lubricator Details', items:[], readings:[
+            {id:'gp_capacity', label:'Capacity', unit:'g/mL'},
+            {id:'gp_discharge', label:'Discharge setting', unit:'—'}
+          ]},
+        { id:'gp_checks', title:'Inspection Checkpoints', items:[
+            {id:'gp_1', label:'Reservoir grease level > 25% of capacity'},
+            {id:'gp_2', label:'Piston moves freely without obstruction'},
+            {id:'gp_3', label:'No visible leaks at body, fittings, or connections'},
+            {id:'gp_4', label:'Transparent body intact — no cracks or damage'},
+            {id:'gp_5', label:'Spring not damaged, deformed, or corroded'},
+            {id:'gp_6', label:'Outlet fitting clean and unobstructed'},
+            {id:'gp_7', label:'Feed line not blocked, kinked, or damaged'},
+            {id:'gp_8', label:'Correct grease type installed per specification'},
+            {id:'gp_9', label:'Dispenser securely mounted to bracket/equipment'},
+            {id:'gp_10', label:'Dispensing rate matches equipment requirement'},
+            {id:'gp_11', label:'Grease visible at lubrication point'},
+            {id:'gp_12', label:'No contamination (water, dirt, debris) visible'},
+            {id:'gp_13', label:'No air bubbles in grease body affecting discharge'},
+            {id:'gp_14', label:'Unit does not require replacement (not empty/expired)'}
+          ]}
+      ]},
+
+    { id:'lube-oil-sampling', title:'Lube Oil Sampling', dept:'Condition Monitoring — ASTM D4057 / ISO 4406 / ICML',
+      category:'lube', healthScoreApplicable:false,
+      tagPlaceholder:'Sample ID / Bottle No.', defaultVisual:true, defaultVibration:false, sections:[
+        buildSafetySection('los'),
+        { id:'los_s2', title:'Section 2 — Sampling Equipment & Container Verification', items:[
+            {id:'los2_1', label:'Sample bottle is new, clean, factory-sealed'},
+            {id:'los2_2', label:'Bottle is correct type for tests required'},
+            {id:'los2_3', label:'Bottle seal intact — reject if pre-opened/damaged'},
+            {id:'los2_4', label:'Vacuum pump/sampling device clean and functioning'},
+            {id:'los2_5', label:'Sampling tubing new or dedicated to this lubricant'},
+            {id:'los2_6', label:'Tubing length appropriate for mid-stream sampling'},
+            {id:'los2_7', label:'Sample labels legible, adhesive intact'},
+            {id:'los2_8', label:'Permanent marker available'},
+            {id:'los2_9', label:'Submission forms and chain-of-custody docs available'}
+          ]},
+        { id:'los_s3', title:'Section 3 — Sampling Point Identification & Preparation', items:[
+            {id:'los3_1', label:'Located designated primary sampling port (not drain plug/sight glass)'},
+            {id:'los3_2', label:'Sampling point clearly marked/labeled'},
+            {id:'los3_3', label:'Sampling point is in live/turbulent flow zone'},
+            {id:'los3_4', label:'Sampling valve/port free of damage, contamination, corrosion'},
+            {id:'los3_5', label:'Cleaned area around sampling port'},
+            {id:'los3_6', label:'Removed protective cap and inspected for debris'},
+            {id:'los3_7', label:'Inspected o-ring condition on sampling probe (minimess)'},
+            {id:'los3_8', label:'No visible contamination at sampling point entry'}
+          ]},
+        { id:'los_s4', title:'Section 4 — Flushing Procedure', items:[
+            {id:'los4_1', label:'Connected sampling device securely'},
+            {id:'los4_2', label:'Opened valve slowly to prevent pressure surge'},
+            {id:'los4_3', label:'Flushed ≥10x tubing volume to waste before sampling'},
+            {id:'los4_4', label:'Observed flush oil for contamination (water, metal, discoloration)'},
+            {id:'los4_5', label:'Recorded flush volume'},
+            {id:'los4_6', label:'Disposed flush oil properly — not returned to system'},
+            {id:'los4_7', label:'Verified steady flow with no air bubbles'},
+            {id:'los4_8', label:'Continued flushing if flow intermittent/aerated'}
+          ]},
+        { id:'los_s5', title:'Section 5 — Sample Collection Procedure', items:[
+            {id:'los5_1', label:'Removed bottle cap without touching inside'},
+            {id:'los5_2', label:'Held cap open-side down to prevent contamination'},
+            {id:'los5_3', label:'Inserted tube without touching bottle sides'},
+            {id:'los5_4', label:'Filled bottle to correct level (~80% / 100ml min)'},
+            {id:'los5_5', label:'Did not overfill — left headspace for lab agitation'},
+            {id:'los5_6', label:'Removed tube while maintaining positive oil flow'},
+            {id:'los5_7', label:'Replaced bottle cap immediately, hand-tight'},
+            {id:'los5_8', label:'Wiped bottle exterior clean'},
+            {id:'los5_9', label:'Verified bottle properly sealed, no leaks'},
+            {id:'los5_10', label:'Closed sampling valve and replaced port protective cap'}
+          ]},
+        { id:'los_s6', title:'Section 6 — Immediate Visual Inspection (Field Screening)', items:[
+            {id:'los6_1', label:'Held bottle to light — observed clarity/opacity'},
+            {id:'los6_2', label:'Checked for water contamination (milky/cloudy/droplets)'},
+            {id:'los6_3', label:'Checked for particulate matter (metal, dirt, fibers)'},
+            {id:'los6_4', label:'Observed oil color vs. new oil reference'},
+            {id:'los6_5', label:'Noted unusual odor (burnt = thermal degradation)'},
+            {id:'los6_6', label:'Checked for foam or air entrainment'},
+            {id:'los6_7', label:'Notified supervisor if severe contamination observed'},
+            {id:'los6_8', label:'Documented visual observations in notes'}
+          ]},
+        { id:'los_s7', title:'Section 7 — Sample Labeling & Identification', items:[
+            {id:'los7_1', label:'Completed label with all required info (permanent marker)'},
+            {id:'los7_2', label:'Recorded equipment tag/ID exactly as in CMMS'},
+            {id:'los7_3', label:'Recorded equipment name/description'},
+            {id:'los7_4', label:'Recorded component sampled'},
+            {id:'los7_5', label:'Recorded sample date (DD-MMM-YYYY)'},
+            {id:'los7_6', label:'Recorded sample time (24-hour)'},
+            {id:'los7_7', label:'Recorded hour meter/odometer reading'},
+            {id:'los7_8', label:'Recorded hours on oil since last change'},
+            {id:'los7_9', label:'Recorded lubricant type/brand/grade'},
+            {id:'los7_10', label:'Recorded oil top-up quantity since last sample'},
+            {id:'los7_11', label:'Recorded technician name and ID'},
+            {id:'los7_12', label:'Affixed label — fully adhered and legible'},
+            {id:'los7_13', label:'Cross-referenced sample ID with maintenance record'}
+          ]},
+        { id:'los_s8', title:'Section 8 — Sample Handling, Storage & Chain of Custody', items:[
+            {id:'los8_1', label:'Placed sample in protective bag/container'},
+            {id:'los8_2', label:'Stored upright, cool, dark location'},
+            {id:'los8_3', label:'Did not freeze sample unless required by lab'},
+            {id:'los8_4', label:'Kept away from vibration sources'},
+            {id:'los8_5', label:'Completed chain-of-custody form'},
+            {id:'los8_6', label:'Recorded sample ID in CMMS'},
+            {id:'los8_7', label:'Arranged transport to lab within 24–48 hours'},
+            {id:'los8_8', label:'Used appropriate packaging for shipping'},
+            {id:'los8_9', label:'Retained copy of submission and custody forms'}
+          ]},
+        { id:'los_s9', title:'Section 9 — Post-Sampling Cleanup & Housekeeping', items:[
+            {id:'los9_1', label:'Disposed flush oil/waste in designated container'},
+            {id:'los9_2', label:'Cleaned and stored sampling equipment'},
+            {id:'los9_3', label:'Disposed used tubing if single-use'},
+            {id:'los9_4', label:'Cleaned any oil spills immediately'},
+            {id:'los9_5', label:'Disposed used gloves/absorbents properly'},
+            {id:'los9_6', label:'Verified sampling port cap securely replaced'},
+            {id:'los9_7', label:'Returned equipment to storage'},
+            {id:'los9_8', label:'Removed all materials/tools from area'}
+          ]},
+        { id:'los_s10', title:'Section 10 — Lab Submission & Documentation', items:[
+            {id:'los10_1', label:'Completed lab sample submission form'},
+            {id:'los10_2', label:'Specified tests required (wear metals, contamination, viscosity, TAN/TBN, etc.)'},
+            {id:'los10_3', label:'Indicated sample priority (Routine/Urgent/Emergency)'},
+            {id:'los10_4', label:'Provided alarm limits/target values if applicable'},
+            {id:'los10_5', label:'Included previous results for trending'},
+            {id:'los10_6', label:'Verified correct contact for results delivery'},
+            {id:'los10_7', label:'Retained copy of submission documents'},
+            {id:'los10_8', label:'Updated sampling schedule in CMMS'},
+            {id:'los10_9', label:'Logged submission details in CM database'}
+          ]}
+      ]},
+
+    { id:'lube-oil-replacement', title:'Lube Oil Replacement', dept:'Condition Monitoring — ISO 55000 / ICML 55',
+      category:'lube', healthScoreApplicable:false,
+      tagPlaceholder:'e.g. Equipment tag', defaultVisual:true, defaultVibration:false, sections:[
+        buildSafetySection('lor'),
+        { id:'lor_s2', title:'Section 2 — Equipment Inspection & Preparation', items:[
+            {id:'lor2_1', label:'Recorded hour meter/odometer reading before service'},
+            {id:'lor2_2', label:'Allowed equipment to cool below 50°C'},
+            {id:'lor2_3', label:'Visually inspected for external oil leaks'},
+            {id:'lor2_4', label:'Inspected oil reservoir/sump for damage/corrosion'},
+            {id:'lor2_5', label:'Checked breather cap/desiccant condition'},
+            {id:'lor2_6', label:'Verified drain plug condition and accessibility'},
+            {id:'lor2_7', label:'Inspected sight glass/dipstick — level and contamination'},
+            {id:'lor2_8', label:'Cleaned area around drain plug and filler cap'},
+            {id:'lor2_9', label:'Positioned drain pan of adequate capacity'}
+          ]},
+        { id:'lor_s3', title:'Section 3 — Oil Drain Procedure', items:[
+            {id:'lor3_1', label:'Removed drain plug carefully (oil may be warm)'},
+            {id:'lor3_2', label:'Allowed ≥15 minutes for full drainage'},
+            {id:'lor3_3', label:'Inspected drain plug for metal particles/debris'},
+            {id:'lor3_4', label:'Inspected magnetic element (if equipped)'},
+            {id:'lor3_5', label:'Cleaned drain plug threads'},
+            {id:'lor3_6', label:'Replaced drain plug washer/gasket with new OEM part'},
+            {id:'lor3_7', label:'Inspected drained oil for abnormalities'},
+            {id:'lor3_8', label:'Measured and recorded drained oil quantity'},
+            {id:'lor3_9', label:'Transferred used oil to approved waste container'}
+          ]},
+        { id:'lor_s4', title:'Section 4 — Filter Inspection & Replacement', items:[
+            {id:'lor4_1', label:'Identified correct replacement filter part number'},
+            {id:'lor4_2', label:'Removed old filter using proper wrench'},
+            {id:'lor4_3', label:'Cut open old filter and inspected media'},
+            {id:'lor4_4', label:'Documented/photographed abnormal debris'},
+            {id:'lor4_5', label:'Inspected filter housing for damage/debris'},
+            {id:'lor4_6', label:'Cleaned filter housing before installing new filter'},
+            {id:'lor4_7', label:'Verified new filter correct spec and undamaged'},
+            {id:'lor4_8', label:'Pre-filled new filter with oil (spin-on types)'},
+            {id:'lor4_9', label:'Applied thin oil film to new filter gasket'},
+            {id:'lor4_10', label:'Installed new filter hand-tight plus specified turns'},
+            {id:'lor4_11', label:'Disposed old filter in hazardous waste container'}
+          ]},
+        { id:'lor_s5', title:'Section 5 — Oil Refill Procedure', items:[
+            {id:'lor5_1', label:'Verified lubricant type matches specification exactly'},
+            {id:'lor5_2', label:'Checked container seal intact — rejected if tampered'},
+            {id:'lor5_3', label:'Verified lubricant batch number and expiry date'},
+            {id:'lor5_4', label:'Reinstalled drain plug to specified torque'},
+            {id:'lor5_5', label:'Cleaned filler port before removing filler cap'},
+            {id:'lor5_6', label:'Used dedicated, color-coded transfer equipment'},
+            {id:'lor5_7', label:'Added oil through filtered transfer equipment (10-micron min)'},
+            {id:'lor5_8', label:'Filled to specified quantity — did not overfill'},
+            {id:'lor5_9', label:'Allowed oil to settle 5 minutes before checking level'},
+            {id:'lor5_10', label:'Verified oil level within operating range'},
+            {id:'lor5_11', label:'Reinstalled filler cap securely'},
+            {id:'lor5_12', label:'Recorded lubricant batch number in maintenance record'}
+          ]},
+        { id:'lor_s6', title:'Section 6 — Post-Service Verification & Startup', items:[
+            {id:'lor6_1', label:'Visual inspection — no leaks at plug, filter, filler cap'},
+            {id:'lor6_2', label:'Removed all tools and materials from area'},
+            {id:'lor6_3', label:'Removed LOTO per site de-isolation procedure'},
+            {id:'lor6_4', label:'Notified control room/supervisor of startup'},
+            {id:'lor6_5', label:'Started equipment, ran at idle 5 minutes (or per OEM)'},
+            {id:'lor6_6', label:'Monitored oil pressure — within normal range'},
+            {id:'lor6_7', label:'Checked for leaks during initial operation'},
+            {id:'lor6_8', label:'Verified oil temperature reaches normal range'},
+            {id:'lor6_9', label:'Listened for abnormal noises (knocking, whining, cavitation)'},
+            {id:'lor6_10', label:'Re-checked oil level after 5–10 minutes — topped up if needed'},
+            {id:'lor6_11', label:'Verified warning lights/alarms functioning'}
+          ]},
+        { id:'lor_s7', title:'Section 7 — Environmental Compliance & Housekeeping', items:[
+            {id:'lor7_1', label:'Cleaned any oil spills immediately'},
+            {id:'lor7_2', label:'Transferred used oil to waste storage area'},
+            {id:'lor7_3', label:'Disposed used filters in hazardous waste container'},
+            {id:'lor7_4', label:'Disposed contaminated rags/absorbents properly'},
+            {id:'lor7_5', label:'Returned unused lubricant, container sealed'},
+            {id:'lor7_6', label:'Cleaned and returned tools to storage'},
+            {id:'lor7_7', label:'Removed spill containment equipment'},
+            {id:'lor7_8', label:'Verified area clean and free of trip/slip hazards'}
+          ]},
+        { id:'lor_s8', title:'Section 8 — Documentation & Record Keeping', items:[
+            {id:'lor8_1', label:'Updated equipment service log (date, hours, lubricant)'},
+            {id:'lor8_2', label:'Recorded lubricant type, quantity, batch number in CMMS'},
+            {id:'lor8_3', label:'Recorded filter part numbers replaced'},
+            {id:'lor8_4', label:'Documented abnormal findings'},
+            {id:'lor8_5', label:'Attached photos of abnormal conditions to work order'},
+            {id:'lor8_6', label:'Updated lubrication schedule/next service date'},
+            {id:'lor8_7', label:'Submitted oil sample tracking form to lab'},
+            {id:'lor8_8', label:'Closed out work order in maintenance system'},
+            {id:'lor8_9', label:'Obtained supervisor sign-off for completion'}
+          ]}
+      ]},
+    { id:'structural-inspection', title:'Structural Inspection Checklist',
+      dept:'Condition Monitoring — OSHA 1926 / AS/NZS 4100 / ISO 9001 (Mining Operations, Structural)',
+      category:'static',
+      tagPlaceholder:'e.g. STR-PLT-01', defaultVisual:true, defaultVibration:false, sections:[
+        buildSafetySection('si'),
+        { id:'si_s2', title:'Section 2 — Foundation & Base Plate Inspection', items:[
+            {id:'si2_1', label:'Inspect concrete foundations for cracks, spalling, or deterioration'},
+            {id:'si2_2', label:'Check for settlement, heaving, or differential movement'},
+            {id:'si2_3', label:'Verify base plates are level and properly seated'},
+            {id:'si2_4', label:'Inspect anchor bolts for corrosion, looseness, or damage'},
+            {id:'si2_5', label:'Measure anchor bolt projection and thread condition'},
+            {id:'si2_6', label:'Check grout condition under base plates'},
+            {id:'si2_7', label:'Verify drainage around foundation (no water pooling)'},
+            {id:'si2_8', label:'Inspect expansion joints for proper function'},
+            {id:'si2_9', label:'Document any foundation repairs or modifications'}
+          ]},
+        { id:'si_s3', title:'Section 3 — Steel Structural Members', items:[
+            {id:'si3_1', label:'Inspect columns for plumbness (vertical alignment)'},
+            {id:'si3_2', label:'Check beams for deflection, sagging, or lateral buckling'},
+            {id:'si3_3', label:'Examine bracing members for tension/compression damage'},
+            {id:'si3_4', label:'Inspect gusset plates for cracks, corrosion, or distortion'},
+            {id:'si3_5', label:'Check for signs of overloading: bent members, local buckling'},
+            {id:'si3_6', label:'Verify fire protection coatings are intact (if applicable)'},
+            {id:'si3_7', label:'Inspect for impact damage from mobile equipment'},
+            {id:'si3_8', label:'Check all members for section loss due to corrosion'},
+            {id:'si3_9', label:'Verify structural modifications have engineering approval'}
+          ]},
+        { id:'si_s4', title:'Section 4 — Connections & Fasteners', items:[
+            {id:'si4_1', label:'Inspect bolted connections for looseness — torque check random sample'},
+            {id:'si4_2', label:'Check high-strength bolts for proper tensioning indicators'},
+            {id:'si4_3', label:'Examine bolt holes for elongation or damage'},
+            {id:'si4_4', label:'Verify correct bolt grades are installed (marked heads)'},
+            {id:'si4_5', label:'Inspect welded connections for cracks, undercut, or porosity'},
+            {id:'si4_6', label:'Check fillet welds for proper size and profile'},
+            {id:'si4_7', label:'Look for lamellar tearing in thick plate connections'},
+            {id:'si4_8', label:'Verify lock nuts/washers are in place where required'},
+            {id:'si4_9', label:'Check for galvanic corrosion at dissimilar metal contacts'}
+          ]},
+        { id:'si_s5', title:'Section 5 — Corrosion & Protective Coatings', items:[
+            {id:'si5_1', label:'Assess overall corrosion level using standard rating scale'},
+            {id:'si5_2', label:'Identify areas of active corrosion requiring immediate attention'},
+            {id:'si5_3', label:'Measure coating thickness at representative locations (DFT)'},
+            {id:'si5_4', label:'Check for coating failures: blistering, peeling, chalking'},
+            {id:'si5_5', label:'Inspect areas prone to moisture accumulation'},
+            {id:'si5_6', label:'Check crevices and overlapping surfaces for hidden corrosion'},
+            {id:'si5_7', label:'Verify galvanizing is intact on galvanized members'},
+            {id:'si5_8', label:'Document areas requiring touch-up or full recoating'},
+            {id:'si5_9', label:'Assess cathodic protection system function (if installed)'}
+          ]},
+        { id:'si_s6', title:'Section 6 — Platforms, Walkways & Handrails', items:[
+            {id:'si6_1', label:'Inspect platform structural supports for integrity'},
+            {id:'si6_2', label:'Check grating for secure attachment and proper clips'},
+            {id:'si6_3', label:'Verify grating is not bent, damaged, or missing sections'},
+            {id:'si6_4', label:'Inspect handrails: 1050 mm height, 450 mm mid-rail, toe boards'},
+            {id:'si6_5', label:'Check handrail posts for secure base attachment'},
+            {id:'si6_6', label:'Verify ladder cages are intact and properly attached'},
+            {id:'si6_7', label:'Inspect stairways for structural integrity and anti-slip treads'},
+            {id:'si6_8', label:'Check platform drainage — no water accumulation'},
+            {id:'si6_9', label:'Verify load rating signage is posted and visible'}
+          ]},
+        { id:'si_s7', title:'Section 7 — Special Structures (Conveyors, Bins, Chutes)', items:[
+            {id:'si7_1', label:'Inspect conveyor support structures for alignment'},
+            {id:'si7_2', label:'Check transfer chute liners for wear and attachment'},
+            {id:'si7_3', label:'Examine bin/hopper structural supports'},
+            {id:'si7_4', label:'Inspect for wear from material flow/abrasion'},
+            {id:'si7_5', label:'Check vibrating equipment mounting and isolation'},
+            {id:'si7_6', label:'Verify emergency stop pull cords are accessible'},
+            {id:'si7_7', label:'Inspect dust collection system supports'},
+            {id:'si7_8', label:'Check structural steel around heat sources'}
+          ]},
+        { id:'si_s8', title:'Section 8 — Measurement & Documentation', items:[
+            {id:'si8_1', label:'Record thickness measurements at predetermined monitoring points'},
+            {id:'si8_2', label:'Document all defects with photographs (include reference scale)'},
+            {id:'si8_3', label:'Update structural inspection database/CMMS'},
+            {id:'si8_4', label:'Compare current findings to previous inspection records'},
+            {id:'si8_5', label:'Calculate remaining service life where applicable'},
+            {id:'si8_6', label:'Identify any load restriction requirements'},
+            {id:'si8_7', label:'Complete inspection report with recommendations'}
+          ],
+          readingNote:'Site-defined monitoring points — rename to match your structure\u2019s CML/drawing references', readings:[
+            {id:'si8_pt1', label:'Monitoring Point 1', unit:'mm'},
+            {id:'si8_pt2', label:'Monitoring Point 2', unit:'mm'},
+            {id:'si8_pt3', label:'Monitoring Point 3', unit:'mm'},
+            {id:'si8_pt4', label:'Monitoring Point 4', unit:'mm'}
+          ]},
+        { id:'si_s9', title:'Section 9 — Condition Assessment Summary',
+          readingNote:'Rating key — 1 Good · 2 Fair · 3 Poor · 4 Critical · 5 Unsafe', items:[], readings:[
+            {id:'si9_found', label:'Foundations', unit:'rating'},
+            {id:'si9_cols', label:'Columns/Main Frame', unit:'rating'},
+            {id:'si9_beams', label:'Beams/Girders', unit:'rating'},
+            {id:'si9_brace', label:'Bracing', unit:'rating'},
+            {id:'si9_conn', label:'Connections', unit:'rating'},
+            {id:'si9_plat', label:'Platforms/Walkways', unit:'rating'},
+            {id:'si9_hand', label:'Handrails/Guards', unit:'rating'},
+            {id:'si9_coat', label:'Coatings/Corrosion', unit:'rating'}
+          ]}
+      ]},
+    { id:'auto-greasing-system', title:'Automatic Greasing System Inspection',
+      dept:'Condition Monitoring — Lubrication Maintenance Program (Offline Preventive Maintenance)',
+      category:'lube',
+      tagPlaceholder:'e.g. AGS-01', defaultVisual:true, defaultVibration:false, sections:[
+        buildSafetySection('ags'),
+        { id:'ags_s1', title:'Section 1 — Reservoir / Pump Unit', items:[
+            {id:'ags1_1', label:'Check grease level; top off with the correct NLGI grade and base oil (Weekly)'},
+            {id:'ags1_2', label:'Inspect grease for water, dirt, hardening, or oil separation/bleeding (Weekly)'},
+            {id:'ags1_3', label:'Clean or replace the reservoir breather / vent cap (Monthly)'},
+            {id:'ags1_4', label:'Inspect the low-level sensor / float for correct operation (Quarterly)'},
+            {id:'ags1_5', label:'Check pump element mounting, seals, and inlet strainer/screen for blockage (Quarterly)'},
+            {id:'ags1_6', label:'Verify the agitator, if fitted, moves freely (Quarterly)'}
+          ]},
+        { id:'ags_s2', title:'Section 2 — Controller / Timer', items:[
+            {id:'ags2_1', label:'Verify cycle time, pause time, and cycle count match the OEM/application spec (Quarterly)'},
+            {id:'ags2_2', label:'Check battery backup condition and replace at the approved fixed interval (Annual)'},
+            {id:'ags2_3', label:'Confirm low-level, no-pressure, and cycle-fail alarms trip during a manual test cycle (Quarterly)'},
+            {id:'ags2_4', label:'Check electrical terminals and connectors for corrosion or looseness (Quarterly)'}
+          ]},
+        { id:'ags_s3', title:'Section 3 — Metering Devices (Injectors / Divider Valves)', items:[
+            {id:'ags3_1', label:'Visually confirm each injector indicator pin cycles during a controlled manual trigger (Monthly)'},
+            {id:'ags3_2', label:'Remove and inspect a representative sample of injectors/valve sections for blockage or worn pistons (Semi-Annual)'},
+            {id:'ags3_3', label:'Confirm output volume per injector matches specification; bench-check critical points where required (Semi-Annual)'}
+          ]},
+        { id:'ags_s4', title:'Section 4 — Distribution Lines & Fittings', items:[
+            {id:'ags4_1', label:'Trace the full line route for chafing, kinks, crushing, or contact with moving parts (Monthly)'},
+            {id:'ags4_2', label:'Check all fittings for tightness and leakage (Monthly)'},
+            {id:'ags4_3', label:'Replace tubing showing cracking, swelling, abrasion, or heat damage (Quarterly)'},
+            {id:'ags4_4', label:'Confirm line supports and clamps are intact and correctly positioned (Quarterly)'}
+          ]},
+        { id:'ags_s5', title:'Section 5 — Lubrication Points (Bearings / Pins / Bushings)', items:[
+            {id:'ags5_1', label:'Confirm grease purge is visible at the seal of each lubrication point, where applicable (Monthly)'},
+            {id:'ags5_2', label:'Check for starvation indicators: dry seals, discoloration, heat marks, or abnormal noise (Monthly)'},
+            {id:'ags5_3', label:'Confirm bearing relief / vent fittings are not blocked (Quarterly)'}
+          ]},
+        { id:'ags_s6', title:'Section 6 — System Pressure', items:[
+            {id:'ags6_1', label:'Check the main-line relief valve setting and operation using the approved test method (Annual)'},
+            {id:'ags6_2', label:'Verify pressure switch / gauge calibration against a known reference (Annual)'}
+          ]},
+        { id:'ags_s7', title:'Section 7 — Documentation & Close-Out', items:[
+            {id:'ags7_1', label:'Log cycle count, grease-consumption trend, and faults recorded since the previous PM (Every PM)'},
+            {id:'ags7_2', label:'Record parts replaced, including injectors, lines, fittings, sensors, and batteries (Every PM)'}
+          ]}
+      ]},
+    { id:'tank-external-inspection', title:'Tank External Inspection Checklist',
+      dept:'Condition Monitoring — API 653 / API 575 / EEMUA 159 (Tank External)',
+      category:'static',
+      tagPlaceholder:'e.g. TK-01', defaultVisual:true, defaultVibration:false, sections:[
+        buildSafetySection('tke'),
+        { id:'tke_s2', title:'Section 2 — Foundation Inspection', items:[
+            {id:'tke2_1', label:'Inspect ringwall/concrete foundation for cracks or spalling'},
+            {id:'tke2_2', label:'Check for settlement — uneven or differential settlement'},
+            {id:'tke2_3', label:'Verify proper drainage slope away from tank'},
+            {id:'tke2_4', label:'Inspect foundation anchor bolts and chairs'},
+            {id:'tke2_5', label:'Check for vegetation growth near foundation'},
+            {id:'tke2_6', label:'Verify cathodic protection test stations (if installed)'},
+            {id:'tke2_7', label:'Inspect grounding connections and continuity'}
+          ]},
+        { id:'tke_s3', title:'Section 3 — Tank Bottom & Annular Plate', items:[
+            {id:'tke3_1', label:'Inspect visible bottom edge for corrosion'},
+            {id:'tke3_2', label:'Check bottom-to-shell weld (sketch weld) for cracks'},
+            {id:'tke3_3', label:'Look for product staining indicating leaks'},
+            {id:'tke3_4', label:'Verify bottom plate projection beyond shell'},
+            {id:'tke3_5', label:'Check for bulging or distortion of bottom'},
+            {id:'tke3_6', label:'Inspect leak detection system (if installed)'}
+          ]},
+        { id:'tke_s4', title:'Section 4 — Shell Inspection', items:[
+            {id:'tke4_1', label:'Inspect shell plates for corrosion — all courses'},
+            {id:'tke4_2', label:'Check vertical shell welds for cracks or defects'},
+            {id:'tke4_3', label:'Inspect horizontal shell welds'},
+            {id:'tke4_4', label:'Look for bulges, dents, or out-of-roundness'},
+            {id:'tke4_5', label:'Check shell for hot spots (insulated tanks)'},
+            {id:'tke4_6', label:'Verify shell plumbness (vertical alignment)'},
+            {id:'tke4_7', label:'Inspect for shell settlement or tilt'},
+            {id:'tke4_8', label:'Check coating/paint condition on shell'},
+            {id:'tke4_9', label:'Document any previous repair areas'}
+          ]},
+        { id:'tke_s5', title:'Section 5 — Shell Appurtenances', items:[
+            {id:'tke5_1', label:'Inspect all shell nozzles and reinforcing pads'},
+            {id:'tke5_2', label:'Check nozzle welds for cracks or corrosion'},
+            {id:'tke5_3', label:'Verify tell-tale holes in reinforcing pads are open'},
+            {id:'tke5_4', label:'Inspect manways — condition and gasket seating'},
+            {id:'tke5_5', label:'Check cleanout doors/fittings'},
+            {id:'tke5_6', label:'Inspect shell-mounted instruments and connections'},
+            {id:'tke5_7', label:'Verify valve condition and operability'},
+            {id:'tke5_8', label:'Check pipe supports attached to shell'}
+          ]},
+        { id:'tke_s6', title:'Section 6 — Roof Inspection (Fixed Roof)', items:[
+            {id:'tke6_1', label:'Inspect roof plates for corrosion or holes'},
+            {id:'tke6_2', label:'Check roof-to-shell junction for cracks'},
+            {id:'tke6_3', label:'Verify roof slope — no ponding areas'},
+            {id:'tke6_4', label:'Inspect roof vents for blockage or damage'},
+            {id:'tke6_5', label:'Check pressure/vacuum relief valves'},
+            {id:'tke6_6', label:'Inspect roof drain system'},
+            {id:'tke6_7', label:'Check roof nozzles and fittings'},
+            {id:'tke6_8', label:'Verify emergency venting (weak roof-to-shell)'}
+          ]},
+        { id:'tke_s7', title:'Section 7 — Floating Roof (If Applicable)', items:[
+            {id:'tke7_1', label:'Check roof position and level'},
+            {id:'tke7_2', label:'Inspect primary seal condition'},
+            {id:'tke7_3', label:'Check secondary seal (if installed)'},
+            {id:'tke7_4', label:'Verify roof drain system functional'},
+            {id:'tke7_5', label:'Inspect pontoons/floats for integrity'},
+            {id:'tke7_6', label:'Check rolling ladder/stairway condition'},
+            {id:'tke7_7', label:'Inspect roof legs and guide poles'},
+            {id:'tke7_8', label:'Verify anti-rotation devices functional'}
+          ]},
+        { id:'tke_s8', title:'Section 8 — Accessories & Systems', items:[
+            {id:'tke8_1', label:'Inspect spiral stairway — structural integrity'},
+            {id:'tke8_2', label:'Check stairway handrails and toe boards'},
+            {id:'tke8_3', label:'Verify gauging platform condition'},
+            {id:'tke8_4', label:'Inspect foam chambers/fire suppression system'},
+            {id:'tke8_5', label:'Check earthing/grounding straps'},
+            {id:'tke8_6', label:'Verify tank identification signage visible'},
+            {id:'tke8_7', label:'Inspect overflow line and containment'},
+            {id:'tke8_8', label:'Check level gauging instruments'}
+          ]},
+        { id:'tke_s9', title:'Section 9 — Containment & Environment', items:[
+            {id:'tke9_1', label:'Inspect bund wall/dike integrity'},
+            {id:'tke9_2', label:'Verify containment capacity adequate'},
+            {id:'tke9_3', label:'Check bund drainage valve — closed position'},
+            {id:'tke9_4', label:'Inspect for product staining in bund area'},
+            {id:'tke9_5', label:'Verify no unauthorized penetrations through bund'},
+            {id:'tke9_6', label:'Check fire access roads clear'},
+            {id:'tke9_7', label:'Inspect deluge/foam system piping'}
+          ]},
+        { id:'tke_s10', title:'Section 10 — Condition Summary',
+          readingNote:'Rating key — 1 Good · 2 Fair · 3 Poor · 4 Critical · 5 Unsafe', items:[], readings:[
+            {id:'tke10_found', label:'Foundation', unit:'rating'},
+            {id:'tke10_bottom', label:'Bottom/Annular', unit:'rating'},
+            {id:'tke10_shellp', label:'Shell Plates', unit:'rating'},
+            {id:'tke10_shellw', label:'Shell Welds', unit:'rating'},
+            {id:'tke10_roof', label:'Roof', unit:'rating'},
+            {id:'tke10_appurt', label:'Appurtenances', unit:'rating'},
+            {id:'tke10_coat', label:'Coatings', unit:'rating'},
+            {id:'tke10_safety', label:'Safety Systems', unit:'rating'}
+          ]}
+      ]},
+    { id:'tank-internal-inspection', title:'Tank Internal Inspection Checklist',
+      dept:'Condition Monitoring — API 653 / API 575 / EEMUA 159 / AS 1940 (Tank Internal, Confined Space)',
+      category:'static',
+      tagPlaceholder:'e.g. TK-01', defaultVisual:true, defaultVibration:false, sections:[
+        buildSafetySection('tki'),
+        { id:'tki_s2', title:'Section 2 — Bottom Plate Inspection', items:[
+            {id:'tki2_1', label:'Visually inspect entire bottom for corrosion pitting'},
+            {id:'tki2_2', label:'Check for underside corrosion'},
+            {id:'tki2_3', label:'Inspect bottom-to-shell weld from inside'},
+            {id:'tki2_4', label:'Check annular plate for corrosion and thickness loss'},
+            {id:'tki2_5', label:'Perform floor scan/UT thickness mapping'},
+            {id:'tki2_6', label:'Identify areas below minimum thickness'},
+            {id:'tki2_7', label:'Check for buckling or distortion of bottom plates'},
+            {id:'tki2_8', label:'Inspect lap welds for cracks or corrosion'},
+            {id:'tki2_9', label:'Check sump area condition'},
+            {id:'tki2_10', label:'Document all pitting depths and locations'}
+          ]},
+        { id:'tki_s3', title:'Section 3 — Shell Inspection (Internal)', items:[
+            {id:'tki3_1', label:'Inspect Course 1 (bottom) — highest corrosion risk'},
+            {id:'tki3_2', label:'Check liquid/vapor interface zone'},
+            {id:'tki3_3', label:'Inspect all horizontal shell welds from inside'},
+            {id:'tki3_4', label:'Check vertical shell welds'},
+            {id:'tki3_5', label:'Perform UT thickness measurements at grid points'},
+            {id:'tki3_6', label:'Inspect for hydrogen blistering (if sour service)'},
+            {id:'tki3_7', label:'Check for stress corrosion cracking indicators'},
+            {id:'tki3_8', label:'Inspect internal coating/lining condition'},
+            {id:'tki3_9', label:'Document all shell thickness readings'}
+          ]},
+        { id:'tki_s4', title:'Section 4 — Internal Structures', items:[
+            {id:'tki4_1', label:'Inspect internal support columns'},
+            {id:'tki4_2', label:'Check roof support structure (fixed roof tanks)'},
+            {id:'tki4_3', label:'Inspect internal piping and supports'},
+            {id:'tki4_4', label:'Check heating coils (if installed) — integrity and supports'},
+            {id:'tki4_5', label:'Inspect mixers/agitators and mounting'},
+            {id:'tki4_6', label:'Check swing lines and guides'},
+            {id:'tki4_7', label:'Inspect floating roof legs and guides (internal)'},
+            {id:'tki4_8', label:'Verify all internal welds'}
+          ]},
+        { id:'tki_s5', title:'Section 5 — Roof Inspection (Internal)', items:[
+            {id:'tki5_1', label:'Inspect underside of roof plates for corrosion'},
+            {id:'tki5_2', label:'Check roof support rafters/trusses'},
+            {id:'tki5_3', label:'Inspect roof-to-shell connection from inside'},
+            {id:'tki5_4', label:'Check center column (if cone roof)'},
+            {id:'tki5_5', label:'Inspect roof plate welds'},
+            {id:'tki5_6', label:'Verify roof nozzle connections'},
+            {id:'tki5_7', label:'Check pontoon compartments (floating roof)'},
+            {id:'tki5_8', label:'Inspect deck plates (floating roof)'}
+          ]},
+        { id:'tki_s6', title:'Section 6 — Nozzles & Appurtenances (Internal)', items:[
+            {id:'tki6_1', label:'Inspect all nozzle welds from inside'},
+            {id:'tki6_2', label:'Check nozzle necks for corrosion/erosion'},
+            {id:'tki6_3', label:'Inspect reinforcing pad welds'},
+            {id:'tki6_4', label:'Check manway frames and seating surfaces'},
+            {id:'tki6_5', label:'Inspect shell nozzle projection alignment'},
+            {id:'tki6_6', label:'Verify nozzle flange faces condition'},
+            {id:'tki6_7', label:'Check instrument nozzles and thermowells'}
+          ]},
+        { id:'tki_s7', title:'Section 7 — Coatings & Linings', items:[
+            {id:'tki7_1', label:'Assess overall coating/lining condition'},
+            {id:'tki7_2', label:'Check for holidays, blistering, or disbondment'},
+            {id:'tki7_3', label:'Measure coating thickness at representative points'},
+            {id:'tki7_4', label:'Document areas requiring coating repair'},
+            {id:'tki7_5', label:'Check cathodic protection anodes (if installed)'},
+            {id:'tki7_6', label:'Inspect lining at welds and transitions'}
+          ]},
+        { id:'tki_s8', title:'Section 8 — NDT Examination', items:[
+            {id:'tki8_1', label:'Perform UT thickness grid mapping — bottom'},
+            {id:'tki8_2', label:'Perform UT thickness grid mapping — shell'},
+            {id:'tki8_3', label:'MPI/DPI critical welds as required'},
+            {id:'tki8_4', label:'TOFD/Phased Array on suspect welds'},
+            {id:'tki8_5', label:'Vacuum box testing of bottom welds'},
+            {id:'tki8_6', label:'Document all NDT results'}
+          ]},
+        { id:'tki_s9', title:'Section 9 — Post-Inspection', items:[
+            {id:'tki9_1', label:'Account for all personnel exiting tank'},
+            {id:'tki9_2', label:'Secure manways properly'},
+            {id:'tki9_3', label:'Complete all documentation and photographs'},
+            {id:'tki9_4', label:'Issue inspection report with findings'},
+            {id:'tki9_5', label:'Calculate remaining service life'},
+            {id:'tki9_6', label:'Schedule repairs as required'}
+          ]},
+        { id:'tki_s10', title:'Section 10 — Thickness Measurement Summary',
+          readingNote:'Record measured thickness at each monitoring location', items:[], readings:[
+            {id:'tki10_botc', label:'Bottom — Center', unit:'mm'},
+            {id:'tki10_bot3', label:'Bottom — 3m Ring', unit:'mm'},
+            {id:'tki10_bot6', label:'Bottom — 6m Ring', unit:'mm'},
+            {id:'tki10_annular', label:'Annular Plate', unit:'mm'},
+            {id:'tki10_c1', label:'Shell Course 1', unit:'mm'},
+            {id:'tki10_c2', label:'Shell Course 2', unit:'mm'},
+            {id:'tki10_c3', label:'Shell Course 3', unit:'mm'},
+            {id:'tki10_roof', label:'Roof Plates', unit:'mm'}
+          ]},
+        { id:'tki_s11', title:'Section 11 — Condition Summary',
+          readingNote:'Rating key — 1 Good · 2 Fair · 3 Poor · 4 Critical · 5 Unsafe', items:[], readings:[
+            {id:'tki11_bottom', label:'Tank Bottom', unit:'rating'},
+            {id:'tki11_annular', label:'Annular Ring', unit:'rating'},
+            {id:'tki11_shelll', label:'Shell (Lower)', unit:'rating'},
+            {id:'tki11_shellu', label:'Shell (Upper)', unit:'rating'},
+            {id:'tki11_roof', label:'Roof Structure', unit:'rating'},
+            {id:'tki11_internal', label:'Internal Structures', unit:'rating'},
+            {id:'tki11_coat', label:'Coatings/Linings', unit:'rating'},
+            {id:'tki11_appurt', label:'Appurtenances', unit:'rating'}
+          ]}
+      ]},
+    { id:'piping-hose-inspection', title:'Piping & Hose Inspection Checklist',
+      dept:'Condition Monitoring — API 570 / API RP 574 / ASME B31.3 / ASME PCC-2 / ISO 4413-4414 (Piping & Hoses)',
+      category:'static',
+      tagPlaceholder:'e.g. PL-01', defaultVisual:true, defaultVibration:false, sections:[
+        buildSafetySection('ph'),
+        { id:'ph_s2', title:'Section 2 — Documentation, Identification & Operating Envelope', items:[
+            {id:'ph2_1', label:'Verify line number, service, direction of flow and limits against the current P&ID/isometric'},
+            {id:'ph2_2', label:'Confirm pipe material, schedule, class/rating and corrosion allowance are documented'},
+            {id:'ph2_3', label:'Verify design and operating pressure/temperature remain within the approved envelope'},
+            {id:'ph2_4', label:'Check pipe, valve and hose identification, colour coding and flow arrows are legible'},
+            {id:'ph2_5', label:'Confirm previous inspection findings, thickness readings and repair recommendations are available'},
+            {id:'ph2_6', label:'Identify damage mechanisms and susceptible locations for the actual service and environment'},
+            {id:'ph2_7', label:'Verify changes, temporary repairs, reratings or alterations have approved engineering records'},
+            {id:'ph2_8', label:'Confirm inspection interval and condition-monitoring locations are defined and current'}
+          ]},
+        { id:'ph_s3', title:'Section 3 — External Condition, Corrosion & Mechanical Damage', items:[
+            {id:'ph3_1', label:'Inspect accessible pipe surfaces for general corrosion, pitting, grooving and scale'},
+            {id:'ph3_2', label:'Check low points, dead legs, injection points, mix points and drains for localised corrosion'},
+            {id:'ph3_3', label:'Inspect soil-to-air, concrete-to-air and splash-zone interfaces for accelerated corrosion'},
+            {id:'ph3_4', label:'Check for erosion, thinning or impingement at elbows, tees, reducers and high-velocity locations'},
+            {id:'ph3_5', label:'Inspect for dents, gouges, buckling, ovality, abrasion and impact damage'},
+            {id:'ph3_6', label:'Check small-bore connections, vents, drains and instrument take-offs for fatigue or damage'},
+            {id:'ph3_7', label:'Inspect external coatings, wraps and corrosion protection for breakdown or disbondment'},
+            {id:'ph3_8', label:'Check stainless steel and alloy piping for contamination, chloride exposure or stress-corrosion indicators'},
+            {id:'ph3_9', label:'Inspect buried/partially buried interfaces and verify cathodic-protection records where applicable'},
+            {id:'ph3_10', label:'Photograph, locate and dimension every significant defect for trending and assessment'}
+          ]},
+        { id:'ph_s4', title:'Section 4 — Supports, Alignment, Vibration & Flexibility', items:[
+            {id:'ph4_1', label:'Inspect hangers, shoes, saddles, clamps, guides and anchors for damage, looseness or corrosion'},
+            {id:'ph4_2', label:'Verify supports carry the pipe without excessive sagging, point loading or unsupported spans'},
+            {id:'ph4_3', label:'Check spring supports/constant hangers for correct travel position and freedom of movement'},
+            {id:'ph4_4', label:'Inspect sliding supports and expansion joints for binding, misalignment or restricted movement'},
+            {id:'ph4_5', label:'Check piping alignment at pumps, vessels and equipment nozzles for visible strain or displacement'},
+            {id:'ph4_6', label:'Assess vibration, pulsation and resonance; record abnormal movement or noise'},
+            {id:'ph4_7', label:'Inspect supports and nearby steelwork for fretting, wear, cracking or loose fasteners'},
+            {id:'ph4_8', label:'Verify thermal expansion clearances and expansion loops are unobstructed'},
+            {id:'ph4_9', label:'Check pipe penetrations and sleeves for rubbing, sealing failure or load transfer'}
+          ]},
+        { id:'ph_s5', title:'Section 5 — Welds, Flanges, Threaded Joints & Fittings', items:[
+            {id:'ph5_1', label:'Inspect circumferential and longitudinal welds for cracks, corrosion, undercut or leakage'},
+            {id:'ph5_2', label:'Check branch connections, reinforcement pads and welded attachments for fatigue cracking'},
+            {id:'ph5_3', label:'Inspect flanges for leakage, corrosion, distortion, misalignment and gasket extrusion'},
+            {id:'ph5_4', label:'Verify flange bolting is complete, correct, evenly engaged and free from severe corrosion'},
+            {id:'ph5_5', label:'Check threaded, socket-weld and compression joints for leakage, damage or excessive sealant'},
+            {id:'ph5_6', label:'Inspect elbows, tees, reducers, caps and couplings for thinning, erosion or deformation'},
+            {id:'ph5_7', label:'Verify spectacle blinds, spades, spacers and blanks are correctly installed and identified'},
+            {id:'ph5_8', label:'Check temporary clamps, wraps or enclosures for approved status, condition and expiry date'},
+            {id:'ph5_9', label:'Refer crack-like indications, active leaks and unapproved repairs for immediate engineering review'}
+          ]},
+        { id:'ph_s6', title:'Section 6 — Valves, Strainers & Specialty Components', items:[
+            {id:'ph6_1', label:'Inspect valve bodies, bonnets, glands, packing and drains for leakage or corrosion'},
+            {id:'ph6_2', label:'Verify critical isolation valves are accessible, identified and in the required position'},
+            {id:'ph6_3', label:'Check handwheels, gearboxes, actuators, stems and position indicators for damage or seizure'},
+            {id:'ph6_4', label:'Inspect check valves and critical non-return devices for evidence of malfunction or reverse flow'},
+            {id:'ph6_5', label:'Check strainers, filters and traps for blockage, leakage, differential pressure and drain condition'},
+            {id:'ph6_6', label:'Inspect expansion joints/bellows for distortion, leakage, damaged braid, anchors or shipping bars'},
+            {id:'ph6_7', label:'Verify pressure-relief device inlet/outlet piping is supported, unobstructed and not leaking'},
+            {id:'ph6_8', label:'Confirm drains, vents, sample points and bleed valves are capped, plugged or routed safely'}
+          ]},
+        { id:'ph_s7', title:'Section 7 — Hoses, Flexible Connections & Couplings', items:[
+            {id:'ph7_1', label:'Verify hose assembly type, material, pressure rating and temperature rating suit the service'},
+            {id:'ph7_2', label:'Inspect hose cover for cuts, cracks, abrasion, blistering, soft spots, hardening or exposed reinforcement'},
+            {id:'ph7_3', label:'Check for kinking, crushing, flattening, twisting and bend radius below manufacturer limits'},
+            {id:'ph7_4', label:'Inspect couplings, ferrules, clamps, threads and seals for corrosion, movement, damage or leakage'},
+            {id:'ph7_5', label:'Confirm hose routing prevents rubbing, heat exposure, sharp edges, vehicle damage and trip hazards'},
+            {id:'ph7_6', label:'Verify adequate slack for movement without tensile loading, excessive sag or whip exposure'},
+            {id:'ph7_7', label:'Check restraints, whip checks, safety cables and supports are correctly fitted where required'},
+            {id:'ph7_8', label:'Inspect conductive/anti-static bonding and continuity provisions where required by the service'},
+            {id:'ph7_9', label:'Verify inspection/test date, assembly ID and replacement-life markings are legible and current'},
+            {id:'ph7_10', label:'Remove from service any leaking, bulged, reinforcement-exposed, coupling-slipped or otherwise unsafe hose'}
+          ]},
+        { id:'ph_s8', title:'Section 8 — Thickness Monitoring, NDT & Integrity Assessment', items:[
+            {id:'ph8_1', label:'Verify thickness measurement locations match the approved inspection plan and are permanently identified'},
+            {id:'ph8_2', label:'Prepare measurement surfaces and confirm UT gauge calibration for material and temperature'},
+            {id:'ph8_3', label:'Record current wall thickness at every required condition-monitoring location'},
+            {id:'ph8_4', label:'Compare readings with previous data, nominal thickness and minimum required thickness'},
+            {id:'ph8_5', label:'Calculate/update corrosion rate and remaining life using approved engineering methodology'},
+            {id:'ph8_6', label:'Investigate unexpected readings, local pits and accelerated corrosion with expanded examination'},
+            {id:'ph8_7', label:'Apply appropriate NDT to suspect welds or crack-like indications using qualified personnel/procedures'},
+            {id:'ph8_8', label:'Refer readings at/below minimum thickness or outside acceptance criteria for immediate engineering assessment'},
+            {id:'ph8_9', label:'Update isometric/CML map, photographs and inspection records with traceable results'}
+          ],
+          readingNote:'CML numbers — rename to match your isometric/CML map reference', readings:[
+            {id:'ph8_cml1', label:'CML-1', unit:'mm'},
+            {id:'ph8_cml2', label:'CML-2', unit:'mm'},
+            {id:'ph8_cml3', label:'CML-3', unit:'mm'},
+            {id:'ph8_cml4', label:'CML-4', unit:'mm'},
+            {id:'ph8_cml5', label:'CML-5', unit:'mm'}
+          ]},
+        { id:'ph_s9', title:'Section 9 — Leaks, Insulation, Containment & Environment', items:[
+            {id:'ph9_1', label:'Inspect for active leaks, staining, deposits, odour, vapour, wet insulation or product accumulation'},
+            {id:'ph9_2', label:'Treat pinhole leaks, sprays and hazardous-service seepage as immediate safety risks'},
+            {id:'ph9_3', label:'Check insulation and cladding for damage, open seams, water ingress and corrosion-under-insulation risk'},
+            {id:'ph9_4', label:'Inspect heat tracing, weather seals and removable insulation covers for condition and correct installation'},
+            {id:'ph9_5', label:'Verify drip trays, bunds, guards, shields and leak-detection provisions are serviceable'},
+            {id:'ph9_6', label:'Check drains and containment routes are clear and direct releases to approved collection points'},
+            {id:'ph9_7', label:'Assess nearby electrical equipment, walkways and structures for exposure from potential leakage'},
+            {id:'ph9_8', label:'Record environmental contamination and initiate spill response/notification where required'}
+          ]},
+        { id:'ph_s10', title:'Section 10 — Testing, Reinstatement & Follow-Up', items:[
+            {id:'ph10_1', label:'Confirm pressure/leak testing requirements, test medium and limits are engineering-approved'},
+            {id:'ph10_2', label:'Verify calibrated gauges, relief protection, barriers and exclusion zones before any test'},
+            {id:'ph10_3', label:'Check system for leakage or abnormal movement during approved operational/pressure testing'},
+            {id:'ph10_4', label:'Confirm all vents, drains, blinds, valves, guards, insulation and supports are correctly reinstated'},
+            {id:'ph10_5', label:'Verify temporary equipment, tools, rags and inspection access materials are removed'},
+            {id:'ph10_6', label:'Classify findings by condition and priority; identify immediate isolation or operating restrictions'},
+            {id:'ph10_7', label:'Raise work orders/recommendations with owner, due date and clear acceptance criteria'},
+            {id:'ph10_8', label:'Communicate results to operations and update inspection history before closing the work order'}
+          ]},
+        { id:'ph_s11', title:'Section 11 — Condition Assessment Summary',
+          readingNote:'Rating key — 1 Good (no defects, fit for continued service) · 2 Fair (minor deterioration, routine monitoring) · 3 Poor (moderate deterioration, planned repair) · 4 Critical (urgent repair/restriction) · 5 Unsafe (isolate immediately)',
+          items:[], readings:[
+            {id:'ph11_pipe', label:'Pipework / Corrosion', unit:'rating'},
+            {id:'ph11_supp', label:'Supports / Alignment', unit:'rating'},
+            {id:'ph11_welds', label:'Welds / Attachments', unit:'rating'},
+            {id:'ph11_flange', label:'Flanges / Bolting', unit:'rating'},
+            {id:'ph11_valve', label:'Valves / Specialty Items', unit:'rating'},
+            {id:'ph11_hose', label:'Hoses / Flexible Connections', unit:'rating'},
+            {id:'ph11_cui', label:'Insulation / CUI Risk', unit:'rating'},
+            {id:'ph11_ndt', label:'Thickness / NDT Results', unit:'rating'},
+            {id:'ph11_leak', label:'Leaks / Containment', unit:'rating'},
+            {id:'ph11_relief', label:'Pressure-Relief Interfaces', unit:'rating'},
+            {id:'ph11_overall', label:'Overall Piping Circuit', unit:'rating'}
+          ]}
+      ]},
+    { id:'feed-box-inspection', title:'Feed Box Inspection Checklist',
+      dept:'Condition Monitoring — AS/NZS 4100 / AS 1554.1 / ISO 9001 / CEMA (Feed Box)',
+      category:'static',
+      tagPlaceholder:'e.g. FB-01', defaultVisual:true, defaultVibration:false, sections:[
+        buildSafetySection('fb'),
+        { id:'fb_s2', title:'Section 2 — Structural Frame & Support Steelwork', items:[
+            {id:'fb2_1', label:'Inspect support columns/legs for plumbness and deformation'},
+            {id:'fb2_2', label:'Check main support beams for deflection, sagging, or buckling'},
+            {id:'fb2_3', label:'Inspect cross-bracing for tension/compression damage'},
+            {id:'fb2_4', label:'Check base plates and foundation bolts for looseness or corrosion'},
+            {id:'fb2_5', label:'Verify structural modifications have engineering approval'},
+            {id:'fb2_6', label:'Inspect for impact damage from mobile equipment or falling material'},
+            {id:'fb2_7', label:'Check for signs of overloading: bent members, local buckling'},
+            {id:'fb2_8', label:'Verify vibration isolation/mounting hardware, if fitted'}
+          ]},
+        { id:'fb_s3', title:'Section 3 — Shell Plate & Panel Inspection', items:[
+            {id:'fb3_1', label:'Inspect hopper/box shell plates for wear-through and holing'},
+            {id:'fb3_2', label:'Check sloped/conical sidewalls for bulging or distortion'},
+            {id:'fb3_3', label:'Inspect plate-to-plate seams for cracking or gapping'},
+            {id:'fb3_4', label:'Check for material build-up affecting flow (choke points)'},
+            {id:'fb3_5', label:'Inspect stiffener ribs and gusset plates for cracks'},
+            {id:'fb3_6', label:'Verify plate thickness at high-wear zones (impact area, discharge throat)'},
+            {id:'fb3_7', label:'Check for evidence of past patch repairs and their condition'}
+          ]},
+        { id:'fb_s4', title:'Section 4 — Wear Liners & Impact Protection', items:[
+            {id:'fb4_1', label:'Inspect impact/wear liners for thickness loss and perforation'},
+            {id:'fb4_2', label:'Check liner fastening bolts/clamps for looseness or missing hardware'},
+            {id:'fb4_3', label:'Verify liner overlap and joint sealing to prevent fines ingress'},
+            {id:'fb4_4', label:'Inspect impact bars/deflector plates at the feed inlet'},
+            {id:'fb4_5', label:'Check rubber or ceramic liner segments for cracking or delamination'},
+            {id:'fb4_6', label:'Document liner wear pattern and estimate remaining service life'}
+          ]},
+        { id:'fb_s5', title:'Section 5 — Welded & Bolted Connections', items:[
+            {id:'fb5_1', label:'Inspect all structural welds for cracks, undercut, or porosity'},
+            {id:'fb5_2', label:'Check fillet welds at plate junctions for proper size and profile'},
+            {id:'fb5_3', label:'Inspect bolted flange connections for looseness — torque check sample'},
+            {id:'fb5_4', label:'Verify correct bolt grades installed (marked heads)'},
+            {id:'fb5_5', label:'Check for galvanic corrosion at dissimilar metal contacts'},
+            {id:'fb5_6', label:'Verify lock nuts/washers in place where required'}
+          ]},
+        { id:'fb_s6', title:'Section 6 — Inlet/Outlet Openings & Chute Alignment', items:[
+            {id:'fb6_1', label:'Verify inlet chute alignment with upstream conveyor discharge'},
+            {id:'fb6_2', label:'Check outlet opening alignment with downstream conveyor/crusher'},
+            {id:'fb6_3', label:'Inspect chute angle for adequate material flow (no build-up)'},
+            {id:'fb6_4', label:'Check for material spillage at transfer points'},
+            {id:'fb6_5', label:'Verify skirt rubber/seals at inlet and outlet are intact'},
+            {id:'fb6_6', label:'Inspect centering/guide plates for wear or misalignment'}
+          ]},
+        { id:'fb_s7', title:'Section 7 — Dust Suppression, Sealing & Enclosure', items:[
+            {id:'fb7_1', label:'Inspect dust suppression spray nozzles and piping for blockage'},
+            {id:'fb7_2', label:'Check dust curtain/enclosure panels for damage or gaps'},
+            {id:'fb7_3', label:'Verify dust collection ductwork connections are sealed'},
+            {id:'fb7_4', label:'Inspect access door seals for dust leakage'},
+            {id:'fb7_5', label:'Check water/additive supply line for leaks'}
+          ]},
+        { id:'fb_s8', title:'Section 8 — Access Doors & Inspection Hatches', items:[
+            {id:'fb8_1', label:'Inspect access doors/hatches for secure closure and hinges'},
+            {id:'fb8_2', label:'Check hatch gaskets for dust-tight sealing'},
+            {id:'fb8_4', label:'Check inspection hatch signage and lockout provisions'},
+            {id:'fb8_5', label:'Verify walkway grating and handrails around the feed box'}
+          ]},
+        { id:'fb_s9', title:'Section 9 — Corrosion & Protective Coatings', items:[
+            {id:'fb9_1', label:'Assess overall corrosion level using standard rating scale'},
+            {id:'fb9_2', label:'Identify areas of active corrosion requiring immediate attention'},
+            {id:'fb9_3', label:'Check for coating failures: blistering, peeling, chalking'},
+            {id:'fb9_4', label:'Inspect areas prone to moisture/condensation build-up'},
+            {id:'fb9_5', label:'Document areas requiring touch-up or full recoating'}
+          ]},
+        { id:'fb_s10', title:'Section 10 — Condition Assessment Summary',
+          readingNote:'Rating key — 1 Good · 2 Fair · 3 Poor · 4 Critical · 5 Unsafe', items:[], readings:[
+            {id:'fb10_frame', label:'Structural Frame', unit:'rating'},
+            {id:'fb10_shell', label:'Shell Plates', unit:'rating'},
+            {id:'fb10_liner', label:'Wear Liners', unit:'rating'},
+            {id:'fb10_weld', label:'Welded Connections', unit:'rating'},
+            {id:'fb10_bolt', label:'Bolted Connections', unit:'rating'},
+            {id:'fb10_align', label:'Inlet/Outlet Alignment', unit:'rating'},
+            {id:'fb10_dust', label:'Dust Sealing/Enclosure', unit:'rating'},
+            {id:'fb10_doors', label:'Access Doors/Guarding', unit:'rating'},
+            {id:'fb10_coat', label:'Coatings/Corrosion', unit:'rating'}
+          ]}
+      ]},
+    { id:'sag-feed-chute-inspection', title:'SAG Mill Feed Chute Inspection Checklist',
+      dept:'Condition Monitoring — AS/NZS 4100 / AS 4024.1 / ISO 9001 / MSHA 30 CFR (SAG Mill Feed Chute)',
+      category:'static',
+      tagPlaceholder:'e.g. SFC-01', defaultVisual:true, defaultVibration:false, sections:[
+        buildSafetySection('sfc'),
+        { id:'sfc_s2', title:'Section 2 — Structural Frame, Undercarriage & Rail Alignment', items:[
+            {id:'sfc2_1', label:'Inspect main support frame for cracks, distortion, or fatigue damage'},
+            {id:'sfc2_2', label:'Check cross-bracing (X-bracing) for tension/compression damage'},
+            {id:'sfc2_3', label:'Inspect wheel bogies/undercarriage frame for structural integrity'},
+            {id:'sfc2_4', label:'Verify rail track alignment and level along the travel path'},
+            {id:'sfc2_5', label:'Check rail fixings/anchors for looseness or corrosion'},
+            {id:'sfc2_6', label:'Inspect for impact damage from mobile equipment'},
+            {id:'sfc2_7', label:'Verify structural modifications have engineering approval'},
+            {id:'sfc2_8', label:'Check base plates and foundation bolts for looseness or corrosion'}
+          ]},
+        { id:'sfc_s3', title:'Section 3 — Wear Liners & Spoon/Chute Plate Inspection', items:[
+            {id:'sfc3_1', label:'Inspect chute liner plates for wear-through and perforation'},
+            {id:'sfc3_2', label:'Check spoon/feed liner at the trunnion discharge point for wear'},
+            {id:'sfc3_3', label:'Verify liner fastening bolts/clamps for looseness or missing hardware'},
+            {id:'sfc3_4', label:'Inspect impact zone liners for cracking or displacement'},
+            {id:'sfc3_5', label:'Check liner joint overlap to prevent fines/ore ingress behind liners'},
+            {id:'sfc3_6', label:'Measure liner thickness at high-wear monitoring points'},
+            {id:'sfc3_7', label:'Document liner wear trend and estimate remaining service life'}
+          ]},
+        { id:'sfc_s4', title:'Section 4 — Trunnion Interface, Seals & Clearance', items:[
+            {id:'sfc4_1', label:'Verify feed chute-to-trunnion clearance is within OEM specification'},
+            {id:'sfc4_2', label:'Inspect trunnion seal/wiper for wear, tears, or hardening'},
+            {id:'sfc4_3', label:'Check for ore spillage or dust leakage at the trunnion interface'},
+            {id:'sfc4_4', label:'Verify chute spout centering relative to trunnion bore'},
+            {id:'sfc4_5', label:'Inspect for contact marks indicating chute-to-trunnion rubbing'},
+            {id:'sfc4_6', label:'Check grease/lubrication points at the interface, if fitted'}
+          ]},
+        { id:'sfc_s5', title:'Section 5 — Welded & Bolted Connections', items:[
+            {id:'sfc5_1', label:'Inspect all structural welds for cracks, undercut, or porosity'},
+            {id:'sfc5_2', label:'Check fillet welds at frame and liner-backing junctions'},
+            {id:'sfc5_3', label:'Inspect bolted connections for looseness — torque check sample'},
+            {id:'sfc5_4', label:'Verify correct bolt grades installed (marked heads)'},
+            {id:'sfc5_5', label:'Check for galvanic corrosion at dissimilar metal contacts'},
+            {id:'sfc5_6', label:'Verify lock nuts/washers in place where required'}
+          ]},
+        { id:'sfc_s6', title:'Section 6 — Wheel, Axle & Bearing Inspection (Undercarriage)', items:[
+            {id:'sfc6_1', label:'Inspect travel wheels for flat spots, cracking, or excessive wear'},
+            {id:'sfc6_2', label:'Check wheel bearings for play, noise, or overheating signs'},
+            {id:'sfc6_3', label:'Verify axle alignment and straightness'},
+            {id:'sfc6_4', label:'Inspect wheel flanges for rail-riding wear'},
+            {id:'sfc6_5', label:'Check lubrication of wheel bearings and axle bushes'},
+            {id:'sfc6_6', label:'Verify retaining pins/circlips are in place and secure'}
+          ]},
+        { id:'sfc_s7', title:'Section 7 — Positioning, Retraction & Alignment Mechanism', items:[
+            {id:'sfc7_1', label:'Verify retraction/withdrawal mechanism operates smoothly (if fitted)'},
+            {id:'sfc7_2', label:'Check hydraulic/pneumatic cylinders for leaks and mounting integrity'},
+            {id:'sfc7_3', label:'Inspect position indicators/limit switches for correct operation'},
+            {id:'sfc7_4', label:'Verify locking pins or stops function correctly at operating position'},
+            {id:'sfc7_5', label:'Check drive motor/gearbox mounting for the traverse mechanism'}
+          ]},
+        { id:'sfc_s8', title:'Section 8 — Dust & Spillage Containment', items:[
+            {id:'sfc8_1', label:'Inspect dust enclosure panels and seals for damage or gaps'},
+            {id:'sfc8_2', label:'Check spillage collection trays/chutes beneath the feed chute'},
+            {id:'sfc8_3', label:'Verify dust suppression spray nozzles are clear and functional'},
+            {id:'sfc8_4', label:'Inspect housekeeping — accumulated ore/dust build-up around the unit'}
+          ]},
+        { id:'sfc_s9', title:'Section 9 — Corrosion & Protective Coatings', items:[
+            {id:'sfc9_1', label:'Assess overall corrosion level using standard rating scale'},
+            {id:'sfc9_2', label:'Identify areas of active corrosion requiring immediate attention'},
+            {id:'sfc9_3', label:'Check for coating failures: blistering, peeling, chalking'},
+            {id:'sfc9_4', label:'Inspect areas prone to moisture accumulation near the mill'},
+            {id:'sfc9_5', label:'Document areas requiring touch-up or full recoating'}
+          ]},
+        { id:'sfc_s10', title:'Section 10 — Condition Assessment Summary',
+          readingNote:'Rating key — 1 Good · 2 Fair · 3 Poor · 4 Critical · 5 Unsafe', items:[], readings:[
+            {id:'sfc10_frame', label:'Structural Frame/Undercarriage', unit:'rating'},
+            {id:'sfc10_liner', label:'Wear Liners', unit:'rating'},
+            {id:'sfc10_trunnion', label:'Trunnion Interface/Seals', unit:'rating'},
+            {id:'sfc10_weld', label:'Welded Connections', unit:'rating'},
+            {id:'sfc10_bolt', label:'Bolted Connections', unit:'rating'},
+            {id:'sfc10_wheel', label:'Wheels/Bearings', unit:'rating'},
+            {id:'sfc10_pos', label:'Positioning Mechanism', unit:'rating'},
+            {id:'sfc10_dust', label:'Dust/Spillage Containment', unit:'rating'},
+            {id:'sfc10_coat', label:'Coatings/Corrosion', unit:'rating'}
+          ]}
+      ]}
+  ];
+

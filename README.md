@@ -3,7 +3,7 @@
 **Lotus Africa Uranium Plant · Engineering Department · Asset Health & Integrity**
 
 Live site: **https://lusaacjean-debug.github.io/cm/**
-Current release: **v1.1.1 (2026-10-05)** — see [CHANGELOG](CHANGELOG.md)
+Current release: **v1.3.0 (2026-10-08)** — see [CHANGELOG](CHANGELOG.md)
 
 CM Inspect is the site's web checklist system for condition monitoring, inspection and prestart checks. Each inspection is recorded against a written acceptance criterion, produces a numbered PDF report (defects first, health score, remaining life, sign-off) and is closed out in Pronto (work request for every NOT OK, PDF attached to the work order).
 
@@ -11,7 +11,8 @@ CM Inspect is the site's web checklist system for condition monitoring, inspecti
 |---|---|
 | Checklists | 172 in 10 disciplines — full list in [docs/CHECKLIST_REGISTER.md](docs/CHECKLIST_REGISTER.md) |
 | Pronto link | 838 PM tasks linked by short link `…/cm/?pm=<PM task>` |
-| Works on | Phone, tablet and PC (Chrome / Edge / Safari). No installation, no login. |
+| Works on | Phone, tablet and PC (Chrome / Edge / Safari). No installation, no login. **Works offline** after the first visit. |
+| Standards | Report content and records per ISO/IEC 17020, ISO 17359, ISO 18436, ISO 9001 / ISO 55001 §7.5 — see [docs/STANDARDS_COMPLIANCE.md](docs/STANDARDS_COMPLIANCE.md) |
 | Data | Drafts stay on the inspector's device; the PDF attached in Pronto is the record. |
 
 ---
@@ -21,10 +22,12 @@ CM Inspect is the site's web checklist system for condition monitoring, inspecti
 ```
 cm/
 ├── index.html                      Page shell (markup only) and script load order
+├── sw.js, manifest.webmanifest     Offline support / installable web app
 ├── assets/
 │   ├── css/cm-inspect.css          All styles — screen and print (A4)
 │   ├── js/app.js                   Application: home, forms, scoring, drafts, print, PDF, deep links
-│   └── img/favicon.svg
+│   ├── img/favicon.svg
+│   └── vendor/                     jsPDF and jsQR (served locally)
 ├── data/
 │   ├── document-register.js        Document number + revision per checklist (frozen)
 │   └── pm-task-map.js              Pronto PM task → checklist (for ?pm= links)

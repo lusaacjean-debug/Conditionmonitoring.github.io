@@ -106,7 +106,15 @@
   .item-component{font-weight:700;}
   .item-meta{font-size:11.5px; color:var(--ink-soft); line-height:1.4; margin:3px 0 0; flex:1;}
   .item-meta .freq-chip{display:inline-block; font-size:10px; font-weight:700; color:var(--navy); background:#e7edf1; border-radius:5px; padding:1px 5px; margin-right:6px; vertical-align:1px;}
-  .item-detail-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;}
+  .item-detail-grid{display:grid; grid-template-columns:1fr 1fr 150px; gap:8px; margin-top:8px;}
+  .item-detail-field select{width:100%; font:inherit; font-size:13px; padding:8px; border:1px solid var(--line); border-radius:8px; background:#fff;}
+  .trace-block{margin-top:12px; border-top:1px dashed var(--line); padding-top:10px;}
+  .trace-block summary{cursor:pointer; font-size:13px; font-weight:700; color:var(--navy); list-style:revert;}
+  .trace-hint{font-weight:500; color:var(--ink-soft); font-size:11.5px; margin-left:6px;}
+  .trace-block .field-grid{margin-top:10px;}
+  .trace-block select{width:100%; font:inherit; padding:10px; border:1px solid var(--line); border-radius:10px; background:#fff;}
+  .trace-note{font-size:11.5px; color:var(--ink-soft); margin:8px 0 0;}
+  .method-toggle{flex-wrap:wrap;}
   @media (max-width:480px){ .item-detail-grid{grid-template-columns:1fr;} }
   .item-detail-field label{display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); font-weight:700; margin-bottom:4px;}
   .item-detail-field input, .item-detail-field textarea{width:100%; padding:7px 8px; font-size:13px; border:1px solid var(--line); border-radius:8px; font-family:inherit; resize:vertical;}
@@ -255,6 +263,7 @@
   .eq-card:hover{border-color:var(--navy); box-shadow:0 6px 18px rgba(15,35,48,.10);}
   .eq-card:focus-visible{outline:3px solid var(--amber); outline-offset:2px;}
   .eq-card .eq-cat{font-size:12px; color:var(--amber-deep); font-weight:600;}
+  .eq-card .eq-doc{font-size:11.5px; color:var(--amber-deep); font-weight:600; letter-spacing:.02em; font-variant-numeric:tabular-nums;}
   .eq-card .eq-title{font-size:15px; font-weight:700; line-height:1.3;}
   .eq-card .eq-std{font-size:12.5px; color:var(--ink-soft); line-height:1.4;}
   .eq-card .eq-meta{font-size:12.5px; color:var(--ink-soft);}
@@ -275,7 +284,6 @@
 
   /* ================= PRINT (browser Ctrl+P) ================= */
   @media print{
-    @page{size:A4; margin:12mm 11mm 14mm;}
     html,body{background:#fff !important; padding:0 !important; font-size:10pt;}
     *{-webkit-print-color-adjust:exact; print-color-adjust:exact; box-shadow:none !important;}
     #hubView, #catView, .actionbar, .save-note, .toast, .qr-modal, .back-row, .qr-btn, .chevron,
@@ -313,7 +321,8 @@
     .item-row.detailed .item-meta{margin-top:0 !important;}
     .segmented:not(:has(.active))::after{content:"\2014"; padding:2px 10px; color:#9aa8b2; font-size:8.5pt;}
     .item-detail-grid{margin-top:3px !important; gap:4px !important;}
-    .item-detail-grid:not(:has(input:not(:placeholder-shown))){display:none !important;}
+    .item-detail-grid:not(:has(input:not(:placeholder-shown))):not(:has(select.has-value)){display:none !important;}
+    .trace-block{display:block;} .trace-block summary{list-style:none;} .trace-block:not([open]) > .field-grid{display:grid !important;} .trace-note, .trace-hint{display:none !important;}
     .item-detail-field label{font-size:7pt !important; margin-bottom:1px !important;}
     .item-detail-field input{font-size:8.5pt !important;}
     .comment-block:has(textarea:placeholder-shown){display:none !important;}
@@ -334,3 +343,10 @@
   .print-signoff td.sig{height:34px;}
   .print-foot{font-size:8pt; color:var(--ink-soft); margin-top:8px;}
 
+
+  /* Finding / action / priority on simple check points: shown only when NOT OK */
+  .item-row .nok-only{display:none;}
+  .item-row.is-notok .nok-only{display:grid; margin-left:36px;}
+  @media (max-width:560px){ .item-row.is-notok .nok-only{margin-left:0;} }
+  .item-row:not(.detailed){flex-wrap:wrap;}
+  .item-row:not(.detailed) .nok-only{flex-basis:100%;}

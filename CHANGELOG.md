@@ -2,6 +2,26 @@
 
 All notable changes to CM Inspect. Versions follow *major.minor.patch*: major = structure or numbering change, minor = new checklists or features, patch = content corrections.
 
+## [1.3.0] — 2026-10-08
+### Added — inspection standards (ISO/IEC 17020, ISO 17359, ISO 18436, ALCOA+)
+- Inspection conditions & traceability: operating condition, load / speed, inspector qualification, test instrument & serial, calibration due date (name, qualification and instrument remembered per device).
+- Methods: thermography and ultrasound / UT added to visual and vibration.
+- Every answer time-stamped; report shows the inspection time window.
+- Unique report number and SHA-256 record fingerprint on every page; closing statement "results relate only to the item inspected".
+- Finding, corrective action / WR and priority (P1–P4) on every NOT OK — simple check points included; defects table sorted by priority.
+- Pre-issue review before the PDF: traceability, independent reviewer, operating condition, instrument & calibration, readings evidence, all-N/A sections, open defects.
+- Works offline after the first visit (service worker, web app manifest).
+- docs/STANDARDS_COMPLIANCE.md — compliance matrix for audits.
+
+## [1.2.0] — 2026-10-08
+### Changed
+- Every checklist now cites its standards (33 rotating checklists previously showed only a department name); a foreign company name removed from the Yard Conveyor checklist.
+- Checklist cards show the document number and revision; search finds a checklist by its number (e.g. CMI-ROT-001).
+- Browser print: A4 page footer on every page — document number, revision, title, "Uncontrolled when printed", Page x of y.
+- Dates in reports and print-outs use one format (YYYY-MM-DD HH:MM).
+- PDF and QR libraries served from the repository (assets/vendor) — no dependency on an external CDN; works behind the company firewall.
+- Pinch-zoom allowed on phones (accessibility).
+
 ## [1.1.1] — 2026-10-05
 ### Fixed
 - Prestart go / no-go: decision calculated from the CRITICAL check points (GO / NO-GO / INCOMPLETE) — shown in the header pill, the PDF result line and the summary tiles (Critical NOT OK, Decision).

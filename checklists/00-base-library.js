@@ -272,7 +272,7 @@
 
   const EQUIPMENT = [
 
-            { id:'centrifugal-pump', title:'Centrifugal Pump', dept:'Condition Monitoring — Rotating Equipment',
+            { id:'centrifugal-pump', title:'Centrifugal Pump', dept:'Rotating — ISO 20816-3 (vibration) / API 610 / API 682 (mechanical seals) / OEM manual',
       category:'rotating', sourceSheet:'Centrifugal Pump', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. CP-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('cnp')].concat(buildMotorSections('cnp_mtr').concat(buildCouplingSections('cnp_cpl'), [
@@ -300,7 +300,7 @@
           ]}
       ]))},
 
-    { id:'positive-displacement-pump', title:'Positive Displacement Pump', dept:'Condition Monitoring — Rotating Equipment',
+    { id:'positive-displacement-pump', title:'Positive Displacement Pump', dept:'Rotating — ISO 20816-3 / API 674 (reciprocating) / API 676 (rotary) / OEM manual',
       category:'rotating', sourceSheet:'Positive Displ. Pump', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. PDP-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('pdp')].concat(buildMotorSections('pdp_mtr').concat(buildCouplingSections('pdp_cpl'), [
@@ -333,7 +333,7 @@
           ]}
       ]))},
 
-    { id:'progressive-cavity-pump', title:'Progressive Cavity Pump', dept:'Condition Monitoring — Rotating Equipment',
+    { id:'progressive-cavity-pump', title:'Progressive Cavity Pump', dept:'Rotating — ISO 20816-3 / API 676 (rotary PD) / OEM manual',
       category:'rotating', sourceSheet:'Progressive Cavity Pump', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. PCP-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('pcp')].concat(buildMotorSections('pcp_mtr').concat(buildCouplingSections('pcp_cpl'), [
@@ -368,7 +368,7 @@
           ]}
       ]))},
 
-    { id:'gearbox', title:'Gearbox', dept:'Condition Monitoring — Rotating Equipment',
+    { id:'gearbox', title:'Gearbox', dept:'Rotating — ISO 20816-3 / AGMA 6013 (industrial gear drives) / ISO 4406 (oil cleanliness) / OEM manual',
       category:'rotating', sourceSheet:'Gearbox', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. GBX-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('gbx')].concat(buildMotorSections('gbx_mtr').concat(buildCouplingSections('gbx_cpl'), [
@@ -397,7 +397,7 @@
           ]}
       ]))},
 
-    { id:'agitator', title:'Agitator', dept:'Condition Monitoring — Rotating Equipment',
+    { id:'agitator', title:'Agitator', dept:'Rotating — ISO 20816-3 / AGMA 6013 (drive) / OEM manual',
       category:'rotating', sourceSheet:'Agitator', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. AGT-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('agt')].concat(buildMotorSections('agt_mtr').concat(buildCouplingSections('agt_cpl'), [
@@ -443,7 +443,7 @@
           ]}
       ]))},
 
-    { id:'linear-screen-standard', title:'Linear Screen — Standard Checklist', dept:'Condition Monitoring — Rotating Equipment',
+    { id:'linear-screen-standard', title:'Linear Screen — Standard Checklist', dept:'Rotating — ISO 20816-3 / AS 4024.1 (guarding) / OEM manual',
       category:'rotating', sourceSheet:'Linear Screen', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. LSC-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('lsc')].concat(buildMotorSections('lsc_mtr').concat(buildCouplingSections('lsc_cpl'), [
@@ -498,7 +498,7 @@
           ]}
       ]))},
 
-    { id:'mineral-sizer-standard', title:'Mineral Sizer — Standard Checklist', dept:'Condition Monitoring — Rotating Equipment',
+    { id:'mineral-sizer-standard', title:'Mineral Sizer — Standard Checklist', dept:'Rotating — ISO 20816-3 / AS 4024.1 (guarding) / OEM manual',
       category:'rotating', sourceSheet:'Mineral Sizer', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. MSZ-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('msz')].concat(buildMotorSections('msz_mtr').concat(buildCouplingSections('msz_cpl'), [
@@ -553,7 +553,7 @@
           ]}
       ]))},
 
-    { id:'jaw-crusher', title:'Jaw Crusher', dept:'Condition Monitoring — Rotating Equipment',
+    { id:'jaw-crusher', title:'Jaw Crusher', dept:'Rotating — EN 1009-2 (crushers) / ISO 20816-3 / AS 4024.1 / OEM manual',
       category:'rotating', sourceSheet:'Jaw Crusher', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. JC-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('jcr')].concat(buildMotorSections('jcr_mtr').concat(buildCouplingSections('jcr_cpl'), [
@@ -592,7 +592,7 @@
           ]}
       ]))},
 
-    { id:'centrifugal-fan', title:'Centrifugal Fan', dept:'Condition Monitoring — Rotating Equipment',
+    { id:'centrifugal-fan', title:'Centrifugal Fan', dept:'Rotating — ISO 14694 (fan vibration & balance) / ISO 20816-3 / ISO 21940 / OEM manual',
       category:'rotating', sourceSheet:'Centrifugal Fan', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. CF-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('cnf')].concat(buildMotorSections('cnf_mtr').concat(buildCouplingSections('cnf_cpl'), [
@@ -620,7 +620,7 @@
           ]}
       ]))},
 
-    { id:'blower', title:'Blower', dept:'Condition Monitoring — Rotating Equipment',
+    { id:'blower', title:'Blower', dept:'Rotating — ISO 20816-3 / ISO 14694 / OEM manual',
       category:'rotating', sourceSheet:'Blower', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. BLW-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('blw')].concat(buildMotorSections('blw_mtr').concat(buildCouplingSections('blw_cpl'), [
@@ -653,7 +653,7 @@
           ]}
       ]))},
 
-    { id:'centrifuge', title:'Centrifuge', dept:'Condition Monitoring — Rotating Equipment',
+    { id:'centrifuge', title:'Centrifuge', dept:'Rotating — ISO 20816-3 / ISO 21940 (balancing) / OEM manual',
       category:'rotating', sourceSheet:'Centrifuge', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. CTF-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('ctf')].concat(buildMotorSections('ctf_mtr').concat(buildCouplingSections('ctf_cpl'), [
@@ -682,7 +682,7 @@
           ]}
       ]))},
 
-    { id:'rotary-valve', title:'Rotary Valve', dept:'Condition Monitoring — Rotating Equipment',
+    { id:'rotary-valve', title:'Rotary Valve', dept:'Rotating — ISO 20816-3 / AS 4024.1 (guarding) / OEM manual',
       category:'rotating', sourceSheet:'Rotary Valve', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. RV-01', defaultVisual:true, defaultVibration:false, sections: [buildSafetySection('rov')].concat(buildMotorSections('rov_mtr').concat(buildCouplingSections('rov_cpl'), [
@@ -707,7 +707,7 @@
           ]}
       ]))},
 
-    { id:'conveyor-belt-pulleys', title:'Conveyor Belt-Pulleys', dept:'Condition Monitoring — Rotating Equipment',
+    { id:'conveyor-belt-pulleys', title:'Conveyor Belt-Pulleys', dept:'Rotating — CEMA Belt Conveyors for Bulk Materials / AS 1755 (conveyor safety) / ISO 20816-3 / OEM manual',
       category:'rotating', sourceSheet:'Conveyor Belt-Pulleys', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. CV-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('cbp')].concat(buildMotorSections('cbp_mtr').concat(buildCouplingSections('cbp_cpl'), [
@@ -755,7 +755,7 @@
           ]}
       ]))},
 
-    { id:'screw-conveyor', title:'Screw Conveyor', dept:'Condition Monitoring — Rotating Equipment',
+    { id:'screw-conveyor', title:'Screw Conveyor', dept:'Rotating — CEMA 350 (screw conveyors) / AS 1755 / OEM manual',
       category:'rotating', sourceSheet:'Screw Conveyor', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. SC-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('scc')].concat(buildMotorSections('scc_mtr').concat(buildCouplingSections('scc_cpl'), [
@@ -788,7 +788,7 @@
           ]}
       ]))},
 
-    { id:'ball-sag-rod-mill', title:'Ball / SAG / Rod Mill — Standard Checklist', dept:'Condition Monitoring — Rotating Equipment',
+    { id:'ball-sag-rod-mill', title:'Ball / SAG / Rod Mill — Standard Checklist', dept:'Rotating — AGMA 6014 (girth gear) / ISO 20816-3 / ISO 4406 / OEM manual',
       category:'rotating', sourceSheet:'Ball SAG Rod Mill', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. MILL-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('bsr')].concat(buildMotorSections('bsr_mtr').concat(buildCouplingSections('bsr_cpl'), [
@@ -814,7 +814,7 @@
           ]}
       ]))},
 
-    { id:'vibrating-feeder', title:'Vibrating Feeder', dept:'Condition Monitoring — Rotating Equipment',
+    { id:'vibrating-feeder', title:'Vibrating Feeder', dept:'Rotating — ISO 20816-3 / AS 4024.1 (guarding) / OEM manual',
       category:'rotating', sourceSheet:'Vibrating Feeder', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. VF-01', defaultVisual:true, defaultVibration:true, sections: [buildSafetySection('vbf')].concat(buildMotorSections('vbf_mtr').concat(buildCouplingSections('vbf_cpl'), [
@@ -832,7 +832,7 @@
           ]}
       ]))},
 
-    { id:'thickener-rake-standard', title:'Thickener Rake — Standard Checklist', dept:'Condition Monitoring — Rotating Equipment',
+    { id:'thickener-rake-standard', title:'Thickener Rake — Standard Checklist', dept:'Rotating — AGMA 6013 (drive) / ISO 4413 (hydraulics) / OEM manual',
       category:'rotating', sourceSheet:'Thickener Rake', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. TKR-01', defaultVisual:true, defaultVibration:false, sections: [buildSafetySection('thr')].concat(buildMotorSections('thr_mtr').concat(buildCouplingSections('thr_cpl'), [
@@ -853,7 +853,7 @@
           ]}
       ]))},
 
-    { id:'apron-feeder', title:'Apron Feeder', dept:'Condition Monitoring — Rotating Equipment',
+    { id:'apron-feeder', title:'Apron Feeder', dept:'Rotating — CEMA / ISO 20816-3 / AS 4024.1 / OEM manual',
       category:'rotating', sourceSheet:'Apron Feeder', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. AF-01', defaultVisual:true, defaultVibration:false, sections: [buildSafetySection('apf')].concat(buildMotorSections('apf_mtr').concat(buildCouplingSections('apf_cpl'), [
@@ -869,7 +869,7 @@
           ]}
       ]))},
 
-    { id:'air-compressor', title:'Air Compressor', dept:'Condition Monitoring — Rotating Equipment',
+    { id:'air-compressor', title:'Air Compressor', dept:'Rotating — ISO 20816-3 / ISO 8573-1 (compressed air quality) / pressure vessel regulations / OEM manual',
       category:'rotating', sourceSheet:'Air Compressor', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. AC-01', defaultVisual:true, defaultVibration:false, sections: [buildSafetySection('aic')].concat(buildMotorSections('aic_mtr').concat(buildCouplingSections('aic_cpl'), [
@@ -887,7 +887,7 @@
           ]}
       ]))},
 
-    { id:'cyclone-cluster', title:'Cyclone Cluster', dept:'Condition Monitoring — Rotating Equipment',
+    { id:'cyclone-cluster', title:'Cyclone Cluster', dept:'Rotating — OEM manual / API 570 (feed & overflow piping) / site wear-liner standard',
       category:'rotating', sourceSheet:'Cyclone Cluster',
       tagPlaceholder:'e.g. CYC-01', defaultVisual:true, defaultVibration:false, sections:[
         buildSafetySection('ccl'),
@@ -906,7 +906,7 @@
           ]}
       ]},
 
-    { id:'flotation-cell', title:'Flotation Cell', dept:'Condition Monitoring — Rotating Equipment',
+    { id:'flotation-cell', title:'Flotation Cell', dept:'Rotating — ISO 20816-3 / AGMA 6013 (drive) / OEM manual',
       category:'rotating', sourceSheet:'Flotation Cell', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. FLT-01', defaultVisual:true, defaultVibration:false, sections: [buildSafetySection('flc')].concat(buildMotorSections('flc_mtr').concat(buildCouplingSections('flc_cpl'), [
@@ -921,7 +921,7 @@
           ]}
       ]))},
 
-    { id:'magnetic-separator', title:'Magnetic Separator', dept:'Condition Monitoring — Rotating Equipment',
+    { id:'magnetic-separator', title:'Magnetic Separator', dept:'Rotating — ISO 20816-3 / AS 4024.1 (guarding) / OEM manual',
       category:'rotating', sourceSheet:'Magnetic Separator', driveCouplingField:true,
       driveTypeOptions:['Belt Drive'].concat(TRUE_COUPLING_TYPES).concat(['Direct Drive','Not Applicable']),
       tagPlaceholder:'e.g. MGS-01', defaultVisual:true, defaultVibration:false, sections: [buildSafetySection('mgs')].concat(buildMotorSections('mgs_mtr').concat(buildCouplingSections('mgs_cpl'), [
@@ -939,7 +939,7 @@
           ]}
       ]))},
 
-    { id:'yard-conveyor', title:'Yard Conveyor Belt', dept:'Ambatovy Maintenance Asset Management',
+    { id:'yard-conveyor', title:'Yard Conveyor Belt', dept:'Rotating — CEMA Belt Conveyors for Bulk Materials / AS 1755 / ISO 20816-3 / OEM manual',
       category:'rotating',
       tagPlaceholder:'75-CV-03', defaultVisual:false, defaultVibration:true, sections:[
         buildSafetySection('yc'),
@@ -971,7 +971,7 @@
           ]}
       ]},
 
-    { id:'vbelt-drive-pump', title:'V-Belt Drive Pump', dept:'Engineering Department',
+    { id:'vbelt-drive-pump', title:'V-Belt Drive Pump', dept:'Rotating — ISO 20816-3 / API 610 / ISO 4184 (V-belts) / OEM manual',
       category:'rotating',
       tagPlaceholder:'e.g. 32-PP-01', defaultVisual:true, defaultVibration:true, sections:[
         buildSafetySection('vb'),
@@ -1007,7 +1007,7 @@
           ]}
       ]},
 
-    { id:'vertical-pump', title:'Acid Vertical Pump', dept:'Lotus Engineering Department',
+    { id:'vertical-pump', title:'Acid Vertical Pump', dept:'Rotating — ISO 20816-3 / API 610 (vertical types) / OEM manual (acid service)',
       category:'rotating',
       tagPlaceholder:'e.g. VP-01', defaultVisual:false, defaultVibration:true, sections:[
         buildSafetySection('vp'),
@@ -1030,7 +1030,7 @@
           ]}
       ]},
 
-    { id:'general-conveyor', title:'General Conveyor', dept:'Lotus Engineering Department',
+    { id:'general-conveyor', title:'General Conveyor', dept:'Rotating — CEMA / AS 1755 (conveyor safety) / OEM manual',
       category:'rotating',
       tagPlaceholder:'e.g. CV-01', defaultVisual:false, defaultVibration:true, sections:[
         buildSafetySection('gc'),
@@ -1065,7 +1065,7 @@
           ]}
       ]},
 
-    { id:'linear-screen', title:'Linear Screen', dept:'Lotus Engineering Department',
+    { id:'linear-screen', title:'Linear Screen', dept:'Rotating — ISO 20816-3 / AS 4024.1 (guarding) / OEM manual',
       category:'rotating',
       tagPlaceholder:'e.g. SCR-01', defaultVisual:false, defaultVibration:true, sections:[
         buildSafetySection('ls'),
@@ -1100,7 +1100,7 @@
           ]}
       ]},
 
-    { id:'magnetic-conveyor', title:'Magnetic Conveyor', dept:'Lotus Engineering Department',
+    { id:'magnetic-conveyor', title:'Magnetic Conveyor', dept:'Rotating — CEMA / AS 1755 / OEM manual',
       category:'rotating',
       tagPlaceholder:'e.g. MC-01', defaultVisual:false, defaultVibration:true, sections:[
         buildSafetySection('mc'),
@@ -1119,7 +1119,7 @@
           ]}
       ]},
 
-    { id:'mix-tank-agitator', title:'Mix Tank Agitator', dept:'Lotus Engineering Department',
+    { id:'mix-tank-agitator', title:'Mix Tank Agitator', dept:'Rotating — ISO 20816-3 / AGMA 6013 (drive) / OEM manual',
       category:'rotating',
       tagPlaceholder:'e.g. MTA-01', defaultVisual:false, defaultVibration:true, sections:[
         buildSafetySection('mta'),
@@ -1154,7 +1154,7 @@
           ]}
       ]},
 
-    { id:'neutralization-tank-agitator', title:'Neutralization Tank Agitator', dept:'Lotus Engineering Department',
+    { id:'neutralization-tank-agitator', title:'Neutralization Tank Agitator', dept:'Rotating — ISO 20816-3 / AGMA 6013 (drive) / OEM manual',
       category:'rotating',
       tagPlaceholder:'e.g. NTA-01', defaultVisual:true, defaultVibration:true, sections:[
         buildSafetySection('nta'),
@@ -1175,7 +1175,7 @@
           ], readings:[ {id:'nta_sh_level', label:'Tank level', unit:'%'} ]}
       ]},
 
-    { id:'thickener-rake-hpp', title:'Thickener Rake Drive Hydraulic Power Pack', dept:'Lotus Engineering Department',
+    { id:'thickener-rake-hpp', title:'Thickener Rake Drive Hydraulic Power Pack', dept:'Rotating — ISO 4413 (hydraulic power) / ISO 4406 (oil cleanliness) / OEM manual',
       category:'rotating',
       tagPlaceholder:'e.g. THK-HPP-01', defaultVisual:true, defaultVibration:true, sections:[
         buildSafetySection('thk'),
@@ -1247,7 +1247,7 @@
           ]}
       ]},
 
-    { id:'sag-mill', title:'SAG Mill (Ball Mill)', dept:'Lotus Engineering Department',
+    { id:'sag-mill', title:'SAG Mill (Ball Mill)', dept:'Rotating — AGMA 6014 (girth gear) / ISO 20816-3 / ISO 4406 / OEM manual',
       category:'rotating',
       tagPlaceholder:'e.g. SAG-01', defaultVisual:false, defaultVibration:true, sections:(function(){
         const sections = [];
@@ -1381,7 +1381,7 @@
         return sections;
       })() },
 
-    { id:'mineral-sizer', title:'Mineral Sizer', dept:'Lotus Engineering Department',
+    { id:'mineral-sizer', title:'Mineral Sizer', dept:'Rotating — ISO 20816-3 / AS 4024.1 (guarding) / OEM manual',
       category:'rotating',
       tagPlaceholder:'e.g. SZ-01', defaultVisual:false, defaultVibration:true, sections:[
         buildSafetySection('sz'),

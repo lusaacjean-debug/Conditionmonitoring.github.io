@@ -17,7 +17,7 @@
        (screen, print, PDF): section N, item N.n, independent of how the
        source data was typed ("Section 3 —", "A. MOTOR", "Coupling — B." …).
      ===================================================================== */
-  const APP_VERSION = '1.1.1', APP_RELEASE = '2026-10-05';
+  const APP_VERSION = '1.3.0', APP_RELEASE = '2026-10-08';
   // DOC_REGISTER is loaded from data/document-register.js
   function docOf(eq){ const r = DOC_REGISTER[eq.id]; return r ? { no: r[0], rev: r[1] } : { no: 'CMI-DRAFT', rev: '0' }; }
   const KEEP_UPPER = new Set(['VSD','MCC','PSV','HPP','HV','LV','HME','UPS','DC','AC','GET','ROPS','FOPS','IR','PI','NER','PFC','MEWP','TC','HT','LT','BMS','SIS','CML','UT','NDT','OEM','CW','RIP','SAG','PM','WO','WR','HFO','LO','AVR','PPE','LOTO','JSA','PDF','ISO','API','SO2','DE','NDE','RPM','CIP','LMI','RCI','PTO','ATS','PCB','PLC','DCS','VFD','II','III','IV','HPU','MOV','RTD','SMU','TLB','ADT','LHD','KSB','GSW']);
@@ -59,6 +59,64 @@
     const decision = nok.length ? 'NO-GO' : open.length ? 'INCOMPLETE' : 'GO';
     return { decision, nok, open, total: crit.length };
   }
+  function fmtStamp(d){
+    d = d || new Date(); const z = n => String(n).padStart(2, '0');
+    return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()) + ' ' + z(d.getHours()) + ':' + z(d.getMinutes());
+  }
+  // Report identity & integrity (ALCOA+: attributable, contemporaneous, original)
+  function reportId(eq, h){
+    const d = (h.f_date || new Date().toISOString().slice(0,10)).replace(/-/g, '');
+    return (h.f_wo ? 'WO' + String(h.f_wo).replace(/[^A-Za-z0-9]/g, '') : docOf(eq).no) + '-' + String(h.f_tag || 'NOTAG').replace(/[^A-Za-z0-9-]/g, '') + '-' + d;
+  }
+  function timeWindow(st){
+    const t = Object.values(st.ts || {}).filter(Boolean);
+    if (!t.length) return '';
+    const z = n => String(n).padStart(2, '0'), f = x => { const d = new Date(x); return z(d.getHours()) + ':' + z(d.getMinutes()); };
+    return f(Math.min.apply(null, t)) + '–' + f(Math.max.apply(null, t));
+  }
+  function canonicalRecord(eq, st){
+    return JSON.stringify({ doc: docOf(eq), id: eq.id, header: st.header, items: st.items, readings: st.readings,
+      findings: st.findings, corrective: st.corrective, priority: st.priority, comments: st.comments, v: APP_VERSION });
+  }
+  async function fingerprint(eq, st){
+    const txt = canonicalRecord(eq, st);
+    try {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(txt));
+      return 'SHA-256 ' + Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16).toUpperCase();
+    } catch(e){
+      let h = 2166136261; for (let i = 0; i < txt.length; i++){ h ^= txt.charCodeAt(i); h = Math.imul(h, 16777619); }
+      return 'FNV ' + (h >>> 0).toString(16).toUpperCase().padStart(8, '0');
+    }
+  }
+  const PRIORITY_TXT = { P1:'P1 Immediate', P2:'P2 ≤ 7 days', P3:'P3 ≤ 30 days', P4:'P4 Next shutdown' };
+  // Pre-issue compliance review (ISO/IEC 17020 report content, ISO 17359 conditions, evidence for measured items)
+  function complianceIssues(eq, st){
+    const h = st.header || {}, out = [], NS = numberedSections(eq), norm = x => String(x || '').toLowerCase().replace(/[^a-z]/g, '');
+    const miss = [];
+    const PRE = eq.category === 'prestart';
+    if (!h.f_tag) miss.push('equipment tag'); if (!h.f_checkby) miss.push('inspected by'); if (!h.f_date) miss.push('date'); if (!h.f_wo && !PRE) miss.push('work order');
+    if (miss.length) out.push('Traceability — missing ' + miss.join(', ') + '.');
+    if (!h.f_reviewby && !PRE) out.push('Review — no reviewer named.');
+    else if (h.f_checkby && (norm(h.f_reviewby).indexOf(norm(h.f_checkby).slice(-6)) !== -1 || norm(h.f_checkby).indexOf(norm(h.f_reviewby)) !== -1)) out.push('Review — reviewer appears to be the inspector; review must be independent.');
+    if (eq.healthScoreApplicable !== false && !h.f_op) out.push('Operating condition not recorded (ISO 17359 — results are only comparable at known operating conditions).');
+    if ((h.f_vibration || h.f_ir || h.f_us) && !h.f_instr) out.push('Instrument — vibration / thermography / ultrasound selected but no instrument and serial number recorded.');
+    if (h.f_instr && h.f_cal && h.f_date && h.f_cal < h.f_date) out.push('Instrument calibration expired on ' + h.f_cal + ' — measurements are not valid evidence.');
+    const noRead = [], naSec = [], nokOpen = [];
+    NS.forEach(s => {
+      const sec = s.sec, vals = s.items.map(x => st.items[x.it.id]);
+      const plain = (sec.readings || []).filter(r => r.unit !== 'mm' && r.unit !== 'rating');
+      if (plain.length && plain.every(r => st.readings[r.id] === undefined || st.readings[r.id] === '')){
+        s.items.forEach(x => { const t = (x.it.checkpoint || x.it.label || '') + ' ' + (x.it.component || '');
+          if (st.items[x.it.id] === 'ok' && /measure|record|temperature|vibration|reading|pressure|current|amps/i.test(t)) noRead.push(x.ref); });
+      }
+      if (vals.length && vals.every(v => v === 'na') && !st.comments[sec.id]) naSec.push(s.num + ' ' + s.title);
+      s.items.forEach(x => { if (st.items[x.it.id] === 'notok' && (!st.findings[x.it.id] || !st.corrective[x.it.id] || !st.priority[x.it.id])) nokOpen.push(x.ref); });
+    });
+    if (noRead.length) out.push('Evidence — item ' + noRead.join(', ') + ' marked OK but the section readings are empty.');
+    if (naSec.length) out.push('Section ' + naSec.join('; ') + ' — all N/A without a reason in the comments.');
+    if (nokOpen.length) out.push('Defect ' + nokOpen.join(', ') + ' — NOT OK without finding, corrective action / WR number or priority.');
+    return out;
+  }
   function readingNoteText(note){
     if (/^rating key/i.test(note)) return note;
     return (/°C|mm\/s|%|bar|<|>|≤|≥|max|min|zone/i.test(note) ? 'Target: ' : 'Reference: ') + note;
@@ -83,8 +141,8 @@
 
   let currentEquipment = null;
   let currentCategory = null;
-  let state = { header:{}, items:{}, readings:{}, comments:{}, photos:{}, findings:{}, corrective:{} };
-  const STATE_DEFAULTS = { header:{}, items:{}, readings:{}, comments:{}, photos:{}, findings:{}, corrective:{} };
+  let state = { header:{}, items:{}, readings:{}, comments:{}, photos:{}, findings:{}, corrective:{}, priority:{}, ts:{} };
+  const STATE_DEFAULTS = { header:{}, items:{}, readings:{}, comments:{}, photos:{}, findings:{}, corrective:{}, priority:{}, ts:{} };
   let saveTimer = null;
 
   const hubView = document.getElementById('hubView');
@@ -165,7 +223,7 @@
     }
     const n = countChecks(eq);
     card.innerHTML = `
-      ${showCat ? `<span class="eq-cat">${esc(catById(eq.category).title)}</span>` : ''}
+      <span class="eq-doc">${esc(docOf(eq).no)} · Rev ${esc(docOf(eq).rev)}${showCat ? ' · ' + esc(catById(eq.category).title) : ''}</span>
       <span class="eq-title">${esc(eq.title)}</span>
       ${stdLine(eq) ? `<span class="eq-std">${esc(stdLine(eq))}</span>` : ''}
       <span class="eq-meta">${eq.sections.filter(sc => !(sc.items || []).length || (sc.items || []).some(i => !i.applicableDriveTypes)).length} sections · ${n} check points</span>
@@ -238,7 +296,7 @@
     if (!q){ res.style.display = 'none'; home.style.display = 'block'; return; }
     const words = q.split(/\s+/);
     const hits = EQUIPMENT.filter(eq => {
-      const hay = norm(eq.title + ' ' + eq.dept + ' ' + catById(eq.category).title + ' ' + (eq.tagPlaceholder || ''));
+      const hay = norm(eq.title + ' ' + eq.dept + ' ' + catById(eq.category).title + ' ' + (eq.tagPlaceholder || '') + ' ' + docOf(eq).no + ' ' + eq.id);
       return words.every(w => hay.indexOf(w) !== -1);
     });
     res.style.display = 'block'; home.style.display = 'none';
@@ -262,7 +320,7 @@
     const cat = currentCategory; if (!cat) return;
     const q = norm(document.getElementById('catFilter').value).trim();
     const list = EQUIPMENT.filter(eq => eq.category === cat.id)
-      .filter(eq => !q || q.split(/\s+/).every(w => norm(eq.title + ' ' + eq.dept).indexOf(w) !== -1));
+      .filter(eq => !q || q.split(/\s+/).every(w => norm(eq.title + ' ' + eq.dept + ' ' + docOf(eq).no).indexOf(w) !== -1));
     catGrid.innerHTML = '';
     list.forEach(eq => catGrid.appendChild(equipmentCard(eq)));
     const total = EQUIPMENT.filter(eq => eq.category === cat.id).length;
@@ -296,7 +354,7 @@
 
   function openEquipment(eq){
     currentEquipment = eq;
-    state = Object.assign({}, STATE_DEFAULTS, { header:{}, items:{}, readings:{}, comments:{}, photos:{}, findings:{}, corrective:{} });
+    state = Object.assign({}, STATE_DEFAULTS, { header:{}, items:{}, readings:{}, comments:{}, photos:{}, findings:{}, corrective:{}, priority:{}, ts:{} });
 
     document.getElementById('formTitle').textContent = eq.title;
     { const dc = docOf(eq); document.getElementById('formDocNo').textContent = dc.no + '  ·  Rev ' + dc.rev; }
@@ -310,6 +368,8 @@
     document.getElementById('f_tag').value = '';
     document.getElementById('f_visual').checked = !!eq.defaultVisual;
     document.getElementById('f_vibration').checked = !!eq.defaultVibration;
+    ['f_ir','f_us'].forEach(id => { document.getElementById(id).checked = false; });
+    ['f_op','f_load','f_qual','f_instr','f_cal'].forEach(id => { document.getElementById(id).value = ''; });
     state.header.f_date = document.getElementById('f_date').value;
     state.header.f_visual = !!eq.defaultVisual;
     state.header.f_vibration = !!eq.defaultVibration;
@@ -324,7 +384,15 @@
     window.scrollTo(0,0);
 
     loadDraft();
+    applyInspectorProfile();
     refreshProgress();
+  }
+  // Prefill name, qualification and instrument remembered on this device (only into empty fields)
+  function applyInspectorProfile(){
+    let pr = {}; try { pr = JSON.parse(localStorage.getItem('cmi_inspector') || '{}'); } catch(e){}
+    PROFILE_IDS.forEach(id => {
+      if (!state.header[id] && pr[id]){ state.header[id] = pr[id]; document.getElementById(id).value = pr[id]; }
+    });
   }
 
   function closeEquipment(){
@@ -438,16 +506,49 @@
               <input type="text" data-finding="${item.id}" placeholder="Enter finding or measured value">
             </div>
             <div class="item-detail-field">
-              <label>Corrective Action Required</label>
+              <label>Corrective Action / WR No.</label>
               <input type="text" data-corrective="${item.id}" placeholder="Required if NOT OK">
             </div>
-          </div>` : ''}`;
+            <div class="item-detail-field">
+              <label>Priority</label>
+              <select data-priority="${item.id}">
+                <option value="">—</option>
+                <option value="P1">P1 · Immediate</option>
+                <option value="P2">P2 · ≤ 7 days</option>
+                <option value="P3">P3 · ≤ 30 days</option>
+                <option value="P4">P4 · Next shutdown</option>
+              </select>
+            </div>
+          </div>` : `
+          <div class="item-detail-grid nok-only">
+            <div class="item-detail-field">
+              <label>Findings / Measured Value</label>
+              <input type="text" data-finding="${item.id}" placeholder="Enter finding or measured value">
+            </div>
+            <div class="item-detail-field">
+              <label>Corrective Action / WR No.</label>
+              <input type="text" data-corrective="${item.id}" placeholder="Required if NOT OK">
+            </div>
+            <div class="item-detail-field">
+              <label>Priority</label>
+              <select data-priority="${item.id}">
+                <option value="">—</option>
+                <option value="P1">P1 · Immediate</option>
+                <option value="P2">P2 · ≤ 7 days</option>
+                <option value="P3">P3 · ≤ 30 days</option>
+                <option value="P4">P4 · Next shutdown</option>
+              </select>
+            </div>
+          </div>`}`;
 
         row.querySelectorAll('.seg-btn').forEach(btn => {
           btn.addEventListener('click', () => {
             row.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             state.items[item.id] = btn.dataset.v;
+            row.classList.toggle('is-notok', btn.dataset.v === 'notok');
+            state.ts[item.id] = Date.now();
+            if (!state.header.startedAt) state.header.startedAt = Date.now();
             refreshSection(sec);
             refreshProgress();
             refreshItemValidation(row, item);
@@ -455,11 +556,13 @@
           });
         });
 
-        if (item.detailed){
+        if (row.querySelector(`input[data-finding="${item.id}"]`)){
           const findingInp = row.querySelector(`input[data-finding="${item.id}"]`);
           const correctiveInp = row.querySelector(`input[data-corrective="${item.id}"]`);
           findingInp.addEventListener('input', () => { state.findings[item.id] = findingInp.value; refreshItemValidation(row, item); scheduleSave(); });
           correctiveInp.addEventListener('input', () => { state.corrective[item.id] = correctiveInp.value; refreshItemValidation(row, item); scheduleSave(); });
+          const prioSel = row.querySelector(`select[data-priority="${item.id}"]`);
+          prioSel.addEventListener('change', () => { state.priority[item.id] = prioSel.value; prioSel.classList.toggle('has-value', !!prioSel.value); scheduleSave(); });
         }
 
         body.appendChild(row);
@@ -562,7 +665,6 @@
   }
 
   function refreshItemValidation(row, item){
-    if (!item.detailed) return;
     const status = state.items[item.id];
     const findingInp = row.querySelector(`input[data-finding="${item.id}"]`);
     const correctiveInp = row.querySelector(`input[data-corrective="${item.id}"]`);
@@ -896,15 +998,20 @@
   }
 
   /* ---------------- Header fields ---------------- */
-  const headerIds = ['f_date','f_wo','f_checkby','f_reviewby','f_tag'];
+  const headerIds = ['f_date','f_wo','f_checkby','f_reviewby','f_tag','f_op','f_load','f_qual','f_instr','f_cal'];
+  const PROFILE_IDS = ['f_checkby','f_qual','f_instr','f_cal'];   // remembered per device
+  const METHOD_IDS = ['f_visual','f_vibration','f_ir','f_us'];
   headerIds.forEach(id => {
     const el = document.getElementById(id);
-    el.addEventListener('input', () => {
+    const onChange = () => {
       state.header[id] = el.value; scheduleSave();
+      if (PROFILE_IDS.indexOf(id) !== -1){ try { const pr = JSON.parse(localStorage.getItem('cmi_inspector') || '{}'); pr[id] = el.value; localStorage.setItem('cmi_inspector', JSON.stringify(pr)); } catch(e){} }
       if (id === 'f_tag') document.getElementById('tagPill').textContent = el.value || 'Set tag #';
-    });
+    };
+    el.addEventListener('input', onChange);
+    if (el.tagName === 'SELECT') el.addEventListener('change', onChange);
   });
-  ['f_visual','f_vibration'].forEach(id => {
+  METHOD_IDS.forEach(id => {
     document.getElementById(id).addEventListener('change', (e) => {
       state.header[id] = e.target.checked; scheduleSave();
     });
@@ -1028,11 +1135,13 @@
       comments: Object.assign({}, saved.comments||{}),
       photos: Object.assign({}, saved.photos||{}),
       findings: Object.assign({}, saved.findings||{}),
-      corrective: Object.assign({}, saved.corrective||{})
+      corrective: Object.assign({}, saved.corrective||{}),
+      priority: Object.assign({}, saved.priority||{}),
+      ts: Object.assign({}, saved.ts||{})
     });
     headerIds.forEach(id => { if (state.header[id] !== undefined) document.getElementById(id).value = state.header[id]; });
-    document.getElementById('f_visual').checked = !!state.header.f_visual;
-    document.getElementById('f_vibration').checked = !!state.header.f_vibration;
+    METHOD_IDS.forEach(id => { document.getElementById(id).checked = !!state.header[id]; });
+    ['f_op','f_load','f_qual','f_instr','f_cal'].forEach(id => { if (state.header[id] === undefined) document.getElementById(id).value = ''; });
     document.getElementById('tagPill').textContent = state.header.f_tag || 'Set tag #';
 
     if (currentEquipment.driveCouplingField){
@@ -1052,11 +1161,14 @@
         const v = state.items[item.id];
         const seg = document.querySelector(`.segmented[data-item="${item.id}"]`);
         if (seg && v) seg.querySelectorAll('.seg-btn').forEach(b => b.classList.toggle('active', b.dataset.v === v));
-        if (item.detailed){
+        if (seg) seg.closest('.item-row').classList.toggle('is-notok', v === 'notok');
+        {
           const findingInp = document.querySelector(`input[data-finding="${item.id}"]`);
           const correctiveInp = document.querySelector(`input[data-corrective="${item.id}"]`);
           if (findingInp && state.findings[item.id] !== undefined) findingInp.value = state.findings[item.id];
           if (correctiveInp && state.corrective[item.id] !== undefined) correctiveInp.value = state.corrective[item.id];
+          const prioSel = document.querySelector(`select[data-priority="${item.id}"]`);
+          if (prioSel){ prioSel.value = state.priority[item.id] || ''; prioSel.classList.toggle('has-value', !!prioSel.value); }
           const rowEl = seg ? seg.closest('.item-row') : null;
           if (rowEl) refreshItemValidation(rowEl, item);
         }
@@ -1091,7 +1203,7 @@
     if (!currentEquipment) return;
     if (!confirm('Clear all entries on this inspection form? This cannot be undone.')) return;
     const eq = currentEquipment;
-    state = Object.assign({}, STATE_DEFAULTS, { header:{}, items:{}, readings:{}, comments:{}, photos:{}, findings:{}, corrective:{} });
+    state = Object.assign({}, STATE_DEFAULTS, { header:{}, items:{}, readings:{}, comments:{}, photos:{}, findings:{}, corrective:{}, priority:{}, ts:{} });
     document.querySelectorAll('.seg-btn.active').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('input[type=text], input[data-reading], input[data-tk]').forEach(i => { i.value = ''; i.classList.remove('missing-required'); });
     document.querySelectorAll('textarea').forEach(t => t.value = '');
@@ -1102,6 +1214,9 @@
     document.getElementById('f_tag').value = '';
     document.getElementById('f_visual').checked = !!eq.defaultVisual;
     document.getElementById('f_vibration').checked = !!eq.defaultVibration;
+    ['f_ir','f_us'].forEach(id => { document.getElementById(id).checked = false; });
+    ['f_op','f_cal'].forEach(id => { document.getElementById(id).value = ''; });
+    document.querySelectorAll('select[data-priority]').forEach(x => { x.value = ''; x.classList.remove('has-value'); });
     document.getElementById('tagPill').textContent = 'Set tag #';
     state.header.f_date = document.getElementById('f_date').value;
     state.header.f_visual = !!eq.defaultVisual;
@@ -1110,6 +1225,7 @@
       state.header.f_drivetype = '';
       buildSections(eq); // collapse back to the un-filtered (no type selected) view
     }
+    applyInspectorProfile();
     eq.sections.forEach(sec => {
       const strip = document.getElementById('strip_'+sec.id);
       if (strip) strip.querySelectorAll('.photo-thumb').forEach(el=>el.remove());
@@ -1154,7 +1270,7 @@
   }
   const RATING_WORD = {1:'Good',2:'Fair',3:'Poor',4:'Critical',5:'Unsafe'};
 
-  function generatePdfDoc(){
+  function generatePdfDoc(FP){
     const eq = currentEquipment, h = state.header || {};
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('p','pt','a4');
@@ -1188,17 +1304,21 @@
     y += 4;
 
     // ---------- Details grid ----------
-    const method = [h.f_visual ? 'Visual' : '', h.f_vibration ? 'Vibration' : ''].filter(Boolean).join(' + ') || '—';
-    const fields = [['Equipment tag', h.f_tag], ['Inspection date', h.f_date], ['Work order', h.f_wo],
-                    ['Inspected by', h.f_checkby], ['Reviewed by', h.f_reviewby], [eq.driveCouplingField ? 'Drive / coupling' : 'Method', eq.driveCouplingField ? (h.f_drivetype || '—') + ' · ' + method : method]];
+    const method = [h.f_visual ? 'Visual' : '', h.f_vibration ? 'Vibration' : '', h.f_ir ? 'Thermography' : '', h.f_us ? 'Ultrasound' : ''].filter(Boolean).join(' + ') || '—';
+    const tw0 = timeWindow(state);
+    const fields = [['Equipment tag', h.f_tag], ['Inspection date / time', (h.f_date || '—') + (tw0 ? '  ' + tw0 : '')], ['Work order', h.f_wo],
+                    ['Inspected by', h.f_checkby], ['Reviewed by', h.f_reviewby], [eq.driveCouplingField ? 'Drive / coupling · method' : 'Method', eq.driveCouplingField ? (h.f_drivetype || '—') + ' · ' + method : method],
+                    ['Operating condition', (h.f_op || '—') + (h.f_load ? ' · ' + h.f_load : '')], ['Test instrument', (h.f_instr || '—') + (h.f_cal ? ' · cal. due ' + h.f_cal : '')], ['Report no.', reportId(eq, h)]];
     const fw = CW / 3, fh = 30;
     fields.forEach((f, i) => {
       const x = M + (i % 3) * fw, yy = y + Math.floor(i / 3) * fh;
       doc.setDrawColor.apply(doc, C.line); doc.setLineWidth(0.6); doc.rect(x, yy, fw, fh);
       font('normal', 7, C.soft); doc.text(f[0], x + 6, yy + 10);
-      font('bold', 9.5, C.ink); doc.text(wrap(f[1] || '—', fw - 12)[0], x + 6, yy + 23);
+      let fs2 = 9.5; font('bold', fs2, C.ink); const val = pdfTxt(f[1] || '—');
+      while (doc.getTextWidth(val) > fw - 12 && fs2 > 7){ fs2 -= 0.5; doc.setFontSize(fs2); }
+      doc.text(wrap(val, fw - 12)[0], x + 6, yy + 23);
     });
-    y += fh * 2 + 12;
+    y += fh * Math.ceil(fields.length / 3) + 12;
 
     // ---------- Summary tiles ----------
     const allVisible = eq.sections.reduce((a, s) => a.concat(visibleItems(s)), []);
@@ -1249,6 +1369,8 @@
     // ---------- Defects & actions ----------
     const defects = [];
     eq.sections.forEach(sec => visibleItems(sec).forEach(it => { if (state.items[it.id] === 'notok') defects.push({ sec, it }); }));
+    const PRANK = { P1:1, P2:2, P3:3, P4:4 };
+    defects.sort((a, b) => (PRANK[state.priority[a.it.id]] || 9) - (PRANK[state.priority[b.it.id]] || 9));
     function tableHead(cols){
       doc.setFillColor.apply(doc, C.navy); doc.rect(M, y, CW, 16, 'F');
       font('bold', 7.8, [255,255,255]); let x = M;
@@ -1256,7 +1378,7 @@
       y += 16;
     }
     font('bold', 12, C.ink); need(40); doc.text('Defects & corrective actions', M, y); y += 8;
-    const dcols = [['Ref', 30], ['Section', 96], ['Check point', 190], ['Finding / corrective action', CW - 316]];
+    const dcols = [['Ref', 30], ['Priority', 52], ['Section', 84], ['Check point', 170], ['Finding / corrective action / WR', CW - 336]];
     if (!defects.length){
       y += 6; font('normal', 9, C.soft); doc.text('No NOT OK items in this inspection.', M, y + 8); y += 22;
     } else {
@@ -1268,14 +1390,17 @@
         if (state.corrective[d.it.id]) fc.push('Action: ' + state.corrective[d.it.id]);
         if (!fc.length) fc.push('No finding entered');
         doc.setFontSize(8);
-        const c2 = wrap(cleanTitle(d.sec.title), dcols[1][1] - 10), c3 = wrap(label, dcols[2][1] - 10), c4 = wrap(fc.join('\n'), dcols[3][1] - 10);
-        const rh = Math.max(c2.length, c3.length, c4.length) * 10 + 8;
+        const pr = state.priority[d.it.id];
+        const cP = wrap(pr ? PRIORITY_TXT[pr] : 'Not set', dcols[1][1] - 8);
+        const c2 = wrap(cleanTitle(d.sec.title), dcols[2][1] - 10), c3 = wrap(label, dcols[3][1] - 10), c4 = wrap(fc.join('\n'), dcols[4][1] - 10);
+        const rh = Math.max(cP.length, c2.length, c3.length, c4.length) * 10 + 8;
         if (need(rh)) tableHead(dcols);
         if (k % 2) { doc.setFillColor(248,249,250); doc.rect(M, y, CW, rh, 'F'); }
         let x = M;
         font('bold', 8, C.nok); doc.text(REF[d.it.id] || String(k + 1), x + 5, y + 11); x += dcols[0][1];
-        font('normal', 8, C.soft); doc.text(c2, x + 5, y + 11); x += dcols[1][1];
-        font('normal', 8, C.ink); doc.text(c3, x + 5, y + 11); x += dcols[2][1];
+        font('bold', 7.5, pr === 'P1' ? C.nok : pr ? C.ink : C.soft); doc.text(cP, x + 4, y + 11); x += dcols[1][1];
+        font('normal', 8, C.soft); doc.text(c2, x + 5, y + 11); x += dcols[2][1];
+        font('normal', 8, C.ink); doc.text(c3, x + 5, y + 11); x += dcols[3][1];
         font('normal', 8, C.ink); doc.text(c4, x + 5, y + 11);
         doc.setDrawColor.apply(doc, C.line); doc.line(M, y + rh, M + CW, y + rh);
         y += rh;
@@ -1312,8 +1437,9 @@
         doc.setFontSize(8.6); const L = wrap(label, CW - 80);
         doc.setFontSize(7.2); const A = it.detailed && (it.acceptance || it.freq) ? wrap((it.freq ? '[' + it.freq + ']  ' : '') + (it.acceptance ? 'Acceptance: ' + it.acceptance : ''), CW - 80) : [];
         const notes = [];
-        if (it.detailed && state.findings[it.id]) notes.push('Finding: ' + state.findings[it.id]);
-        if (it.detailed && state.corrective[it.id]) notes.push('Action: ' + state.corrective[it.id]);
+        if (state.findings[it.id]) notes.push('Finding: ' + state.findings[it.id]);
+        if (state.corrective[it.id]) notes.push('Action: ' + state.corrective[it.id]);
+        if (state.items[it.id] === 'notok' && state.priority[it.id]) notes.push('Priority: ' + PRIORITY_TXT[state.priority[it.id]]);
         doc.setFontSize(7.8); const N = notes.length ? wrap(notes.join('   '), CW - 80) : [];
         const rh = L.length * 10.5 + A.length * 8.8 + N.length * 9.5 + 7;
         if (need(rh)) secBar(sec, true);
@@ -1389,16 +1515,18 @@
       doc.setDrawColor.apply(doc, C.line); doc.setLineWidth(0.8); doc.rect(x, y, bw, 82);
       font('normal', 7.5, C.soft); doc.text(r[0], x + 8, y + 13);
       font('bold', 10, C.ink); doc.text(pdfTxt(r[1] || ''), x + 8, y + 28);
+      if (i === 0 && h.f_qual){ font('normal', 7.5, C.soft); doc.text(wrap(h.f_qual, bw - 16)[0], x + 8, y + 40); }
       font('normal', 7.5, C.soft); doc.text('Signature', x + 8, y + 64); doc.text('Date', x + bw * 0.62, y + 64);
       doc.setDrawColor(160,170,178); doc.line(x + 8, y + 56, x + bw * 0.55, y + 56); doc.line(x + bw * 0.62, y + 56, x + bw - 8, y + 56);
       if (i === 0 && h.f_date){ font('normal', 9, C.ink); doc.text(pdfTxt(h.f_date), x + bw * 0.62, y + 52); }
     });
     y += 94;
     font('normal', 7.5, C.soft);
-    doc.text(wrap('Acceptance criteria are taken from the referenced codes and OEM manuals. Items not checked are shown as "—". This report was generated from CM Inspect; drafts are stored on the inspector\u2019s device. \u00A9 Lotus Africa \u2014 internal use only, not for distribution.', CW), M, y);
+    const stmt = wrap('The results relate only to the item inspected, at the date, time and operating condition stated. Acceptance criteria are taken from the referenced codes and OEM manuals. Items not checked are shown as "\u2014". Report ' + reportId(eq, h) + (FP ? ' \u00B7 record fingerprint ' + FP + ' (any change to the recorded results changes this value)' : '') + '. \u00A9 Lotus Africa \u2014 internal use only, not for distribution.', CW);
+    doc.text(stmt, M, y);
 
     // ---------- Footer on every page ----------
-    const n = doc.getNumberOfPages(), stamp = new Date().toLocaleString();
+    const n = doc.getNumberOfPages(), stamp = fmtStamp();
     for (let i = 1; i <= n; i++){
       doc.setPage(i);
       if (i > 1){
@@ -1410,27 +1538,24 @@
       font('bold', 7.2, C.ink); doc.text(pdfTxt(DOC.no + '  Rev ' + DOC.rev), M, H - 21);
       font('normal', 7.2, C.soft); doc.text(pdfTxt('  ·  ' + eq.title).slice(0, 80), M + doc.getTextWidth(pdfTxt(DOC.no + '  Rev ' + DOC.rev)) + 1, H - 21);
       font('bold', 7.2, C.ink); doc.text('Page ' + i + ' of ' + n, W - M, H - 21, { align:'right' });
-      font('normal', 6.5, [138,151,161]); doc.text(pdfTxt('Uncontrolled when printed  ·  © Lotus Africa — internal use only  ·  Generated ' + stamp + '  ·  CM Inspect v' + APP_VERSION), W / 2, H - 11, { align:'center' });
+      font('normal', 6.5, [138,151,161]); doc.text(pdfTxt('Report ' + reportId(eq, h) + '  ·  Uncontrolled when printed  ·  Generated ' + stamp + (FP ? '  ·  ' + FP : '') + '  ·  CM Inspect v' + APP_VERSION), W / 2, H - 11, { align:'center' });
     }
     return doc;
   }
 
   document.getElementById('btnPdf').addEventListener('click', async () => {
     if (!currentEquipment) return;
-    const hh = state.header || {}, missing = [];
-    if (!hh.f_tag) missing.push('equipment tag'); if (!hh.f_checkby) missing.push('inspected by'); if (!hh.f_date) missing.push('date');
-    const warn = [];
-    if (missing.length) warn.push('Missing: ' + missing.join(', ') + ' — the report will not be traceable.');
+    const warn = complianceIssues(currentEquipment, state);
     const g = currentEquipment.healthScoreApplicable === false ? goNoGo(currentEquipment) : null;
     if (g && g.decision !== 'GO'){
       const decl = numberedSections(currentEquipment).flatMap(s => s.items).find(x => /^Critical items/.test(x.it.component || ''));
       if (decl && state.items[decl.it.id] === 'ok') warn.push('Item ' + decl.ref + ' declares all critical items OK, but the result is ' + g.decision + ' (' + (g.nok.length ? 'NOT OK: ' + g.nok.join(', ') : 'not recorded: ' + g.open.join(', ')) + ').');
     }
-    if (warn.length && !confirm(warn.join('\n\n') + '\n\nDownload the PDF anyway?')) return;
+    if (warn.length && !confirm('Pre-issue review — ' + warn.length + ' point' + (warn.length > 1 ? 's' : '') + ' to check:\n\n• ' + warn.join('\n• ') + '\n\nIssue the PDF anyway?')) return;
     const btn = document.getElementById('btnPdf');
     btn.disabled = true; btn.textContent = 'Building PDF…';
     try{
-      const doc = generatePdfDoc();
+      const doc = generatePdfDoc(await fingerprint(currentEquipment, state));
       const tag = (state.header.f_tag || currentEquipment.id).replace(/[^a-z0-9\-]/gi,'_');
       const date = state.header.f_date || new Date().toISOString().slice(0,10);
       const wo = (state.header.f_wo || '').replace(/[^a-z0-9\-]/gi,'_');
@@ -1448,6 +1573,16 @@
   /* ---------------- Browser print (Ctrl+P / Print button) ---------------- */
   function preparePrint(){
     if (!currentEquipment) return;
+    { const tb = document.getElementById('traceBlock'); if (tb) tb.open = true; }
+    { // A4 page footer with document number and "Page x of y" (Chrome / Edge 131+)
+      const dc = docOf(currentEquipment), q = t => '"' + String(t).replace(/["\\]/g, '') + '"';
+      let st = document.getElementById('printPageStyle');
+      if (!st){ st = document.createElement('style'); st.id = 'printPageStyle'; document.head.appendChild(st); }
+      st.textContent = '@page { size: A4; margin: 12mm 11mm 16mm; ' +
+        '@bottom-left { content: ' + q(dc.no + ' Rev ' + dc.rev + '  ·  ' + currentEquipment.title) + '; font: 8pt Arial, sans-serif; color: #4b5c68; } ' +
+        '@bottom-center { content: "Uncontrolled when printed"; font: 7pt Arial, sans-serif; color: #8a97a1; } ' +
+        '@bottom-right { content: "Page " counter(page) " of " counter(pages); font: bold 8pt Arial, sans-serif; color: #132330; } }';
+    }
     const h = state.header || {};
     const allVisible = currentEquipment.sections.reduce((a, s) => a.concat(visibleItems(s)), []);
     const v = allVisible.map(i => state.items[i.id]);
@@ -1464,10 +1599,15 @@
         <tr><td>Inspected by</td><td>${esc(h.f_checkby || '')}</td><td class="sig"></td><td>${esc(h.f_date || '')}</td></tr>
         <tr><td>Reviewed by</td><td>${esc(h.f_reviewby || '')}</td><td class="sig"></td><td></td></tr>
       </table>
-      <div class="print-foot"><b>${esc(docOf(currentEquipment).no)} Rev ${esc(docOf(currentEquipment).rev)}</b> · Uncontrolled when printed · © Lotus Africa — internal use only. Every NOT OK item must be raised as a work request in Pronto. Printed ${new Date().toLocaleString()} · CM Inspect · ${esc(currentEquipment.title)}${h.f_tag ? ' · Tag ' + esc(h.f_tag) : ''}${h.f_wo ? ' · WO ' + esc(h.f_wo) : ''}</div>`;
+      <div class="print-foot"><b>${esc(docOf(currentEquipment).no)} Rev ${esc(docOf(currentEquipment).rev)}</b> · Uncontrolled when printed · © Lotus Africa — internal use only. Every NOT OK item must be raised as a work request in Pronto. Printed ${fmtStamp()} · CM Inspect · ${esc(currentEquipment.title)}${h.f_tag ? ' · Tag ' + esc(h.f_tag) : ''}${h.f_wo ? ' · WO ' + esc(h.f_wo) : ''}</div>`;
   }
   window.addEventListener('beforeprint', preparePrint);
   document.getElementById('btnPrint').addEventListener('click', () => { preparePrint(); window.print(); });
+
+  /* ---------------- Offline use (service worker) ---------------- */
+  if ('serviceWorker' in navigator && location.protocol === 'https:'){
+    window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js?v=' + APP_VERSION).catch(() => {}); });
+  }
 
   /* ---------------- Init ---------------- */
   renderHub();
@@ -1507,6 +1647,6 @@
       el.value = val; el.dispatchEvent(new Event('input', { bubbles:true })); el.dispatchEvent(new Event('change', { bubbles:true }));
     };
     setField('f_tag', tag); setField('f_wo', wo); setField('f_checkby', by);
-    if (tag || wo) showToast('Opened from work order' + (wo ? ' ' + wo : ''));
+    if (wo) showToast('Opened from work order ' + wo); else if (tag) showToast('Opened for ' + tag);
   })();
 

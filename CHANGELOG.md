@@ -2,6 +2,10 @@
 
 All notable changes to CM Inspect. Versions follow *major.minor.patch*: major = structure or numbering change, minor = new checklists or features, patch = content corrections.
 
+## [1.3.2] — 2026-10-09
+### Fixed
+- Offline copy could keep serving the previous release after an update (reports were produced with the old version). The service worker is now network-first: online, every visit uses the latest release; the stored copy is only used without network.
+
 ## [1.3.1] — 2026-10-09 — record integrity
 ### Changed
 - Pre-issue review is now a styled panel; each point has **Go to** (jumps to the field or check point). Critical points: unanswered check points, missing tag / inspector / date, self-review, expired calibration.

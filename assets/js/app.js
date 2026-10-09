@@ -17,7 +17,7 @@
        (screen, print, PDF): section N, item N.n, independent of how the
        source data was typed ("Section 3 —", "A. MOTOR", "Coupling — B." …).
      ===================================================================== */
-  const APP_VERSION = '1.3.1', APP_RELEASE = '2026-10-09';
+  const APP_VERSION = '1.3.2', APP_RELEASE = '2026-10-09';
   // DOC_REGISTER is loaded from data/document-register.js
   function docOf(eq){ const r = DOC_REGISTER[eq.id]; return r ? { no: r[0], rev: r[1] } : { no: 'CMI-DRAFT', rev: '0' }; }
   const KEEP_UPPER = new Set(['VSD','MCC','PSV','HPP','HV','LV','HME','UPS','DC','AC','GET','ROPS','FOPS','IR','PI','NER','PFC','MEWP','TC','HT','LT','BMS','SIS','CML','UT','NDT','OEM','CW','RIP','SAG','PM','WO','WR','HFO','LO','AVR','PPE','LOTO','JSA','PDF','ISO','API','SO2','DE','NDE','RPM','CIP','LMI','RCI','PTO','ATS','PCB','PLC','DCS','VFD','II','III','IV','HPU','MOV','RTD','SMU','TLB','ADT','LHD','KSB','GSW']);
@@ -1721,8 +1721,9 @@
   document.getElementById('btnPrint').addEventListener('click', () => { preparePrint(); window.print(); });
 
   /* ---------------- Offline use (service worker) ---------------- */
-  if ('serviceWorker' in navigator && location.protocol === 'https:'){
-    window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js?v=' + APP_VERSION).catch(() => {}); });
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')){
+    // Fixed script URL + updateViaCache 'none': the browser checks sw.js for a new release on every visit
+    window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => reg.update()).catch(() => {}); });
   }
 
   /* ---------------- Init ---------------- */

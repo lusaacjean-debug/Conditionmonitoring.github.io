@@ -3,7 +3,7 @@
 **Lotus Africa Uranium Plant · Engineering Department · Asset Health & Integrity**
 
 Live site: **https://lusaacjean-debug.github.io/cm/**
-Current release: **v1.3.1 (2026-10-09)** — see [CHANGELOG](CHANGELOG.md)
+Current release: **v1.3.2 (2026-10-09)** — see [CHANGELOG](CHANGELOG.md)
 
 CM Inspect is the site's web checklist system for condition monitoring, inspection and prestart checks. Each inspection is recorded against a written acceptance criterion, produces a numbered PDF report (defects first, health score, remaining life, sign-off) and is closed out in Pronto (work request for every NOT OK, PDF attached to the work order).
 

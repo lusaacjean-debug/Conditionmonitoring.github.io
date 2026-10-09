@@ -1514,6 +1514,19 @@
             {id:'los7_11', label:'Recorded technician name and ID'},
             {id:'los7_12', label:'Affixed label — fully adhered and legible'},
             {id:'los7_13', label:'Cross-referenced sample ID with maintenance record'}
+          ],
+          keyData:'Sample data',
+          readingNote:'record the values written on the sample label and submission form',
+          readings:[
+            {id:'los7_r1', label:'Sample ID / bottle no.', unit:'ID', text:true},
+            {id:'los7_r2', label:'Compartment sampled', unit:'—', text:true},
+            {id:'los7_r3', label:'Lubricant type & grade', unit:'—', text:true},
+            {id:'los7_r4', label:'Hour meter', unit:'h'},
+            {id:'los7_r5', label:'Hours on oil', unit:'h'},
+            {id:'los7_r6', label:'Top-up since last sample', unit:'L'},
+            {id:'los7_r7', label:'Flush volume', unit:'mL'},
+            {id:'los7_r8', label:'Oil temperature at sampling', unit:'°C'},
+            {id:'los7_r9', label:'Laboratory', unit:'—', text:true}
           ]},
         { id:'los_s8', title:'Section 8 — Sample Handling, Storage & Chain of Custody', items:[
             {id:'los8_1', label:'Placed sample in protective bag/container'},

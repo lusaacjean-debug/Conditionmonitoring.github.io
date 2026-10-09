@@ -17,7 +17,7 @@
        (screen, print, PDF): section N, item N.n, independent of how the
        source data was typed ("Section 3 —", "A. MOTOR", "Coupling — B." …).
      ===================================================================== */
-  const APP_VERSION = '1.3.0', APP_RELEASE = '2026-10-08';
+  const APP_VERSION = '1.3.1', APP_RELEASE = '2026-10-09';
   // DOC_REGISTER is loaded from data/document-register.js
   function docOf(eq){ const r = DOC_REGISTER[eq.id]; return r ? { no: r[0], rev: r[1] } : { no: 'CMI-DRAFT', rev: '0' }; }
   const KEEP_UPPER = new Set(['VSD','MCC','PSV','HPP','HV','LV','HME','UPS','DC','AC','GET','ROPS','FOPS','IR','PI','NER','PFC','MEWP','TC','HT','LT','BMS','SIS','CML','UT','NDT','OEM','CW','RIP','SAG','PM','WO','WR','HFO','LO','AVR','PPE','LOTO','JSA','PDF','ISO','API','SO2','DE','NDE','RPM','CIP','LMI','RCI','PTO','ATS','PCB','PLC','DCS','VFD','II','III','IV','HPU','MOV','RTD','SMU','TLB','ADT','LHD','KSB','GSW']);
@@ -90,32 +90,106 @@
   }
   const PRIORITY_TXT = { P1:'P1 Immediate', P2:'P2 ≤ 7 days', P3:'P3 ≤ 30 days', P4:'P4 Next shutdown' };
   // Pre-issue compliance review (ISO/IEC 17020 report content, ISO 17359 conditions, evidence for measured items)
+  // Completion, recording speed and pre-issue review (v1.3.1: record integrity)
+  function completion(eq, st){
+    const all = numberedSections(eq).reduce((a, s) => a.concat(s.items), []);
+    const done = all.filter(x => st.items[x.it.id]).length;
+    return { done, total: all.length, pct: all.length ? Math.round(done / all.length * 100) : 0, open: all.filter(x => !st.items[x.it.id]) };
+  }
+  function recordingSpeed(st){
+    const t = Object.values(st.ts || {}).filter(Boolean);
+    if (t.length < 10) return null;
+    const mins = (Math.max.apply(null, t) - Math.min.apply(null, t)) / 60000, perCheck = mins * 60 / t.length;
+    return { n: t.length, mins: Math.max(1, Math.round(mins)), perCheck, fast: perCheck < 5 };
+  }
   function complianceIssues(eq, st){
     const h = st.header || {}, out = [], NS = numberedSections(eq), norm = x => String(x || '').toLowerCase().replace(/[^a-z]/g, '');
-    const miss = [];
+    const add = (text, critical, target) => out.push({ text, critical: !!critical, target: target || null });
     const PRE = eq.category === 'prestart';
-    if (!h.f_tag) miss.push('equipment tag'); if (!h.f_checkby) miss.push('inspected by'); if (!h.f_date) miss.push('date'); if (!h.f_wo && !PRE) miss.push('work order');
-    if (miss.length) out.push('Traceability — missing ' + miss.join(', ') + '.');
-    if (!h.f_reviewby && !PRE) out.push('Review — no reviewer named.');
-    else if (h.f_checkby && (norm(h.f_reviewby).indexOf(norm(h.f_checkby).slice(-6)) !== -1 || norm(h.f_checkby).indexOf(norm(h.f_reviewby)) !== -1)) out.push('Review — reviewer appears to be the inspector; review must be independent.');
-    if (eq.healthScoreApplicable !== false && !h.f_op) out.push('Operating condition not recorded (ISO 17359 — results are only comparable at known operating conditions).');
-    if ((h.f_vibration || h.f_ir || h.f_us) && !h.f_instr) out.push('Instrument — vibration / thermography / ultrasound selected but no instrument and serial number recorded.');
-    if (h.f_instr && h.f_cal && h.f_date && h.f_cal < h.f_date) out.push('Instrument calibration expired on ' + h.f_cal + ' — measurements are not valid evidence.');
+    const C0 = completion(eq, st);
+    if (C0.open.length) add(C0.open.length + ' check point' + (C0.open.length > 1 ? 's' : '') + ' not recorded (' + C0.pct + ' % complete) — first open: ' + C0.open[0].ref + '.', true, { item: C0.open[0].it.id });
+    if (!h.f_tag) add('Equipment tag missing — the report cannot be linked to a plant item.', true, { field: 'f_tag' });
+    if (!h.f_checkby) add('Inspector not named.', true, { field: 'f_checkby' });
+    else if (!/\s/.test(String(h.f_checkby).trim())) add('Inspector "' + h.f_checkby + '" — give the full name (first name and surname).', false, { field: 'f_checkby' });
+    if (!h.f_date) add('Inspection date missing.', true, { field: 'f_date' });
+    if (!h.f_wo && !PRE) add('Work order missing — the report cannot be filed against the Pronto WO.', false, { field: 'f_wo' });
+    if (!h.f_reviewby && !PRE) add('No reviewer named.', false, { field: 'f_reviewby' });
+    else if (h.f_reviewby && h.f_checkby && (norm(h.f_reviewby).indexOf(norm(h.f_checkby).slice(-6)) !== -1 || norm(h.f_checkby).indexOf(norm(h.f_reviewby)) !== -1)) add('Reviewer appears to be the inspector — review must be independent.', true, { field: 'f_reviewby' });
+    if (eq.healthScoreApplicable !== false && !h.f_op) add('Operating condition not recorded (ISO 17359 — results are only comparable at known operating conditions).', false, { field: 'f_op' });
+    if ((h.f_vibration || h.f_ir || h.f_us || h.f_oil) && !h.f_instr) add('Instrument / sampling device not recorded for the selected method.', false, { field: 'f_instr' });
+    if (h.f_instr && h.f_cal && h.f_date && h.f_cal < h.f_date) add('Instrument calibration expired on ' + h.f_cal + ' — measurements are not valid evidence.', true, { field: 'f_cal' });
+    const sp = recordingSpeed(st);
+    if (sp && sp.fast) add(sp.n + ' checks recorded in ' + sp.mins + ' min (' + (sp.perCheck < 1 ? '< 1' : sp.perCheck.toFixed(0)) + ' s per check) — confirm each point was physically checked. This note is printed on the report.', false, null);
     const noRead = [], naSec = [], nokOpen = [];
     NS.forEach(s => {
       const sec = s.sec, vals = s.items.map(x => st.items[x.it.id]);
       const plain = (sec.readings || []).filter(r => r.unit !== 'mm' && r.unit !== 'rating');
       if (plain.length && plain.every(r => st.readings[r.id] === undefined || st.readings[r.id] === '')){
         s.items.forEach(x => { const t = (x.it.checkpoint || x.it.label || '') + ' ' + (x.it.component || '');
-          if (st.items[x.it.id] === 'ok' && /measure|record|temperature|vibration|reading|pressure|current|amps/i.test(t)) noRead.push(x.ref); });
+          if (st.items[x.it.id] === 'ok' && /measure|record|temperature|vibration|reading|pressure|current|amps/i.test(t)) noRead.push(x); });
       }
-      if (vals.length && vals.every(v => v === 'na') && !st.comments[sec.id]) naSec.push(s.num + ' ' + s.title);
-      s.items.forEach(x => { if (st.items[x.it.id] === 'notok' && (!st.findings[x.it.id] || !st.corrective[x.it.id] || !st.priority[x.it.id])) nokOpen.push(x.ref); });
+      if (vals.length && vals.every(v => v === 'na') && !st.comments[sec.id]) naSec.push(s);
+      s.items.forEach(x => { if (st.items[x.it.id] === 'notok' && (!st.findings[x.it.id] || !st.corrective[x.it.id] || !st.priority[x.it.id])) nokOpen.push(x); });
     });
-    if (noRead.length) out.push('Evidence — item ' + noRead.join(', ') + ' marked OK but the section readings are empty.');
-    if (naSec.length) out.push('Section ' + naSec.join('; ') + ' — all N/A without a reason in the comments.');
-    if (nokOpen.length) out.push('Defect ' + nokOpen.join(', ') + ' — NOT OK without finding, corrective action / WR number or priority.');
+    if (noRead.length) add('Item ' + noRead.map(x => x.ref).join(', ') + ' marked OK but the section readings are empty.', false, { item: noRead[0].it.id });
+    if (naSec.length) add('Section ' + naSec.map(x => x.num + ' ' + x.title).join('; ') + ' — all N/A without a reason in the comments.', false, { section: naSec[0].sec.id });
+    if (nokOpen.length) add('Defect ' + nokOpen.map(x => x.ref).join(', ') + ' — NOT OK without finding, corrective action / WR number or priority.', false, { item: nokOpen[0].it.id });
     return out;
+  }
+  // A report issued with any critical gap is a DRAFT, never a valid record
+  function draftReasons(eq, st){ return complianceIssues(eq, st).filter(i => i.critical).map(i => i.text); }
+  function jumpTo(target){
+    if (!target) return;
+    if (target.field){
+      const el = document.getElementById(target.field); if (!el) return;
+      const tb = el.closest('details'); if (tb) tb.open = true;
+      el.scrollIntoView({ behavior:'smooth', block:'center' }); setTimeout(() => el.focus(), 350);
+      el.classList.add('jump-flash'); setTimeout(() => el.classList.remove('jump-flash'), 1800);
+      return;
+    }
+    let row = null, secEl = null;
+    if (target.item){ const seg = document.querySelector(`[data-item="${target.item}"]`) || document.querySelector(`.segmented[data-id="${target.item}"]`);
+      row = seg ? seg.closest('.item-row') : null; secEl = row ? row.closest('.section') : null; }
+    if (target.section) secEl = document.getElementById('sec_' + target.section);
+    if (secEl) secEl.classList.add('open');
+    const el = row || secEl; if (!el) return;
+    el.scrollIntoView({ behavior:'smooth', block:'center' });
+    el.classList.add('jump-flash'); setTimeout(() => el.classList.remove('jump-flash'), 1800);
+  }
+  // Styled review panel (replaces the browser pop-up). Resolves 'issue' or 'cancel'.
+  function reviewPanel(issues){
+    return new Promise(resolve => {
+      const crit = issues.filter(i => i.critical).length;
+      const ov = document.createElement('div'); ov.className = 'review-overlay';
+      ov.innerHTML = `
+        <div class="review-panel" role="dialog" aria-modal="true" aria-labelledby="rvTitle">
+          <div class="review-head">
+            <h3 id="rvTitle">Pre-issue review</h3>
+            <p>${issues.length} point${issues.length > 1 ? 's' : ''} to check before this report is issued${crit ? ` — <b>${crit} critical</b>` : ''}.</p>
+          </div>
+          <ol class="review-list">${issues.map((i, k) => `
+            <li class="${i.critical ? 'crit' : 'warn'}">
+              <span class="rv-tag">${i.critical ? 'Critical' : 'Check'}</span>
+              <span class="rv-text">${esc(i.text)}</span>
+              ${i.target ? `<button type="button" class="rv-go" data-k="${k}">Go to</button>` : ''}
+            </li>`).join('')}</ol>
+          ${crit ? `<div class="review-note">With critical points open, the PDF is issued as <b>DRAFT — NOT A VALID RECORD</b>.</div>` : ''}
+          <div class="review-actions">
+            <button type="button" class="btn btn-ghost" data-act="cancel">Fix first</button>
+            <button type="button" class="btn ${crit ? 'btn-draft' : 'btn-primary'}" data-act="issue">${crit ? 'Issue as DRAFT' : 'Issue PDF'}</button>
+          </div>
+        </div>`;
+      document.body.appendChild(ov);
+      const close = v => { ov.remove(); document.removeEventListener('keydown', esc_); resolve(v); };
+      const esc_ = e => { if (e.key === 'Escape') close('cancel'); };
+      document.addEventListener('keydown', esc_);
+      ov.addEventListener('click', e => {
+        if (e.target === ov) return close('cancel');
+        const go = e.target.closest('.rv-go'); if (go){ close('cancel'); setTimeout(() => jumpTo(issues[+go.dataset.k].target), 50); return; }
+        const act = e.target.closest('[data-act]'); if (act) close(act.dataset.act);
+      });
+      setTimeout(() => { const b = ov.querySelector('[data-act="cancel"]'); if (b) b.focus(); }, 30);
+    });
   }
   function readingNoteText(note){
     if (/^rating key/i.test(note)) return note;
@@ -368,7 +442,7 @@
     document.getElementById('f_tag').value = '';
     document.getElementById('f_visual').checked = !!eq.defaultVisual;
     document.getElementById('f_vibration').checked = !!eq.defaultVibration;
-    ['f_ir','f_us'].forEach(id => { document.getElementById(id).checked = false; });
+    ['f_ir','f_us','f_oil'].forEach(id => { document.getElementById(id).checked = false; });
     ['f_op','f_load','f_qual','f_instr','f_cal'].forEach(id => { document.getElementById(id).value = ''; });
     state.header.f_date = document.getElementById('f_date').value;
     state.header.f_visual = !!eq.defaultVisual;
@@ -578,8 +652,8 @@
           rb.innerHTML = (sec.readingNote ? `<div class="reading-note">${esc(readingNoteText(sec.readingNote))}</div>` : '') +
             `<div class="reading-grid">${plainReadings.map(r => `
               <div class="reading-field">
-                <label>${r.label} (${r.unit})</label>
-                <input type="text" inputmode="decimal" data-reading="${r.id}" placeholder="—">
+                <label>${r.label}${r.text ? '' : ' (' + r.unit + ')'}</label>
+                <input type="text" inputmode="${r.text ? 'text' : 'decimal'}" data-reading="${r.id}" placeholder="—">
               </div>`).join('')}</div>`;
           body.appendChild(rb);
           rb.querySelectorAll('input[data-reading]').forEach(inp => {
@@ -826,6 +900,10 @@
       pill.textContent = 'Health —';
       pill.className = 'health-pill pending';
     }
+    if (currentEquipment.healthScoreApplicable !== false && pill.style.display !== 'none'){
+      const cpl = completion(currentEquipment, state);
+      if (cpl.done && cpl.pct < 100 && /Health \d/.test(pill.textContent)) pill.textContent += ' · provisional (' + cpl.pct + ' %)';
+    }
   }
 
   /* =====================================================================
@@ -1000,7 +1078,7 @@
   /* ---------------- Header fields ---------------- */
   const headerIds = ['f_date','f_wo','f_checkby','f_reviewby','f_tag','f_op','f_load','f_qual','f_instr','f_cal'];
   const PROFILE_IDS = ['f_checkby','f_qual','f_instr','f_cal'];   // remembered per device
-  const METHOD_IDS = ['f_visual','f_vibration','f_ir','f_us'];
+  const METHOD_IDS = ['f_visual','f_vibration','f_ir','f_us','f_oil'];
   headerIds.forEach(id => {
     const el = document.getElementById(id);
     const onChange = () => {
@@ -1214,7 +1292,7 @@
     document.getElementById('f_tag').value = '';
     document.getElementById('f_visual').checked = !!eq.defaultVisual;
     document.getElementById('f_vibration').checked = !!eq.defaultVibration;
-    ['f_ir','f_us'].forEach(id => { document.getElementById(id).checked = false; });
+    ['f_ir','f_us','f_oil'].forEach(id => { document.getElementById(id).checked = false; });
     ['f_op','f_cal'].forEach(id => { document.getElementById(id).value = ''; });
     document.querySelectorAll('select[data-priority]').forEach(x => { x.value = ''; x.classList.remove('has-value'); });
     document.getElementById('tagPill').textContent = 'Set tag #';
@@ -1271,6 +1349,8 @@
   const RATING_WORD = {1:'Good',2:'Fair',3:'Poor',4:'Critical',5:'Unsafe'};
 
   function generatePdfDoc(FP){
+    const DRAFT = draftReasons(currentEquipment, state);
+    const CPL = completion(currentEquipment, state), SPD = recordingSpeed(state);
     const eq = currentEquipment, h = state.header || {};
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('p','pt','a4');
@@ -1304,7 +1384,7 @@
     y += 4;
 
     // ---------- Details grid ----------
-    const method = [h.f_visual ? 'Visual' : '', h.f_vibration ? 'Vibration' : '', h.f_ir ? 'Thermography' : '', h.f_us ? 'Ultrasound' : ''].filter(Boolean).join(' + ') || '—';
+    const method = [h.f_visual ? 'Visual' : '', h.f_vibration ? 'Vibration' : '', h.f_ir ? 'Thermography' : '', h.f_us ? 'Ultrasound' : '', h.f_oil ? 'Oil sampling' : ''].filter(Boolean).join(' + ') || '—';
     const tw0 = timeWindow(state);
     const fields = [['Equipment tag', h.f_tag], ['Inspection date / time', (h.f_date || '—') + (tw0 ? '  ' + tw0 : '')], ['Work order', h.f_wo],
                     ['Inspected by', h.f_checkby], ['Reviewed by', h.f_reviewby], [eq.driveCouplingField ? 'Drive / coupling · method' : 'Method', eq.driveCouplingField ? (h.f_drivetype || '—') + ' · ' + method : method],
@@ -1331,9 +1411,15 @@
       ['OK', String(ok), [C.okbg, C.ok]],
       ['NOT OK', String(nok), nok ? [C.nokbg, C.nok] : [C.light, C.ink]],
       ['N/A', String(na), [C.light, C.ink]],
-      ['Health score', health ? health.score + '%' : '—', bandCol(health && health.band)],
+      ['Health score' + (health && CPL.pct < 100 ? ' (provisional)' : ''), health ? health.score + '%' : '—', bandCol(health && health.band)],
       ['Remaining life', rul ? (rul.remainingLife === Infinity ? 'Stable' : rul.remainingLife.toFixed(1) + ' yrs') : '—', bandCol(rul && rul.band)]
     ];
+    if (!health && !rul){
+      tiles[4] = ['Completion', CPL.pct + ' %', CPL.pct === 100 ? [C.okbg, C.ok] : [C.amberbg, [154,97,19]]];
+      tiles[5] = ['Report status', DRAFT.length ? 'DRAFT' : 'ISSUED', DRAFT.length ? [C.nokbg, C.nok] : [C.okbg, C.ok]];
+    } else if (!rul){
+      tiles[5] = ['Report status', DRAFT.length ? 'DRAFT' : 'ISSUED', DRAFT.length ? [C.nokbg, C.nok] : [C.okbg, C.ok]];
+    }
     const GNG = eq.healthScoreApplicable === false ? goNoGo(eq) : null;
     if (GNG){
       const col = GNG.decision === 'GO' ? [C.okbg, C.ok] : GNG.decision === 'NO-GO' ? [C.nokbg, C.nok] : [C.amberbg, [154,97,19]];
@@ -1362,7 +1448,32 @@
     doc.setFillColor.apply(doc, bad ? C.nokbg : C.okbg); doc.rect(M, y, CW, vh, 'F');
     doc.setFillColor.apply(doc, bad ? C.nok : C.ok); doc.rect(M, y, 3, vh, 'F');
     font('bold', 9, bad ? C.nok : C.ok); doc.text(VL, M + 10, y + 13);
-    y += vh + 12;
+    y += vh + 6;
+    // Record status (draft reasons) and recording-speed note
+    if (DRAFT.length){
+      doc.setFontSize(8.5); const DL = wrap('DRAFT — NOT A VALID RECORD. ' + DRAFT.join(' '), CW - 16); const dh = 8 + DL.length * 10.5;
+      doc.setDrawColor.apply(doc, C.nok); doc.setLineWidth(1); doc.rect(M, y, CW, dh);
+      font('bold', 8.5, C.nok); doc.text(DL, M + 8, y + 12); y += dh + 6;
+    }
+    if (SPD && SPD.fast){
+      doc.setFontSize(8); const SL = wrap('Recording speed: ' + SPD.n + ' checks in ' + SPD.mins + ' min (' + (SPD.perCheck < 1 ? '< 1' : SPD.perCheck.toFixed(0)) + ' s per check) — reviewer to confirm each point was physically checked.', CW - 16);
+      doc.setFillColor.apply(doc, C.amberbg); doc.rect(M, y, CW, 6 + SL.length * 10, 'F');
+      font('bold', 8, [154,97,19]); doc.text(SL, M + 8, y + 11); y += 6 + SL.length * 10 + 6;
+    }
+    // Key data (e.g. oil sample identification) on page 1
+    eq.sections.filter(sc => sc.keyData && sc.readings).forEach(sc => {
+      const cols = 3, cw = CW / cols, rows = Math.ceil(sc.readings.length / cols), bh = 16 + rows * 13 + 4;
+      doc.setFillColor.apply(doc, C.light); doc.rect(M, y, CW, bh, 'F');
+      font('bold', 8, C.navy); doc.text(pdfTxt(sc.keyData), M + 8, y + 12);
+      sc.readings.forEach((r, i) => {
+        const x = M + 8 + (i % cols) * cw, yy = y + 26 + Math.floor(i / cols) * 13, v = state.readings[r.id];
+        const fit = (t, w, f0) => { let f = f0; doc.setFontSize(f); while (doc.getTextWidth(t) > w && f > 5.5){ f -= 0.25; doc.setFontSize(f); } return f; };
+        const lab = pdfTxt(r.label + ':'), val = pdfTxt(v ? v + (r.unit && !r.text ? ' ' + r.unit : '') : 'not recorded');
+        font('normal', 7.5, C.soft); fit(lab, cw * 0.47, 7.5); doc.text(lab, x, yy);
+        font('bold', 8, v ? C.ink : C.nok); fit(val, cw * 0.47 - 8, 8); doc.text(val, x + cw * 0.49, yy);
+      });
+      y += bh + 10;
+    });
 
     const shortTitle = t => String(t).replace(/^Section \d+\s*—\s*/,'');
 
@@ -1529,6 +1640,11 @@
     const n = doc.getNumberOfPages(), stamp = fmtStamp();
     for (let i = 1; i <= n; i++){
       doc.setPage(i);
+      if (DRAFT.length){
+        try { doc.saveGraphicsState(); doc.setGState(new doc.GState({ opacity: 0.10 })); } catch(e){}
+        font('bold', 54, C.nok); doc.text('DRAFT — NOT A VALID RECORD', W / 2, H / 2 + 120, { align:'center', angle: 35 });
+        try { doc.restoreGraphicsState(); } catch(e){}
+      }
       if (i > 1){
         font('bold', 8, C.ink); doc.text(wrap(eq.title, CW * 0.6)[0], M, 26);
         font('normal', 7.5, C.soft); doc.text(pdfTxt((h.f_tag ? 'Tag ' + h.f_tag : '') + (h.f_wo ? '   ·   WO ' + h.f_wo : '') + (h.f_date ? '   ·   ' + h.f_date : '')), W - M, 26, { align:'right' });
@@ -1538,7 +1654,7 @@
       font('bold', 7.2, C.ink); doc.text(pdfTxt(DOC.no + '  Rev ' + DOC.rev), M, H - 21);
       font('normal', 7.2, C.soft); doc.text(pdfTxt('  ·  ' + eq.title).slice(0, 80), M + doc.getTextWidth(pdfTxt(DOC.no + '  Rev ' + DOC.rev)) + 1, H - 21);
       font('bold', 7.2, C.ink); doc.text('Page ' + i + ' of ' + n, W - M, H - 21, { align:'right' });
-      font('normal', 6.5, [138,151,161]); doc.text(pdfTxt('Report ' + reportId(eq, h) + '  ·  Uncontrolled when printed  ·  Generated ' + stamp + (FP ? '  ·  ' + FP : '') + '  ·  CM Inspect v' + APP_VERSION), W / 2, H - 11, { align:'center' });
+      font('normal', 6.5, [138,151,161]); doc.text(pdfTxt((DRAFT.length ? 'DRAFT  ·  ' : '') + 'Report ' + reportId(eq, h) + '  ·  Uncontrolled when printed  ·  Generated ' + stamp + (FP ? '  ·  ' + FP : '') + '  ·  CM Inspect v' + APP_VERSION), W / 2, H - 11, { align:'center' });
     }
     return doc;
   }
@@ -1549,9 +1665,9 @@
     const g = currentEquipment.healthScoreApplicable === false ? goNoGo(currentEquipment) : null;
     if (g && g.decision !== 'GO'){
       const decl = numberedSections(currentEquipment).flatMap(s => s.items).find(x => /^Critical items/.test(x.it.component || ''));
-      if (decl && state.items[decl.it.id] === 'ok') warn.push('Item ' + decl.ref + ' declares all critical items OK, but the result is ' + g.decision + ' (' + (g.nok.length ? 'NOT OK: ' + g.nok.join(', ') : 'not recorded: ' + g.open.join(', ')) + ').');
+      if (decl && state.items[decl.it.id] === 'ok') warn.push({ text: 'Item ' + decl.ref + ' declares all critical items OK, but the result is ' + g.decision + ' (' + (g.nok.length ? 'NOT OK: ' + g.nok.join(', ') : 'not recorded: ' + g.open.join(', ')) + ').', critical: true, target: { item: decl.it.id } });
     }
-    if (warn.length && !confirm('Pre-issue review — ' + warn.length + ' point' + (warn.length > 1 ? 's' : '') + ' to check:\n\n• ' + warn.join('\n• ') + '\n\nIssue the PDF anyway?')) return;
+    if (warn.length && (await reviewPanel(warn)) !== 'issue') return;
     const btn = document.getElementById('btnPdf');
     btn.disabled = true; btn.textContent = 'Building PDF…';
     try{

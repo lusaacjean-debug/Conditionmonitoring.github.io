@@ -142,7 +142,7 @@ const DOC_REGISTER = {
  ],
  "lube-oil-sampling": [
   "CMI-LUB-002",
-  "0"
+  "1"
  ],
  "lube-oil-replacement": [
   "CMI-LUB-003",

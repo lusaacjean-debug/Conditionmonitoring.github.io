@@ -350,3 +350,23 @@
   @media (max-width:560px){ .item-row.is-notok .nok-only{margin-left:0;} }
   .item-row:not(.detailed){flex-wrap:wrap;}
   .item-row:not(.detailed) .nok-only{flex-basis:100%;}
+
+  /* v1.3.1 — pre-issue review panel */
+  .review-overlay{position:fixed; inset:0; background:rgba(15,35,48,.55); z-index:2000; display:flex; align-items:center; justify-content:center; padding:16px;}
+  .review-panel{background:#fff; border-radius:14px; width:min(640px,100%); max-height:88vh; overflow:auto; box-shadow:0 20px 60px rgba(0,0,0,.35);}
+  .review-head{padding:18px 20px 10px; border-bottom:1px solid var(--line);}
+  .review-head h3{margin:0 0 4px; font-size:18px; color:var(--navy);}
+  .review-head p{margin:0; font-size:13.5px; color:var(--ink-soft);}
+  .review-list{list-style:none; margin:0; padding:8px 12px;}
+  .review-list li{display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:start; padding:10px 8px; border-bottom:1px solid #eef1f3; font-size:13.5px; line-height:1.4;}
+  .rv-tag{font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; padding:3px 7px; border-radius:6px; margin-top:1px;}
+  .review-list li.crit .rv-tag{background:var(--notok-bg); color:var(--notok);}
+  .review-list li.warn .rv-tag{background:var(--amber-bg); color:var(--amber-deep);}
+  .rv-go{font:inherit; font-size:12.5px; font-weight:600; border:1px solid var(--line); background:#fff; color:var(--navy); border-radius:8px; padding:5px 10px; cursor:pointer; white-space:nowrap;}
+  .rv-go:hover{border-color:var(--navy);}
+  .review-note{margin:4px 20px 0; padding:10px 12px; background:var(--notok-bg); color:var(--notok); border-radius:8px; font-size:13px;}
+  .review-actions{display:flex; justify-content:flex-end; gap:10px; padding:14px 20px 18px;}
+  .review-actions .btn{width:auto; min-width:140px;}
+  .btn-draft{background:var(--notok); color:#fff; border:none;}
+  .jump-flash{outline:3px solid var(--amber) !important; outline-offset:3px; transition:outline-color .3s;}
+  @media print{ .review-overlay{display:none !important;} }

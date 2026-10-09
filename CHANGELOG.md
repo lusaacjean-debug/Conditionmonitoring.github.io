@@ -2,6 +2,16 @@
 
 All notable changes to CM Inspect. Versions follow *major.minor.patch*: major = structure or numbering change, minor = new checklists or features, patch = content corrections.
 
+## [1.3.1] — 2026-10-09 — record integrity
+### Changed
+- Pre-issue review is now a styled panel; each point has **Go to** (jumps to the field or check point). Critical points: unanswered check points, missing tag / inspector / date, self-review, expired calibration.
+- A PDF issued with critical points open is marked **DRAFT — NOT A VALID RECORD** (watermark, status box, footer, *Report status* tile).
+- Recording-speed check: when checks are answered faster than 5 s each, a note is printed for the reviewer.
+- Unanswered check points are reported first; the health score shows as *provisional* until 100 % complete.
+- Report tiles: *Completion* and *Report status* replace empty Health / Remaining-life tiles.
+- New inspection method: **Oil sampling**.
+- CMI-LUB-002 Lube Oil Sampling **Rev 0 → Rev 1**: sample data recorded (sample ID, compartment, lubricant, hour meter, hours on oil, top-up, flush volume, oil temperature, laboratory) and printed in a *Sample data* box on page 1.
+
 ## [1.3.0] — 2026-10-08
 ### Added — inspection standards (ISO/IEC 17020, ISO 17359, ISO 18436, ALCOA+)
 - Inspection conditions & traceability: operating condition, load / speed, inspector qualification, test instrument & serial, calibration due date (name, qualification and instrument remembered per device).

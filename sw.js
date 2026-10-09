@@ -1,6 +1,6 @@
 /* CM Inspect — offline support. Network-first for the page, cache-first for versioned assets.
    The cache name changes with every release, so old files are removed automatically. */
-const CACHE = 'cm-inspect-1.3.0';
+const CACHE = 'cm-inspect-1.3.1';
 const ASSETS = [
  "./",
  "index.html",

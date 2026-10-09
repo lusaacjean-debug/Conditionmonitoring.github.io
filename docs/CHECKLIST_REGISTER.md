@@ -81,7 +81,7 @@ Controlled list of every checklist in CM Inspect. Document numbers are **frozen*
 | Doc no. | Rev | Checklist | ID (link `?c=`) | Check points |
 |---|---|---|---|---|
 | CMI-LUB-001 | 0 | Automatic Grease Lubricator (Grease Pot) | `grease-pot` | 23 |
-| CMI-LUB-002 | 0 | Lube Oil Sampling | `lube-oil-sampling` | 91 |
+| CMI-LUB-002 | 1 | Lube Oil Sampling | `lube-oil-sampling` | 91 |
 | CMI-LUB-003 | 0 | Lube Oil Replacement | `lube-oil-replacement` | 78 |
 | CMI-LUB-004 | 0 | Automatic Greasing System Inspection | `auto-greasing-system` | 33 |
 | CMI-LUB-005 | 0 | Lubrication Route — Greasing & Motor Bearing Re-greasing | `lube-greasing-route` | 25 |

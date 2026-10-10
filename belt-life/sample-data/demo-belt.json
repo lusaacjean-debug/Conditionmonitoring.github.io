@@ -1,0 +1,47 @@
+{
+  "app": "CM Belt Life",
+  "schema": 1,
+  "belts": [
+    {
+      "uid": "demo-cv03",
+      "id": "CV-03",
+      "name": "Mill feed conveyor (demo data)",
+      "area": "Crushing & milling",
+      "type": "EP",
+      "rating": 630,
+      "plies": 4,
+      "width_mm": 1050,
+      "length_m": 120,
+      "speed": 2.0,
+      "tph": 250,
+      "hoursPerDay": 20,
+      "installDate": "2024-03-15",
+      "topCoverNew": 6,
+      "bottomCoverNew": 2,
+      "minCover": 1.5,
+      "tension": { "mode": "estimate", "T1_kN": "", "power_kW": 55, "eff": 0.9, "loadFactor": 0.8, "wrapDeg": 210, "mu": 0.35 },
+      "strengthLossPct": 5,
+      "sfMin": "",
+      "thickness": [
+        { "date": "2025-04-10", "tonnes": "", "p": [5.6, 5.2, 4.9, 5.3, 5.7] },
+        { "date": "2025-10-08", "tonnes": "", "p": [5.2, 4.6, 4.1, 4.7, 5.3] },
+        { "date": "2026-04-06", "tonnes": "", "p": [4.9, 4.0, 3.4, 4.2, 5.0] },
+        { "date": "2026-10-05", "tonnes": "", "p": [4.6, 3.5, 2.7, 3.7, 4.7] }
+      ],
+      "takeup": { "travel_mm": 1200, "readings": [
+        { "date": "2024-03-20", "pos_mm": 150 },
+        { "date": "2025-03-18", "pos_mm": 420 },
+        { "date": "2026-03-16", "pos_mm": 560 },
+        { "date": "2026-10-05", "pos_mm": 610 }
+      ] },
+      "splices": [
+        { "id": "S1", "type": "Hot vulcanised", "rating": 2, "lengthChange_mm": "", "deltaT": 3, "note": "Reference splice" },
+        { "id": "S2", "type": "Hot vulcanised", "rating": 3, "lengthChange_mm": "", "deltaT": 8, "note": "Minor step lifting" },
+        { "id": "S3", "type": "Mechanical fastener", "rating": 4, "lengthChange_mm": "", "deltaT": 14, "note": "Temporary repair after rip" }
+      ],
+      "condition": { "shoreNew": 60, "shoreNow": 68, "rips": 0, "gouges": 3, "edgeDamage": 2, "cracking": 2, "chemical": 3, "tracking": 3, "cleaners": 3, "repairsPct": 4, "bottomNow": 1.8 },
+      "inspector": "",
+      "notes": "Demonstration data — replace with site measurements."
+    }
+  ]
+}

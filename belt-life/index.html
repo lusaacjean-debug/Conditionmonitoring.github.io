@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>CM Belt Life — Conveyor belt remaining-life assessment</title>
+  <meta name="description" content="Conveyor belt remaining-life assessment: cover wear, carcass safety factor, take-up, splices and condition.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23263038'/><rect x='5' y='13' width='22' height='6' rx='3' fill='%23F2B600'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 40 24" aria-hidden="true"><circle cx="8" cy="12" r="7"/><circle cx="32" cy="12" r="7"/><path d="M8 5h24M8 19h24"/></svg>
+      <div>
+        <h1>CM Belt Life</h1>
+        <p>Conveyor belt remaining-life assessment</p>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <label class="asof">Assessment date <input type="date" id="asOf"></label>
+      <button type="button" class="btn ghost" id="btnPrint">Print report</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="register" aria-label="Belt register">
+      <div class="register-head">
+        <h2>Belt register</h2>
+        <button type="button" class="btn small" id="btnAdd">Add belt</button>
+      </div>
+      <ul id="beltList" class="belt-list"></ul>
+      <div class="register-tools">
+        <button type="button" class="btn ghost small" id="btnDuplicate">Duplicate</button>
+        <button type="button" class="btn ghost small danger" id="btnDelete">Delete</button>
+        <button type="button" class="btn ghost small" id="btnExport">Export data</button>
+        <label class="btn ghost small file">Import data<input type="file" id="fileImport" accept="application/json,.json"></label>
+        <button type="button" class="btn ghost small" id="btnCsv">Register CSV</button>
+      </div>
+      <p class="storage-note">Data is saved in this browser only. Export regularly and keep the file on the site share.</p>
+    </aside>
+
+    <main class="form" id="form" aria-label="Belt data"></main>
+
+    <section class="report" id="report" aria-live="polite" aria-label="Assessment report"></section>
+  </div>
+
+  <footer class="foot">CM Belt Life <span id="ver"></span>. Results are an engineering estimate: verify limits against the belt manufacturer's data and site standards.</footer>
+
+  <script src="js/engine.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
